@@ -236,6 +236,13 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .acct{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
 .acct .em{font-size:14px;word-break:break-all}
 .seg.toolseg{grid-auto-flow:row;grid-template-columns:repeat(3,1fr)}
+.adm-tot{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:8px 0 12px}
+.adm-tot div{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px}
+.adm-tot b{display:block;font-family:var(--font-num);font-size:20px}
+.adm-tot span{font-size:11px;color:var(--muted)}
+.adm-u{border-top:1px solid var(--line);padding:9px 0;font-size:13px}
+.adm-u .e{font-weight:600;font-size:14px;overflow-wrap:anywhere}
+.adm-u .m{color:var(--muted)}
 .alertbar{border:1px solid var(--warn);background:var(--warn-soft);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:6px}
 .alertbar .al{display:flex;align-items:flex-start;gap:8px;font-size:14px;color:var(--ink)}
 .alertbar .al b{color:var(--warn)}
@@ -948,6 +955,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
 <div class="ovl" id="setovl" hidden role="dialog" aria-modal="true" aria-label="Settings"><div class="sheet"><div class="cardhead"><h2 style="margin:0">Settings</h2><button type="button" class="iconbtn" id="set-close" aria-label="Close settings">✕</button></div><div id="set-body"></div></div></div>
 <div class="ovl" id="welcome" hidden role="dialog" aria-modal="true" aria-labelledby="wl-t"><div class="sheet"><div id="wl-body"></div></div></div>
 <div class="ovl" id="opening" hidden role="dialog" aria-modal="true" aria-labelledby="op-t"><div class="sheet"><div id="op-body"></div></div></div>
+<div class="ovl" id="admovl" hidden role="dialog" aria-modal="true" aria-label="Admin"><div class="sheet" style="width:min(100%,760px)"><div id="adm-body"></div></div></div>
 <div class="ovl" id="rpovl" hidden role="dialog" aria-modal="true" aria-label="Receipt photo"><div class="sheet"><div id="rp-body"></div></div></div>
 <div class="ovl" id="jsum" hidden role="dialog" aria-modal="true" aria-label="Jobs summary"><div class="sheet"><div id="js-body"></div></div></div>
 
@@ -1333,7 +1341,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     var el=$('set-body'); if(!el || $('setovl').hidden) return;
     if(!S.db){ el.innerHTML='<p class="help">Open this page while signed in to change settings.</p>'; return; }
     var ae=document.activeElement; if(ae && el.contains(ae) && /INPUT|TEXTAREA|SELECT/.test(ae.tagName)) return;
-    var st=S.settings, z=S.biz||{}, h=renderAccountCard()+renderModeCard()+renderLookCard()+(S.isOwner?renderBackupCard():'')+renderPracticeCard()+renderSuggest()+renderProvPick()+renderBarPick()+renderAlertPick()
+    var st=S.settings, z=S.biz||{}, h=renderAccountCard()+renderModeCard()+renderLookCard()+(S.isOwner?renderBackupCard():'')+renderPracticeCard()+renderSuggest()+renderProvPick()+renderBarPick()+renderAlertPick()+renderAdminCard()
       +'<div class="card"><h2>Your details on receipts</h2><p class="help">Printed at the bottom of every receipt and PDF.</p>'
       +'<div class="field"><label for="bz-trade">Name on your receipts</label><input type="text" id="bz-trade" maxlength="60" value="'+esc(z.trade!=null?z.trade:BRAND)+'"><p class="note" style="margin-top:4px">Shown at the top of every receipt. Leave as '+BRAND+' if you drive under our brand, or use your own trading name.</p></div>'
       +'<div class="field"><label for="bz-name">Your name</label><input type="text" id="bz-name" maxlength="60" value="'+esc(z.name||'')+'" placeholder="e.g. your full name"></div>'
@@ -3638,6 +3646,56 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     if(t.id==='tr-ref'||t.closest('#tr-ref')){ trLoad(true); var r=$('tr-ref'); if(r) r.disabled=true; }
   });
   setInterval(function(){ if(S.tab==='tools'&&S.tool==='trains'&&!document.hidden) trLoad(false); },60000);
+
+  /* ---------- Admin panel (Matt and Marcin, 28 Oct) ----------
+     Website only. Shows who has signed up and how they use Cab Books: email, name, sign-up date,
+     last sign-in and last use, Full books / Just tracking, phones with train alerts, plan (all Free
+     until payments exist). NEVER anyone's jobs, money or expenses – the server function only reads
+     account details. Admins are set in the function (Matt's and Marcin's emails, or ADMIN_EMAILS).
+     Each driver's app notes when it was last used (users/<uid>/meta/seen) at most once an hour. */
+  S.adm={is:false,checked:false,data:null,err:'',busy:false};
+  function admUser(){ return S.auth&&S.auth.currentUser; }
+  function admDevice(){ var u=navigator.userAgent; return /iPhone|iPad|iPod/.test(u)?'iPhone':/Android/.test(u)?'Android':/Macintosh/.test(u)?'Mac':/Windows/.test(u)?'Windows':'Other'; }
+  function admCall(q){ var u=admUser(); if(!u) return Promise.reject(new Error('not_signed_in'));
+    return u.getIdToken().then(function(tk){ return fetch('/.netlify/functions/admin'+(q||''),{headers:{Authorization:'Bearer '+tk},cache:'no-store'}); })
+      .then(function(r){ return r.json().catch(function(){return {}}).then(function(j){ if(!r.ok) throw new Error(j&&j.error||('HTTP '+r.status)); return j; }); }); }
+  setInterval(function(){
+    if(!FX_CFG||!admUser()||!S.db) return;
+    var last=+lsGet('cb-seen')||0; if(Date.now()-last>3600000){ lsSet('cb-seen',String(Date.now())); S.db.collection('meta').doc('seen').set({at:Date.now(),device:admDevice()}).catch(function(){}); }
+    if(!S.adm.checked){ S.adm.checked=true; admCall('?check=1').then(function(j){ S.adm.is=!!j.admin; renderSettings(); }).catch(function(){ S.adm.checked=false; }); }
+  },10000);
+  function renderAdminCard(){
+    if(!S.adm.is) return '';
+    return '<div class="card"><h2>Admin</h2><p class="help">Who has signed up and how they use Cab Books. Account details only: nobody’s jobs or money.</p><button class="btn ghost" type="button" id="adm-open">Open admin panel</button></div>';
+  }
+  function admWhen(ms){ if(!ms) return '–'; var d=new Date(ms), now=new Date(), days=Math.floor((now-d)/864e5);
+    if(d.toDateString()===now.toDateString()) return 'today '+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+    if(days<7) return days<=1?'yesterday':days+' days ago';
+    return d.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}); }
+  function admRender(){
+    var A=S.adm, el=$('adm-body'); if(!el) return;
+    var h='<div class="cardhead"><h2 style="margin:0">Admin</h2><div style="display:flex;gap:8px"><button type="button" class="iconbtn" id="adm-ref" aria-label="Refresh">↻</button><button type="button" class="iconbtn" id="adm-close" aria-label="Close">✕</button></div></div>';
+    if(A.busy&&!A.data) h+='<p class="note">Loading…</p>';
+    else if(A.err&&!A.data) h+='<p class="note">'+(A.err==='not_set_up'?'The admin panel starts working once the Firebase key is added in Netlify (parked on your to-do list).':'Could not load ('+esc(A.err)+').')+'</p>';
+    if(A.data){
+      var T=A.data.totals, U=A.data.users||[];
+      h+='<div class="adm-tot">'+[['Signed up',T.signedUp],['Used today',T.activeToday],['Used this week',T.activeWeek],['Used in 30 days',T.activeMonth],['New this month',T.newThisMonth],['Paying',T.paying]].map(function(x){ return '<div><b>'+x[1]+'</b><span>'+x[0]+'</span></div>'; }).join('')+'</div>';
+      h+='<p class="note" style="margin:0 0 6px">'+T.phoneAlerts+' with train alerts on their phone. Updated '+esc(hm(A.data.checkedAt))+'.</p>';
+      U.forEach(function(u){
+        h+='<div class="adm-u"><div class="e">'+esc(u.email||'(no email)')+(u.name?' <span class="m" style="font-weight:400">· '+esc(u.name)+'</span>':'')+(u.disabled?' <span class="badge ind">disabled</span>':'')+'</div>'
+          +'<div class="m">Last used '+esc(admWhen(u.lastSeen||u.lastSignIn))+(u.device?' on '+esc(u.device):'')+' · signed up '+esc(admWhen(u.created))+'</div>'
+          +'<div class="m">'+esc(u.mode)+' · '+esc(u.subscription)+(u.phoneAlerts?' · train alerts on '+u.phoneAlerts+' phone'+(u.phoneAlerts>1?'s':''):'')+'</div></div>';
+      });
+      if(!U.length) h+='<p class="note">Nobody has signed up yet.</p>';
+    }
+    el.innerHTML=h;
+  }
+  function admLoad(){ var A=S.adm; A.busy=true; A.err=''; admRender();
+    admCall('').then(function(j){ A.data=j; }).catch(function(e){ A.err=e.message||'error'; }).then(function(){ A.busy=false; admRender(); }); }
+  document.addEventListener('click',function(ev){ var t=ev.target; if(!t) return;
+    if(t.id==='adm-open'){ $('admovl').hidden=false; admLoad(); }
+    if(t.id==='adm-close'||t.id==='admovl'){ $('admovl').hidden=true; }
+    if(t.id==='adm-ref'){ admLoad(); } });
 
   /* ---------- Train alerts, stage 1: banner inside the app (Matt, 28 Oct) ----------
      Standard rules are on for everyone (Matt: most drivers won't change them): warn when a London

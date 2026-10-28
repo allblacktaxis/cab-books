@@ -4,7 +4,7 @@
 import crypto from 'node:crypto';
 
 const b64u = buf => Buffer.from(buf).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-let cached = null;
+const cachedTok = {};
 
 export function serviceAccount() {
   const raw = process.env.FIREBASE_SERVICE_ACCOUNT;
@@ -15,11 +15,13 @@ export function serviceAccount() {
   } catch (e) { return null; }
 }
 
-async function token(sa) {
+export async function token(sa, scope) {
+  scope = scope || 'https://www.googleapis.com/auth/datastore';
+  const cached = cachedTok[scope];
   if (cached && cached.exp > Date.now() + 60000) return cached.token;
   const now = Math.floor(Date.now() / 1000);
   const head = b64u(JSON.stringify({ alg: 'RS256', typ: 'JWT' }));
-  const body = b64u(JSON.stringify({ iss: sa.client_email, scope: 'https://www.googleapis.com/auth/datastore', aud: 'https://oauth2.googleapis.com/token', iat: now, exp: now + 3600 }));
+  const body = b64u(JSON.stringify({ iss: sa.client_email, scope, aud: 'https://oauth2.googleapis.com/token', iat: now, exp: now + 3600 }));
   const sig = crypto.sign('sha256', Buffer.from(head + '.' + body), sa.private_key);
   const r = await fetch('https://oauth2.googleapis.com/token', {
     method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' },
@@ -27,8 +29,8 @@ async function token(sa) {
   });
   const j = await r.json();
   if (!r.ok || !j.access_token) throw new Error('firebase_auth_' + r.status);
-  cached = { token: j.access_token, exp: Date.now() + (j.expires_in || 3600) * 1000 };
-  return cached.token;
+  cachedTok[scope] = { token: j.access_token, exp: Date.now() + (j.expires_in || 3600) * 1000 };
+  return j.access_token;
 }
 
 export function decode(v) {
@@ -76,4 +78,21 @@ export async function updateFields(sa, name, obj) {
 }
 export async function deleteDoc(sa, name) {
   await fetch('https://firestore.googleapis.com/v1/' + name, { method: 'DELETE', headers: { authorization: 'Bearer ' + await token(sa) } });
+}
+
+// Read several documents by path (e.g. 'users/<uid>/settings/mode'); missing ones are left out.
+export async function getDocs(sa, paths) {
+  if (!paths.length) return {};
+  const pre = `projects/${sa.project_id}/databases/(default)/documents/`;
+  const out = {};
+  for (let i = 0; i < paths.length; i += 100) {
+    const r = await fetch(base(sa) + ':batchGet', {
+      method: 'POST', headers: { authorization: 'Bearer ' + await token(sa), 'content-type': 'application/json' },
+      body: JSON.stringify({ documents: paths.slice(i, i + 100).map(p => pre + p) })
+    });
+    const rows = await r.json();
+    if (!r.ok) throw new Error('firestore_get_' + r.status);
+    for (const x of rows) if (x.found) out[x.found.name.slice(pre.length)] = decodeFields(x.found.fields);
+  }
+  return out;
 }
