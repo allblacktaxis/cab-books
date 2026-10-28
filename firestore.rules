@@ -1,0 +1,45 @@
+rules_version = '2';
+
+// Cab Books – who can see what.
+// Each driver's books live under users/<their sign-in id>/...
+// Only that driver can read or change them. Nobody else can – not other
+// drivers, and not the people who run Cab Books through the app.
+// The only shared area is the suggestions box.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+    function isAdmin() {
+      return signedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    // A driver's own books: every collection and record below users/<uid>
+    match /users/{uid}/{document=**} {
+      allow read, write: if signedIn() && request.auth.uid == uid;
+    }
+
+    // Suggestions box: any signed-in driver can read and add;
+    // only Cab Books admins can mark one done or remove it.
+    match /suggestions/{id} {
+      allow read: if signedIn();
+      allow create: if signedIn()
+        && request.resource.data.text is string
+        && request.resource.data.text.size() > 0
+        && request.resource.data.text.size() <= 2000;
+      allow update, delete: if isAdmin();
+    }
+
+    // Admin list is managed by hand in the Firebase console, never from the app.
+    match /admins/{uid} {
+      allow read: if signedIn() && request.auth.uid == uid;
+      allow write: if false;
+    }
+
+    // Everything else is closed.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

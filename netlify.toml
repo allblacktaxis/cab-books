@@ -1,0 +1,5 @@
+# Cab Books on Netlify: the site is already built, so there is no build step.
+[build]
+  publish = "web/public"
+  functions = "netlify/functions"
+  command = ""
