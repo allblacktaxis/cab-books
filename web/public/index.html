@@ -235,6 +235,15 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 #signin .fine a{color:var(--muted)}
 .acct{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
 .acct .em{font-size:14px;word-break:break-all}
+.tb-line{border-top:1px solid var(--line)}
+.tb-line:first-of-type{border-top:0}
+.tb-line summary{display:flex;align-items:center;gap:10px;padding:11px 0;cursor:pointer;list-style:none;min-height:48px}
+.tb-line summary::-webkit-details-marker{display:none}
+.tb-bar{width:6px;align-self:stretch;border-radius:3px;flex:0 0 6px;min-height:28px}
+.tb-name{flex:1;font-weight:600}
+.tb-st{font-size:12px;font-weight:700;padding:3px 9px;border-radius:999px;white-space:nowrap;text-align:right}
+.tb-st.ok{background:var(--ok-soft);color:var(--ok)} .tb-st.amb{background:var(--warn-soft);color:var(--warn)} .tb-st.org{background:#3a1f00;color:#ff9d3a} .tb-st.bad{background:var(--bad-soft);color:var(--bad)} .tb-st.off{background:var(--surface2);color:var(--muted)}
+.tb-why{font-size:14px;color:var(--ink);padding:0 0 12px 16px;white-space:pre-line}
 .pm-map{position:relative;height:min(58vh,520px);border-radius:10px;overflow:hidden;border:1px solid var(--line);background:#0d1117}
 .pm-map>div{position:absolute;inset:0}
 .pm-msg{position:absolute;left:10px;right:10px;top:10px;z-index:2;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13px}
@@ -902,6 +911,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   <button type="button" data-tab="tools" data-sub="flights" data-bar="flights" hidden><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 14l7-2V6a2 2 0 0 1 4 0v6l7 2v2l-7-1.5V18l2 1.5V21l-4-1-4 1v-1.5l2-1.5v-3.5L3 16z"/></svg><span>Flights</span></button>
   <button type="button" data-tab="tools" data-sub="ranks" data-bar="ranks" hidden><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6-5.6-6-10.5a6 6 0 0 1 12 0C18 15.4 12 21 12 21zM9.5 8h5M12 8v5"/></svg><span>Ranks</span></button>
   <button type="button" data-tab="tools" data-sub="toilets" data-bar="toilets" hidden><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6-5.6-6-10.5a6 6 0 0 1 12 0C18 15.4 12 21 12 21zM8.5 8l1 4 1-3 1 3 1-4M14 8h2v4"/></svg><span>Toilets</span></button>
+  <button type="button" data-tab="tools" data-sub="tube" data-bar="tube" hidden><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7zM3 12h18"/></svg><span>Tube</span></button>
   <button type="button" data-tab="import"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg><span>Import</span></button>
 </nav>
 <div id="signin" hidden role="dialog" aria-modal="true" aria-labelledby="si-t">
@@ -3569,6 +3579,52 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     var a=F.pts[0]&&F.pts[0].label, b=F.pts[F.pts.length-1]&&F.pts[F.pts.length-1].label; if(a&&b&&a!=='Dropped pin'&&b!=='Dropped pin'){ $('j-note').value=(a+' – '+b).slice(0,120); $('j-notebox').open=true; }
     S.addOpen=true; showTab('today'); renderDay(); updatePreview(); var f=$('d-form'); if(f) f.scrollIntoView({block:'start'}); toast('Fare filled in. Change it to what the meter showed, pick the provider and save.'); }
 
+  /* ---------- Tools: tube status (Matt, 28 Oct) ----------
+     Every TfL line (Underground, DLR, the six Overground lines, Elizabeth line) in A–Z order with
+     its status; tap a line for TfL's reason. Data from TfL's free line-status feed through the
+     website's server function /.netlify/functions/opendata?d=tube (cached 60 seconds), refreshed
+     every minute while open. Website only. */
+  S.tb={data:null,err:'',busy:false,at:0,open:{}};
+  var TB_COL={bakerloo:'#B36305',central:'#E32017',circle:'#FFD300',district:'#00782A',dlr:'#00A4A7','elizabeth':'#6950A1','hammersmith-city':'#F3A9BB',jubilee:'#A0A5A9',metropolitan:'#9B0056',northern:'#8a8a8a',piccadilly:'#2a5bd7',victoria:'#0098D4','waterloo-city':'#95CDBA',liberty:'#7a8085',lioness:'#FAA61A',mildmay:'#437EC1',suffragette:'#5BBD72',weaver:'#a2477a',windrush:'#ED1B00'};
+  function tbClass(st){ var s=String(st||'').toLowerCase();
+    if(/good service/.test(s)) return 'ok';
+    if(/service closed/.test(s)) return 'off';
+    if(/minor|reduced|special/.test(s)) return 'amb';
+    if(/part suspended|severe|part closure/.test(s)) return 'org';
+    if(/suspended|closed|closure|not running/.test(s)) return 'bad';
+    return 'amb'; }
+  function tbLoad(force){
+    var T=S.tb; if(T.busy||!FX_CFG) return; if(!force&&T.data&&Date.now()-T.at<55000) return;
+    T.busy=true;
+    fetch('/.netlify/functions/opendata?d=tube',{cache:'no-store'}).then(function(r){ return r.json().catch(function(){return {}}).then(function(j){ if(!r.ok||!j||!Array.isArray(j.lines)) throw new Error(j&&j.error||('HTTP '+r.status)); return j; }); })
+      .then(function(j){ T.data=j; T.err=''; T.at=Date.now(); })
+      .catch(function(e){ T.err=e.message||'could not load'; })
+      .then(function(){ T.busy=false; if(S.tab==='tools'&&S.tool==='tube') renderTools(); });
+  }
+  function renderTube(el){
+    var T=S.tb;
+    if(!FX_CFG){ el.innerHTML='<div class="card">'+toolNav()+'</div><div class="card empty"><b>Tube status</b>Live line status works on the Cab Books website. Inside Claude it cannot reach TfL.</div>'; return; }
+    tbLoad(false);
+    var h='<div class="card">'+toolNav()+'</div><div class="card">';
+    var L=T.data&&T.data.lines||[];
+    var bad=L.filter(function(l){ var c=tbClass(l.status); return c!=='ok'&&c!=='off'; });
+    h+='<div class="cardhead"><h2>Tube status</h2><button type="button" class="iconbtn" id="tb-ref" aria-label="Refresh" title="Refresh">↻</button></div>';
+    if(!T.data){ h+=T.err?'<p class="note">Could not load the tube status ('+esc(T.err)+'). Check your signal and tap refresh.</p>':'<p class="note">Loading the latest from TfL…</p>'; }
+    else {
+      h+='<p class="note" style="margin:0 0 6px">'+(bad.length?'<b style="color:var(--warn)">'+bad.length+' line'+(bad.length===1?'':'s')+' with problems.</b> ':'Good service on all lines. ')+'Updated '+esc(hm(T.data.checkedAt))+'. Tap a line for details.'+(T.err?' (Last refresh failed.)':'')+'</p>';
+      L.forEach(function(l){
+        var c=tbClass(l.status), why=l.reason||((l.statuses||[]).length>1?'Also: '+l.statuses.slice(1).join(', '):(c==='ok'?'Good service on the whole line.':''));
+        h+='<details class="tb-line" data-tbl="'+esc(l.id)+'"'+(T.open[l.id]?' open':'')+'><summary><span class="tb-bar" style="background:'+(TB_COL[l.id]||'var(--muted)')+'"></span><span class="tb-name">'+esc(l.name)+'</span><span class="tb-st '+c+'">'+esc(l.status)+'</span></summary>'
+          +(why?'<div class="tb-why">'+esc(why)+'</div>':'')+'</details>';
+      });
+    }
+    h+='</div><p class="note" style="margin:0">Live status from Transport for London.</p>';
+    el.innerHTML=h;
+  }
+  document.addEventListener('toggle',function(ev){ var d=ev.target; if(d&&d.getAttribute&&d.getAttribute('data-tbl')) S.tb.open[d.getAttribute('data-tbl')]=d.open; },true);
+  document.addEventListener('click',function(ev){ var t=ev.target; if(t&&(t.id==='tb-ref'||(t.closest&&t.closest('#tb-ref')))){ tbLoad(true); var b=$('tb-ref'); if(b) b.disabled=true; } });
+  setInterval(function(){ if(S.tab==='tools'&&S.tool==='tube'&&!document.hidden) tbLoad(false); },60000);
+
   /* ---------- Tools: taxi ranks and toilets maps (Matt, 28 Oct) ----------
      The same data and colours as TaxiTracker: TfL's live rank layer (728 ranks; yellow = rank,
      green = rest/refreshment, red = suspended) and TaxiTracker's combined London toilets file
@@ -3727,6 +3783,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     if(S.tool!=='fare'&&S.fx.map){ try{ S.fx.map.remove(); }catch(e){} S.fx.map=null; S.fx.marks=[]; }
     if(S.tool!=='ranks'&&S.tool!=='toilets') pmDrop();
     if(S.tool==='flights'){ renderFlights(el); return; }
+    if(S.tool==='tube'){ renderTube(el); return; }
     if(S.tool==='ranks'||S.tool==='toilets'){ renderPM(el,S.tool); return; }
     renderFare(el);
   }
@@ -3737,7 +3794,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
      so the tool explains that it works on the website. */
   S.tool=lsGet('cb-tool')||'fare'; S.fl={ap:lsGet('cb-fl-ap')||'LHR',term:'',n:40,data:{},err:{},busy:{}};
   function toolNav(){
-    return '<div class="seg" style="margin:0" role="group" aria-label="Tool">'+[['fare','Fares'],['flights','Flights'],['ranks','Ranks'],['toilets','Toilets']].map(function(t){ return '<button type="button" data-tool="'+t[0]+'" aria-pressed="'+(S.tool===t[0])+'">'+t[1]+'</button>'; }).join('')+'</div>';
+    return '<div class="seg" style="margin:0" role="group" aria-label="Tool">'+[['fare','Fares'],['flights','Flights'],['ranks','Ranks'],['toilets','Toilets'],['tube','Tube']].map(function(t){ return '<button type="button" data-tool="'+t[0]+'" aria-pressed="'+(S.tool===t[0])+'">'+t[1]+'</button>'; }).join('')+'</div>';
   }
   document.addEventListener('click',function(ev){ var b=ev.target.closest&&ev.target.closest('[data-tool]'); if(!b) return; S.tool=b.getAttribute('data-tool'); lsSet('cb-tool',S.tool); renderTools(); if(typeof markCurrentTab==='function') markCurrentTab(); });
   var LTZ={timeZone:'Europe/London',hour:'2-digit',minute:'2-digit',hour12:false};
@@ -3820,8 +3877,8 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   /* ---------- user mode: Full books vs Just tracking ---------- */
   var FULLTABS=['receipts','months','log','import','receipt'];
   /* ---------- bottom bar: each driver picks which buttons they see (Matt, 28 Oct) ---------- */
-  var BAR_ITEMS=[['today','Today'],['position','Position'],['receipts','Receipts'],['reports','Reports'],['months','Data'],['log','Log'],['import','Import'],['tools','Tools'],['fare','Fare calculator'],['flights','Flight arrivals'],['ranks','Taxi ranks'],['toilets','Toilets']];
-  var BAR_GROUPS=[['Your books',['today','position','receipts','reports','months','log','import']],['On the road',['tools','fare','flights','ranks','toilets']]];
+  var BAR_ITEMS=[['today','Today'],['position','Position'],['receipts','Receipts'],['reports','Reports'],['months','Data'],['log','Log'],['import','Import'],['tools','Tools'],['fare','Fare calculator'],['flights','Flight arrivals'],['ranks','Taxi ranks'],['toilets','Toilets'],['tube','Tube status']];
+  var BAR_GROUPS=[['Your books',['today','position','receipts','reports','months','log','import']],['On the road',['tools','fare','flights','ranks','toilets','tube']]];
   var BAR_DEFAULT=['today','position','receipts','reports','months','log','tools','import'];
   var BAR_FULLONLY=['receipts','months','log','import'];
   S.bar=null;

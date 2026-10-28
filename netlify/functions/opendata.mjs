@@ -1,7 +1,9 @@
 // Cab Books – London taxi ranks and toilets for the Tools maps (same sources as TaxiTracker).
-// GET /.netlify/functions/opendata?d=ranks|toilets
+// GET /.netlify/functions/opendata?d=ranks|toilets|tube
 //  ranks   : TfL's live taxi-rank layer (ArcGIS open data), tidied into simple records.
 //  toilets : TaxiTracker's combined London toilets file (Toilet Map, OpenStreetMap, councils, TfL).
+//  tube    : TfL line status for Underground, DLR, Overground lines and the Elizabeth line
+//            (free TfL feed, cached for 60 seconds), as TaxiTracker's tfl_line_status.php.
 // Fetched here on the server so the page never depends on another site allowing it,
 // and cached by Netlify for 6 hours, so the sources are asked only a few times a day.
 const RANKS_URL = 'https://services1.arcgis.com/YswvgzOodUvqkoCN/arcgis/rest/services/Taxi_Ranks/FeatureServer/37/query';
@@ -13,12 +15,16 @@ const TOILETS_URL = 'https://taxitracker.allblacktaxis.co.uk/offline-data/toilet
 const CORRECTIONS = { TR6141: [-0.187259, 51.516488] };
 const MIN_RANKS = 600, MIN_TOILETS = 500;
 
-const json = (body, status, cache) => new Response(JSON.stringify(body), {
+const TUBE_URL = 'https://api.tfl.gov.uk/Line/Mode/tube,dlr,overground,elizabeth-line/Status';
+const json = (body, status, cache, short) => new Response(JSON.stringify(body), {
   status,
-  headers: Object.assign({ 'content-type': 'application/json' }, cache ? {
+  headers: Object.assign({ 'content-type': 'application/json' }, cache ? (short ? {
+    'cache-control': 'public, max-age=30',
+    'netlify-cdn-cache-control': 'public, durable, s-maxage=60, stale-while-revalidate=60'
+  } : {
     'cache-control': 'public, max-age=900',
     'netlify-cdn-cache-control': 'public, durable, s-maxage=21600, stale-while-revalidate=86400'
-  } : { 'cache-control': 'no-store' })
+  }) : { 'cache-control': 'no-store' })
 });
 
 const txt = v => (v == null ? '' : String(v).trim());
@@ -85,10 +91,39 @@ async function getToilets() {
   return gj;
 }
 
+// Worst status first (10 = good service always last), reasons joined – as TaxiTracker does.
+export function summariseTube(lines) {
+  const out = [];
+  for (const l of Array.isArray(lines) ? lines : []) {
+    const id = txt(l && l.id), name = txt(l && l.name);
+    if (!id || !name) continue;
+    let st = ((l.lineStatuses) || []).map(s => ({
+      severity: Number(s && s.statusSeverity) || 0,
+      status: txt(s && s.statusSeverityDescription),
+      reason: txt(s && (s.reason || (s.disruption && s.disruption.description)))
+    })).filter(s => s.status);
+    if (!st.length) st = [{ severity: 0, status: 'Status unavailable', reason: '' }];
+    st.sort((a, b) => (a.severity === 10) - (b.severity === 10) || a.severity - b.severity);
+    const reasons = [...new Set(st.map(s => s.reason).filter(Boolean))];
+    const statuses = [...new Set(st.map(s => s.status))];
+    out.push({ id, name, mode: txt(l.modeName), severity: st[0].severity, status: st[0].status, statuses, reason: reasons.join('\n\n') });
+  }
+  return out.sort((a, b) => a.name.localeCompare(b.name, 'en', { sensitivity: 'base' }));
+}
+async function getTube() {
+  const key = process.env.TFL_APP_KEY;
+  const r = await fetch(TUBE_URL + (key ? '?app_key=' + encodeURIComponent(key) : ''), { headers: { Accept: 'application/json', 'User-Agent': 'CabBooks-line-status/1.0' } });
+  if (!r.ok) throw new Error('source_' + r.status);
+  const lines = summariseTube(await r.json());
+  if (lines.length < 13) throw new Error('incomplete');
+  return { checkedAt: new Date().toISOString(), lines };
+}
+
 export default async (req) => {
   const d = new URL(req.url).searchParams.get('d');
-  if (d !== 'ranks' && d !== 'toilets') return json({ error: 'Use ?d=ranks or ?d=toilets' }, 400);
+  if (d !== 'ranks' && d !== 'toilets' && d !== 'tube') return json({ error: 'Use ?d=ranks, ?d=toilets or ?d=tube' }, 400);
   try {
+    if (d === 'tube') return json(await getTube(), 200, true, true);
     return json(d === 'ranks' ? await getRanks() : await getToilets(), 200, true);
   } catch (e) {
     return json({ error: String((e && e.message) || 'source_unreachable') }, 502);
