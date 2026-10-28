@@ -871,6 +871,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     <p class="err" id="si-err" role="alert"></p>
     <button class="btn" type="submit" id="si-go">Sign in</button>
     <div class="alt"><button type="button" id="si-switch">New here? Create an account</button><button type="button" id="si-forgot">Forgot password?</button></div>
+    <p class="fine">New to Cab Books? <a href="/help.html" style="color:var(--accent)">Read the getting-started guide</a>.</p>
     <p class="fine">By using Cab Books you agree to how we look after your data: <a href="/privacy.html">privacy notice</a>.</p>
   </form>
 </div>
@@ -3438,7 +3439,8 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
       +'<button class="btn ghost small" type="button" id="acct-out">Sign out</button></div>'
       +'<div style="margin-top:12px"><label for="acct-imp">Bring in data from the old Cab Books</label>'
       +'<p class="help" style="margin:0 0 8px">Choose the backup file (.json) saved from the old app. Records already here with the same number are replaced, nothing else is touched.</p>'
-      +'<input type="file" id="acct-imp" accept=".json,application/json"></div></div>';
+      +'<input type="file" id="acct-imp" accept=".json,application/json"></div>'
+      +'<p class="help" style="margin:12px 0 0"><a href="/help.html" style="color:var(--accent)">Getting-started guide</a> &middot; <a href="/privacy.html" style="color:var(--accent)">Privacy notice</a></p></div>';
   }
   function curMonthKey(){ var d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); }
   function openWelcome(){
