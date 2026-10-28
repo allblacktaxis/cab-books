@@ -1,3 +1,5 @@
+import { serviceAccount } from '../lib/firestore.mjs';
+import { vapidFromSeed, b64u } from '../lib/webpush.mjs';
 // Cab Books – London taxi ranks and toilets for the Tools maps (same sources as TaxiTracker).
 // GET /.netlify/functions/opendata?d=ranks|toilets|tube|rail
 //  ranks   : TfL's live taxi-rank layer (ArcGIS open data), tidied into simple records.
@@ -123,7 +125,8 @@ async function getTube() {
 }
 
 const RAIL_BASE = 'https://api1.raildata.org.uk/1010-live-departure-board-dep1_2/LDBWS/api/20220120';
-export const RAIL_STATIONS = ['CHX', 'EUS', 'FST', 'KGX', 'LST', 'LBG', 'MYB', 'PAD', 'STP', 'VIC', 'WAT'];
+export const RAIL_NAMES = { CHX: 'Charing Cross', EUS: 'Euston', FST: 'Fenchurch Street', KGX: "King's Cross", LST: 'Liverpool Street', LBG: 'London Bridge', MYB: 'Marylebone', PAD: 'Paddington', STP: 'St Pancras', VIC: 'Victoria', WAT: 'Waterloo' };
+export const RAIL_STATIONS = Object.keys(RAIL_NAMES);
 function railCancelled(s) {
   const f = s && s.isCancelled;
   return f === true || f === 1 || f === '1' || f === 'true' || txt(s && s.etd).toLowerCase() === 'cancelled';
@@ -144,7 +147,7 @@ export function summariseBoard(crs, board) {
   }));
   return { crs, available: true, cancellationCount: list.length, cancelledServices: list };
 }
-async function getRail() {
+export async function getRail() {
   const key = process.env.RAIL_API_KEY;
   if (!key) { const e = new Error('not_set_up'); e.status = 503; throw e; }
   const stations = {};
@@ -159,6 +162,12 @@ async function getRail() {
 
 export default async (req) => {
   const d = new URL(req.url).searchParams.get('d');
+  if (d === 'vapid') {
+    // Public key phones need to sign up for train alerts (the private half stays on the server).
+    const sa = serviceAccount();
+    if (!sa) return json({ error: 'not_set_up' }, 503);
+    return json({ key: b64u(vapidFromSeed(sa.private_key).pub) }, 200, true);
+  }
   if (!['ranks', 'toilets', 'tube', 'rail'].includes(d)) return json({ error: 'Use ?d=ranks, ?d=toilets, ?d=tube or ?d=rail' }, 400);
   try {
     if (d === 'tube') return json(await getTube(), 200, true, true);

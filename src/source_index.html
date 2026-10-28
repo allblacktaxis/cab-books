@@ -3634,13 +3634,67 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
         +'<label style="margin-top:12px">Stations</label><div class="chips tight" role="group" aria-label="Stations">'+TR_ST.map(function(st){ var on=(A.off||[]).indexOf(st[1])<0; return '<button type="button" data-alst="'+st[1]+'" aria-pressed="'+on+'">'+(on?'✓ ':'')+esc(st[0])+'</button>'; }).join('')+'</div>'
         +'<label style="margin-top:12px">Airport trains</label><div class="chips tight"><button type="button" data-alex="1" aria-pressed="'+!!A.express+'">'+(A.express?'✓ ':'')+'Heathrow Express and Gatwick Express problems</button></div>';
     }
-    h+='<p class="note">'+(S.tr.err==='not_set_up'?'Alerts start once the National Rail data is connected. ':'')+'For now alerts show at the top of Cab Books while it is open. Alerts on your phone when Cab Books is closed are coming next.</p>';
+    if(A.on) h+=pushCard();
+    h+='<p class="note">'+(S.tr.err==='not_set_up'?'Alerts start once the National Rail data is connected. ':'')+'While Cab Books is open, warnings also show at the top of the screen.</p>';
     return h+'</div>';
   }
   function alSave(ch){
     S.al=Object.assign({},S.al,ch); renderSettings(); alRender();
     if(S.db) S.db.collection('settings').doc('alerts').set({on:!!S.al.on,min:+S.al.min||4,express:!!S.al.express,off:S.al.off||[],ts:Date.now()}).catch(fail);
+    if(S.db&&S.push.state==='on') S.db.collection('push').doc(pushDev()).set({rules:alRules(),ts:Date.now()},{merge:true}).catch(function(){});
   }
+  /* ---------- Train alerts, stage 2: notifications on the phone when Cab Books is closed ----------
+     Website only. The phone signs up once (button in Settings → Train alerts); its push address and
+     this driver's rules are saved in users/<uid>/push/<this phone>. The server function train-alerts
+     checks every 5 minutes and sends the notification (sw.js shows it; tapping opens Trains).
+     iPhone: only works when Cab Books is opened from the Home Screen icon (iOS 16.4+). */
+  S.push={state:'checking'};
+  function alRules(){ return {on:!!S.al.on,min:+S.al.min||4,express:!!S.al.express,off:S.al.off||[]}; }
+  function pushDev(){ var d=lsGet('cb-dev'); if(!d){ d='d'+Date.now().toString(36)+Math.random().toString(36).slice(2,8); lsSet('cb-dev',d); } return d; }
+  function pushIOS(){ return /iPhone|iPad|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1); }
+  function pushStandalone(){ return (window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches)||navigator.standalone===true; }
+  function pushCheck(){
+    var P=S.push;
+    if(!FX_CFG){ P.state='website'; return; }
+    if(pushIOS()&&!pushStandalone()){ P.state='home'; renderSettings(); return; }
+    if(!('serviceWorker' in navigator)||!('PushManager' in window)||!('Notification' in window)){ P.state='unsupported'; renderSettings(); return; }
+    if(Notification.permission==='denied'){ P.state='denied'; renderSettings(); return; }
+    navigator.serviceWorker.register('/sw.js').then(function(reg){ P.reg=reg; return reg.pushManager.getSubscription(); })
+      .then(function(sub){ P.state=sub&&lsGet('cb-push')==='1'?'on':'off'; renderSettings(); })
+      .catch(function(){ P.state='unsupported'; renderSettings(); });
+  }
+  function pushB64(s){ s=s.replace(/-/g,'+').replace(/_/g,'/'); while(s.length%4) s+='='; var r=atob(s), a=new Uint8Array(r.length); for(var i=0;i<r.length;i++) a[i]=r.charCodeAt(i); return a; }
+  function pushOn(){
+    var P=S.push; if(!S.db||!P.reg) return;
+    P.state='busy'; renderSettings();
+    Notification.requestPermission().then(function(perm){
+      if(perm!=='granted') throw new Error(perm==='denied'?'denied':'not allowed');
+      return fetch('/.netlify/functions/opendata?d=vapid').then(function(r){ return r.json().then(function(j){ if(!r.ok||!j.key) throw new Error(j&&j.error==='not_set_up'?'not_set_up':'no key'); return j.key; }); });
+    }).then(function(key){
+      return P.reg.pushManager.getSubscription().then(function(old){ return old?old.unsubscribe():null; }).then(function(){ return P.reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:pushB64(key)}); });
+    }).then(function(sub){
+      return S.db.collection('push').doc(pushDev()).set({sub:JSON.stringify(sub),rules:alRules(),sent:{},device:navigator.userAgent.slice(0,120),ts:Date.now()});
+    }).then(function(){ lsSet('cb-push','1'); P.state='on'; renderSettings(); toast('Train alerts are on for this phone'); })
+      .catch(function(e){ var m=e&&e.message; P.state=m==='denied'?'denied':'off'; renderSettings(); toast(m==='denied'?'Notifications are blocked for Cab Books. Allow them in your phone settings.':m==='not_set_up'?'Phone alerts are not switched on at our end yet. The banner still works.':'Could not turn on alerts. Try again.'); });
+  }
+  function pushOff(){
+    var P=S.push;
+    (P.reg?P.reg.pushManager.getSubscription():Promise.resolve(null)).then(function(sub){ return sub?sub.unsubscribe():null; })
+      .then(function(){ return S.db?S.db.collection('push').doc(pushDev()).delete():null; })
+      .then(function(){ lsSet('cb-push','0'); P.state='off'; renderSettings(); toast('Train alerts are off for this phone'); }).catch(fail);
+  }
+  function pushCard(){
+    var st=S.push.state, h='<label style="margin-top:14px">Alerts on this phone when Cab Books is closed</label>';
+    if(st==='website') return h+'<p class="note">Works on the Cab Books website.</p>';
+    if(st==='home') return h+'<p class="note">On iPhone, add Cab Books to your Home Screen first (Safari: Share → Add to Home Screen), then open it from the icon and come back here.</p>';
+    if(st==='unsupported') return h+'<p class="note">This phone or browser cannot show alerts from Cab Books. The banner inside the app still works.</p>';
+    if(st==='denied') return h+'<p class="note">Notifications are blocked for Cab Books. Allow them in your phone’s settings, then come back here.</p>';
+    if(st==='on') return h+'<p class="note" style="color:var(--ok)">✓ On for this phone.</p><button class="btn ghost small" type="button" id="push-off">Turn off on this phone</button>';
+    if(st==='checking'||st==='busy') return h+'<p class="note">Checking…</p>';
+    return h+'<button class="btn small" type="button" id="push-on">Turn on alerts on this phone</button><p class="note">Your phone will ask once to allow notifications. On iPhone they can now and then arrive late; the banner inside Cab Books always shows the same warning.</p>';
+  }
+  document.addEventListener('click',function(ev){ var t=ev.target; if(!t) return; if(t.id==='push-on') pushOn(); if(t.id==='push-off') pushOff(); });
+  setTimeout(pushCheck,1500);
   document.addEventListener('click',function(ev){
     var t=ev.target; if(!t||!t.closest) return; var b;
     if((b=t.closest('[data-alon]'))){ alSave({on:b.getAttribute('data-alon')==='1'}); return; }
@@ -4102,6 +4156,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   ['m-date','m-amt','m-tips','m-desc','m-prov','m-cat','m-from','m-abs'].forEach(function(id){ $(id).addEventListener('change',buildImport); });
   $('ik-fare').addEventListener('click',function(){setIKind('fare')}); $('ik-expense').addEventListener('click',function(){setIKind('expense')});
   $('i-save').addEventListener('click',saveImport);
+  try{ var qtool=new URLSearchParams(location.search).get('tool'); if(qtool&&['fare','flights','ranks','toilets','tube','trains'].indexOf(qtool)>=0){ S.tool=qtool; lsSet('cb-tool',qtool); lsSet('cb-tab','tools'); if(history.replaceState) history.replaceState(null,'',location.pathname); } }catch(e){}
   var st0=lsGet('cb-tab'); showTab(['today','position','receipts','reports','months','log','tools','import'].indexOf(st0)>=0?st0:'today');
   renderAll();
 
