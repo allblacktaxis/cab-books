@@ -233,9 +233,13 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .tb-st{font-size:12px;font-weight:700;padding:3px 9px;border-radius:999px;white-space:nowrap;text-align:right}
 .tb-st.ok{background:var(--ok-soft);color:var(--ok)} .tb-st.amb{background:var(--warn-soft);color:var(--warn)} .tb-st.org{background:#3a1f00;color:#ff9d3a} .tb-st.bad{background:var(--bad-soft);color:var(--bad)} .tb-st.off{background:var(--surface2);color:var(--muted)}
 .tb-why{font-size:14px;color:var(--ink);padding:0 0 12px 16px;white-space:pre-line}
-.pm-map{position:relative;height:min(58vh,520px);border-radius:10px;overflow:hidden;border:1px solid var(--line);background:#0d1117}
+.pm-map{position:relative;height:max(420px,calc(100dvh - 250px));border-radius:10px;overflow:hidden;border:1px solid var(--line);background:#0d1117}
 .pm-map>div{position:absolute;inset:0}
-.pm-msg{position:absolute;left:10px;right:10px;top:10px;z-index:2;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13px}
+.pm-top{position:absolute;left:8px;right:8px;top:8px;z-index:3}
+.pm-top .pm-row input[type=search]{background:color-mix(in srgb,var(--surface) 92%,transparent);box-shadow:0 2px 10px var(--shadow)}
+.pm-top .pm-res{margin-top:6px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:0 10px;max-height:45vh;overflow:auto;box-shadow:0 4px 18px var(--shadow)}
+.pm-top .pm-res button:first-child{border-top:0}
+.pm-msg{position:absolute;left:10px;right:10px;top:64px;z-index:2;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13px}
 .pm-row{display:flex;gap:8px;align-items:center}
 .pm-row input[type=search]{flex:1;min-width:0;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:11px 12px;min-height:44px;color:var(--ink)}
 .pm-count{font-family:var(--font-num);font-size:13px;color:var(--muted);white-space:nowrap}
@@ -3396,7 +3400,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     if(!F.startSet) F.start=fxLocalNow();
     if($('fx-root')&&el.contains($('fx-root'))){ fxResult(); return; }
     if(F.map){ try{ F.map.remove(); }catch(e){} F.map=null; F.marks=[]; }
-    var h='<div class="card">'+toolNav()+'</div><div id="fx-root">';
+    var h=toolHead()+'<div id="fx-root">';
     if(on){
       h+='<div class="card fx-card"><div id="fx-rows">'+fxRowsHTML()+'</div>'
         +'<div class="fx-map" id="fx-map"><div class="fx-msg" id="fx-msg">Loading the map…</div></div>'
@@ -3575,8 +3579,8 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   }
   function renderTrains(el){
     var T=S.tr; if(FX_CFG) trLoad(false);
-    var notSet=T.err==='not_set_up', h='<div class="card">'+toolNav()+'</div><div class="card">';
-    h+='<div class="cardhead"><h2>London train stations</h2>'+(FX_CFG?'<button type="button" class="iconbtn" id="tr-ref" aria-label="Refresh" title="Refresh">↻</button>':'')+'</div>';
+    var notSet=T.err==='not_set_up', h=toolHead()+'<div class="card">';
+    h+='<div class="cardhead"><h2>London terminals</h2>'+(FX_CFG?'<button type="button" class="iconbtn" id="tr-ref" aria-label="Refresh" title="Refresh">↻</button>':'')+'</div>';
     h+='<p class="note" style="margin:0 0 6px">'+(!FX_CFG?'Tap a station for its live departures. Cancellation counts work on the Cab Books website.'
       :notSet?'Tap a station for its live departures. Cancellation counts start once the National Rail data key is added.'
       :T.data?'Cancellations in the next 2 hours. Updated '+esc(hm(T.data.checkedAt))+'. Tap a station for live departures, or a count for the trains.'+(T.err?' (Last refresh failed.)':'')
@@ -3760,7 +3764,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     if((b=t.closest('[data-alex]'))){ alSave({express:!S.al.express}); return; }
     if((b=t.closest('[data-alst]'))){ var c=b.getAttribute('data-alst'), off=(S.al.off||[]).slice(), i=off.indexOf(c); if(i>=0) off.splice(i,1); else off.push(c); alSave({off:off}); return; }
     if((b=t.closest('[data-alhide]'))){ S.alHide[b.getAttribute('data-alhide')]=+b.getAttribute('data-aln')||0; lsSet('cb-al-hide',JSON.stringify(S.alHide)); alRender(); return; }
-    if(t.id==='al-go'){ S.tool='trains'; lsSet('cb-tool','trains'); showTab('tools'); return; }
+    if(t.id==='al-go'){ S.tool='trains'; S.toolSolo=true; lsSet('cb-tool','trains'); showTab('tools'); return; }
   });
   setInterval(function(){ if(S.al.on&&FX_CFG&&!document.hidden){ trLoad(170000); alPrune(); } },60000);
   document.addEventListener('visibilitychange',function(){ if(!document.hidden&&S.al.on&&FX_CFG) trLoad(170000); });
@@ -3790,12 +3794,12 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   }
   function renderTube(el){
     var T=S.tb;
-    if(!FX_CFG){ el.innerHTML='<div class="card">'+toolNav()+'</div><div class="card empty"><b>Tube status</b>Live line status works on the Cab Books website. Inside Claude it cannot reach TfL.</div>'; return; }
+    if(!FX_CFG){ el.innerHTML=toolHead()+'<div class="card empty"><b>Tube status</b>Live line status works on the Cab Books website. Inside Claude it cannot reach TfL.</div>'; return; }
     tbLoad(false);
-    var h='<div class="card">'+toolNav()+'</div><div class="card">';
+    var h=toolHead()+'<div class="card">';
     var L=T.data&&T.data.lines||[];
     var bad=L.filter(function(l){ var c=tbClass(l.status); return c!=='ok'&&c!=='off'; });
-    h+='<div class="cardhead"><h2>Tube status</h2><button type="button" class="iconbtn" id="tb-ref" aria-label="Refresh" title="Refresh">↻</button></div>';
+    h+='<div class="cardhead"><h2>All lines</h2><button type="button" class="iconbtn" id="tb-ref" aria-label="Refresh" title="Refresh">↻</button></div>';
     if(!T.data){ h+=T.err?'<p class="note">Could not load the tube status ('+esc(T.err)+'). Check your signal and tap refresh.</p>':'<p class="note">Loading the latest from TfL…</p>'; }
     else {
       h+='<p class="note" style="margin:0 0 6px">'+(bad.length?'<b style="color:var(--warn)">'+bad.length+' line'+(bad.length===1?'':'s')+' with problems.</b> ':'Good service on all lines. ')+'Updated '+esc(hm(T.data.checkedAt))+'. Tap a line for details.'+(T.err?' (Last refresh failed.)':'')+'</p>';
@@ -3860,26 +3864,29 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     var P=S.pm, web=!!FX_CFG;
     if(P.kind!==kind){ pmDrop(); P.kind=kind; P.q=''; }
     if(!web){
-      el.innerHTML='<div class="card">'+toolNav()+'</div><div class="card empty"><b>'+(kind==='ranks'?'Taxi ranks':'Toilets')+' map</b>The map works on the Cab Books website. Inside Claude it cannot reach the map or the '+(kind==='ranks'?'TfL rank':'toilets')+' data.</div>';
+      el.innerHTML=toolHead()+'<div class="card empty"><b>'+(kind==='ranks'?'Taxi ranks':'Toilets')+' map</b>The map works on the Cab Books website. Inside Claude it cannot reach the map or the '+(kind==='ranks'?'TfL rank':'toilets')+' data.</div>';
       return;
     }
-    if(P.map&&el.getAttribute('data-pm')===kind&&$('pm-box')){ pmUpdate(); return; }
-    pmDrop(); el.setAttribute('data-pm',kind);
-    var h='<div class="card">'+toolNav()+'</div><div class="card" style="padding:12px">'
-      +'<div class="pm-row"><input type="search" id="pm-q" autocomplete="off" placeholder="'+(kind==='ranks'?'Rank, street, station or reference':'Toilet, venue, street or borough')+'" aria-label="Search" value="'+esc(P.q)+'">'
-      +'<button type="button" class="iconbtn" id="pm-loc" aria-label="Show my location" title="Show my location">◎</button></div>';
+    var pmKey=kind+(S.toolSolo?':solo':'');
+    if(P.map&&el.getAttribute('data-pm')===pmKey&&$('pm-box')){ pmUpdate(); return; }
+    pmDrop(); el.setAttribute('data-pm',pmKey);
+    var h=toolHead()
+      +'<div class="pm-map" id="pm-box"><div id="pm-map"></div>'
+      +'<div class="pm-top">'+'<div class="pm-row"><input type="search" id="pm-q" autocomplete="off" placeholder="'+(kind==='ranks'?'Rank, street, station or reference':'Toilet, venue, street or borough')+'" aria-label="Search" value="'+esc(P.q)+'">'
+      +'<button type="button" class="iconbtn" id="pm-loc" aria-label="Show my location" title="Show my location">◎</button></div>'+'<div id="pm-res" class="pm-res" hidden></div></div>'
+      +'<div class="pm-msg" id="pm-msg">Loading the map\u2026</div></div>'
+      +'<div id="pm-detail"></div>'
+      +'<div class="card" style="padding:12px">';
     if(kind==='ranks'){
-      h+='<div class="pm-row" style="margin-top:8px"><div class="chips tight" role="group" aria-label="Rank type" style="flex:1">'+[['all','All'],['rest','Rest ranks'],['refreshment','Refreshment']].map(function(c){ return '<button type="button" data-pmcat="'+c[0]+'" aria-pressed="'+(P.rcat===c[0])+'">'+c[1]+'</button>'; }).join('')+'</div></div>'
+      h+='<div class="pm-row"><div class="chips tight" role="group" aria-label="Rank type" style="flex:1">'+[['all','All'],['rest','Rest ranks'],['refreshment','Refreshment']].map(function(c){ return '<button type="button" data-pmcat="'+c[0]+'" aria-pressed="'+(P.rcat===c[0])+'">'+c[1]+'</button>'; }).join('')+'</div></div>'
         +'<div class="pm-row" style="margin-top:8px"><select id="pm-st" aria-label="Rank status" style="flex:1">'+[['all','All ranks'],['active','Active'],['suspended','Suspended']].map(function(o){ return '<option value="'+o[0]+'"'+(P.rst===o[0]?' selected':'')+'>'+o[1]+'</option>'; }).join('')+'</select><span class="pm-count" id="pm-count"></span></div>'
         +'<div class="pm-key"><span><i style="background:#ffd447"></i>Rank</span><span><i style="background:#48cf7b"></i>Rest / refreshment</span><span><i style="background:#ff6b6b"></i>Suspended</span></div>';
     } else {
       h+='<div class="pm-row" style="margin-top:8px"><select id="pm-tf" aria-label="Filter toilets" style="flex:1">'+PM_T_FILTERS.map(function(o){ return '<option value="'+o[0]+'"'+(P.tf===o[0]?' selected':'')+'>'+o[1]+'</option>'; }).join('')+'</select><span class="pm-count" id="pm-count"></span></div>'
         +'<div class="pm-key"><span><i style="background:#ffd447"></i>Listed</span><span><i style="background:#48cf7b"></i>Community scheme</span><span><i style="background:#c2a1ff"></i>Restricted</span><span><i style="background:#ff6b6b"></i>Closure reported</span></div>';
     }
-    h+='<div id="pm-res" class="pm-res" hidden></div></div>'
-      +'<div class="pm-map" id="pm-box"><div id="pm-map"></div><div class="pm-msg" id="pm-msg">Loading the map…</div></div>'
-      +'<div id="pm-detail"></div>'
-      +'<p class="note" style="margin:0">'+(kind==='ranks'?'Taxi rank data: Transport for London open data, as in TaxiTracker.':'Toilets: Toilet Map, © OpenStreetMap contributors, London councils and TfL, as combined by TaxiTracker. A listing does not mean it is open now.')+'</p>';
+    h+='</div>';
+    h+='<p class="note" style="margin:0">'+(kind==='ranks'?'Taxi rank data: Transport for London open data, as in TaxiTracker.':'Toilets: Toilet Map, © OpenStreetMap contributors, London councils and TfL, as combined by TaxiTracker. A listing does not mean it is open now.')+'</p>';
     el.innerHTML=h;
     pmLoad(kind);
     fxLoadLibs().then(function(style){
@@ -3981,7 +3988,12 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
      AeroDataBox and caches for 10 minutes for every driver. Inside Claude there is no server,
      so the tool explains that it works on the website. */
   S.tool=lsGet('cb-tool')||'fare'; S.fl={ap:lsGet('cb-fl-ap')||'LHR',term:'',n:40,data:{},err:{},busy:{}};
+  var TOOL_TITLES={fare:'Fare calculator',flights:'Flight arrivals',ranks:'Taxi ranks',toilets:'Toilets',tube:'Tube status',trains:'Train status'};
+  S.toolSolo=false;
+  function toolHead(){ return S.toolSolo?'<h1 style="margin:2px 2px 0;font-size:22px;font-weight:700">'+esc(TOOL_TITLES[S.tool]||'Tools')+'</h1>':'<div class="card">'+toolNav()+'</div>'; }
   function toolNav(){
+    /* Opened from its own bottom-bar button: a page of its own, just the title (Matt, 28 Oct). */
+    if(S.toolSolo) return '<h2 style="margin:0;font-size:19px;text-transform:none;letter-spacing:0;color:var(--ink)">'+esc(TOOL_TITLES[S.tool]||'Tools')+'</h2>';
     return '<div class="seg toolseg" style="margin:0" role="group" aria-label="Tool">'+[['fare','Fares'],['flights','Flights'],['ranks','Ranks'],['toilets','Toilets'],['tube','Tube'],['trains','Trains']].map(function(t){ return '<button type="button" data-tool="'+t[0]+'" aria-pressed="'+(S.tool===t[0])+'">'+t[1]+'</button>'; }).join('')+'</div>';
   }
   document.addEventListener('click',function(ev){ var b=ev.target.closest&&ev.target.closest('[data-tool]'); if(!b) return; S.tool=b.getAttribute('data-tool'); lsSet('cb-tool',S.tool); renderTools(); if(typeof markCurrentTab==='function') markCurrentTab(); });
@@ -4178,7 +4190,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     window.scrollTo(0,0);
   }
   Array.prototype.forEach.call(document.querySelectorAll('.tabs button'),function(b){ b.addEventListener('click',function(){
-    var sub=b.getAttribute('data-sub'); if(sub){ S.tool=sub; lsSet('cb-tool',sub); }
+    var sub=b.getAttribute('data-sub'); if(sub){ S.tool=sub; lsSet('cb-tool',sub); S.toolSolo=true; } else if(b.getAttribute('data-tab')==='tools') S.toolSolo=false;
     showTab(b.getAttribute('data-tab'));
   }); });
   Array.prototype.forEach.call(document.querySelectorAll('input.money'),moneyInput);
@@ -4214,7 +4226,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   ['m-date','m-amt','m-tips','m-desc','m-prov','m-cat','m-from','m-abs'].forEach(function(id){ $(id).addEventListener('change',buildImport); });
   $('ik-fare').addEventListener('click',function(){setIKind('fare')}); $('ik-expense').addEventListener('click',function(){setIKind('expense')});
   $('i-save').addEventListener('click',saveImport);
-  try{ var qtool=new URLSearchParams(location.search).get('tool'); if(qtool&&['fare','flights','ranks','toilets','tube','trains'].indexOf(qtool)>=0){ S.tool=qtool; lsSet('cb-tool',qtool); lsSet('cb-tab','tools'); if(history.replaceState) history.replaceState(null,'',location.pathname); } }catch(e){}
+  try{ var qtool=new URLSearchParams(location.search).get('tool'); if(qtool&&['fare','flights','ranks','toilets','tube','trains'].indexOf(qtool)>=0){ S.tool=qtool; S.toolSolo=true; lsSet('cb-tool',qtool); lsSet('cb-tab','tools'); if(history.replaceState) history.replaceState(null,'',location.pathname); } }catch(e){}
   var st0=lsGet('cb-tab'); showTab(['today','position','receipts','reports','months','log','tools','import'].indexOf(st0)>=0?st0:'today');
   renderAll();
 
