@@ -1425,7 +1425,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     bindLogCsv(out,R);
     Array.prototype.forEach.call(out.querySelectorAll('[data-del]'),function(b){ b.addEventListener('click',function(){ delEntry(b.getAttribute('data-del')); }); });
     Array.prototype.forEach.call(out.querySelectorAll('[data-rc]'),function(b){ b.addEventListener('click',function(){ openReceipt(b.getAttribute('data-rc')); }); });
-    Array.prototype.forEach.call(out.querySelectorAll('[data-lgedit]'),function(b){ b.addEventListener('click',function(){ var e=S.entries.filter(function(x){return x.id===b.getAttribute('data-lgedit')})[0]; if(!e) return; if(String(e.id).indexOf('bill:')===0){ editJob(e.id); return; } S.day=e.date; showTab('today'); renderDay(); editJob(e.id); var f=$('d-form'); if(f){ S.addOpen=true; f.hidden=false; $('d-toggle').textContent='Hide'; f.scrollIntoView({block:'start'}); } }); });
+    Array.prototype.forEach.call(out.querySelectorAll('[data-lgedit]'),function(b){ b.addEventListener('click',function(){ var e=S.entriesAll.filter(function(x){return x.id===b.getAttribute('data-lgedit')})[0]; if(!e) return; if(String(e.id).indexOf('bill:')===0){ editJob(e.id); return; } S.day=e.date; showTab('today'); renderDay(); editJob(e.id); var f=$('d-form'); if(f){ S.addOpen=true; f.hidden=false; $('d-toggle').textContent='Hide'; f.scrollIntoView({block:'start'}); } }); });
     var m=$('lg-more'); if(m) m.addEventListener('click',function(){ S.lg.n+=150; renderLogList(); });
   }
   /* Download exactly what the filters show, as a spreadsheet. */
