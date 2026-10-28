@@ -235,6 +235,19 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 #signin .fine a{color:var(--muted)}
 .acct{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
 .acct .em{font-size:14px;word-break:break-all}
+.pm-map{position:relative;height:min(58vh,520px);border-radius:10px;overflow:hidden;border:1px solid var(--line);background:#0d1117}
+.pm-map>div{position:absolute;inset:0}
+.pm-msg{position:absolute;left:10px;right:10px;top:10px;z-index:2;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13px}
+.pm-row{display:flex;gap:8px;align-items:center}
+.pm-row input[type=search]{flex:1;min-width:0;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:11px 12px;min-height:44px;color:var(--ink)}
+.pm-count{font-family:var(--font-num);font-size:13px;color:var(--muted);white-space:nowrap}
+.pm-res button{display:flex;justify-content:space-between;gap:10px;width:100%;text-align:left;background:none;border:0;border-top:1px solid var(--line);padding:10px 0;color:var(--ink);cursor:pointer;min-height:48px}
+.pm-res button small{display:block;color:var(--muted);font-size:12px}
+.pm-badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:2px 8px;border-radius:999px;margin-right:6px}
+.pm-badge.ok{background:var(--ok-soft);color:var(--ok)} .pm-badge.bad{background:var(--bad-soft);color:var(--bad)} .pm-badge.amb{background:var(--warn-soft);color:var(--warn)} .pm-badge.pur{background:#2a1f45;color:#c2a1ff}
+.pm-key{display:flex;flex-wrap:wrap;gap:10px;font-size:12px;color:var(--muted);margin-top:8px}
+.pm-key i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:-1px;border:1px solid #17212d}
+.pm-user{width:18px;height:18px;background:#3288ff;border:3px solid #fff;border-radius:50%;box-shadow:0 0 0 7px rgba(50,136,255,.22)}
 .rp-btn{background:none;border:0;color:var(--accent);font-size:12px;cursor:pointer;padding:6px 10px 6px 0;min-height:32px;font-weight:600}
 .rp-btn.has{color:var(--ok)}
 .rp-snap{display:flex;align-items:center;justify-content:center;gap:8px}
@@ -887,6 +900,8 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   <button type="button" data-tab="tools"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3h10a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zM9 7h6M9 12h.01M12 12h.01M15 12h.01M9 16h.01M12 16h.01M15 16h.01"/></svg><span>Tools</span></button>
   <button type="button" data-tab="tools" data-sub="fare" data-bar="fare" hidden><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 17h14M6 17l1.5-6h9L18 17M9 11l1-3h4l1 3M7.5 20a1.5 1.5 0 1 0 0-.01M16.5 20a1.5 1.5 0 1 0 0-.01"/></svg><span>Fares</span></button>
   <button type="button" data-tab="tools" data-sub="flights" data-bar="flights" hidden><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 14l7-2V6a2 2 0 0 1 4 0v6l7 2v2l-7-1.5V18l2 1.5V21l-4-1-4 1v-1.5l2-1.5v-3.5L3 16z"/></svg><span>Flights</span></button>
+  <button type="button" data-tab="tools" data-sub="ranks" data-bar="ranks" hidden><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6-5.6-6-10.5a6 6 0 0 1 12 0C18 15.4 12 21 12 21zM9.5 8h5M12 8v5"/></svg><span>Ranks</span></button>
+  <button type="button" data-tab="tools" data-sub="toilets" data-bar="toilets" hidden><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6-5.6-6-10.5a6 6 0 0 1 12 0C18 15.4 12 21 12 21zM8.5 8l1 4 1-3 1 3 1-4M14 8h2v4"/></svg><span>Toilets</span></button>
   <button type="button" data-tab="import"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg><span>Import</span></button>
 </nav>
 <div id="signin" hidden role="dialog" aria-modal="true" aria-labelledby="si-t">
@@ -3553,9 +3568,166 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     S.day=iso; setEditing(null); S.prov=provShown('Hand')?'Hand':S.prov; applyFeeDefaults(); buildChips(); setMoney('j-amt',E.central);
     var a=F.pts[0]&&F.pts[0].label, b=F.pts[F.pts.length-1]&&F.pts[F.pts.length-1].label; if(a&&b&&a!=='Dropped pin'&&b!=='Dropped pin'){ $('j-note').value=(a+' – '+b).slice(0,120); $('j-notebox').open=true; }
     S.addOpen=true; showTab('today'); renderDay(); updatePreview(); var f=$('d-form'); if(f) f.scrollIntoView({block:'start'}); toast('Fare filled in. Change it to what the meter showed, pick the provider and save.'); }
+
+  /* ---------- Tools: taxi ranks and toilets maps (Matt, 28 Oct) ----------
+     The same data and colours as TaxiTracker: TfL's live rank layer (728 ranks; yellow = rank,
+     green = rest/refreshment, red = suspended) and TaxiTracker's combined London toilets file
+     (yellow listed, green community scheme, purple restricted, red closure reported).
+     Data comes through the website's own server function /.netlify/functions/opendata, which
+     caches it for 6 hours. The map is the fare calculator's (MapLibre + TaxiTracker's GB map),
+     so it only works on the website, not inside Claude. */
+  S.pm={kind:null,map:null,data:{},err:{},busy:{},sel:null,user:null,userMark:null,q:'',rcat:'all',rst:'all',tf:'available'};
+  var PM_RANK_CAT={standard:'TfL rank',temporary:'Temporary rank',rest:'Rest rank',refreshment:'Refreshment rank',private:'Private rank',city:'City of London rank',feeder:'Taxi rank feeder'};
+  var PM_T_ACCESS={public:'Public access reported',unknown:'Access not confirmed',permission:'Ask staff',customers:'Customers only',ticket:'Ticket required'};
+  var PM_T_FEE={free:'Free reported',paid:'Charge reported',unknown:'Not supplied'};
+  var PM_T_FILTERS=[['all','All access'],['available','Public'],['public','Public access reported'],['free','Free reported'],['community','Community scheme'],['accessible','Accessible'],['baby','Baby change'],['radar','RADAR key'],['customers','Restricted / ask staff'],['closed','Closure reported']];
+  function pmDrop(){ var P=S.pm; if(P.map){ try{ P.map.remove(); }catch(e){} } P.map=null; P.userMark=null; P.sel=null; }
+  function pmLoad(kind){
+    var P=S.pm; if(P.data[kind]||P.busy[kind]) return;
+    P.busy[kind]=true; P.err[kind]='';
+    fetch('/.netlify/functions/opendata?d='+kind).then(function(r){ return r.json().catch(function(){return {}}).then(function(j){ if(!r.ok||!j||!Array.isArray(j.features)) throw new Error(j&&j.error||('HTTP '+r.status)); return j; }); })
+      .then(function(j){ j.features.forEach(function(f,i){ if(f.properties&&f.properties.id==null) f.properties.id=f.id!=null?f.id:i; }); P.data[kind]=j; })
+      .catch(function(e){ P.err[kind]=e.message||'could not load'; })
+      .then(function(){ P.busy[kind]=false; if(S.tab==='tools'&&S.tool===kind){ pmUpdate(); pmMsg(P.err[kind]?(kind==='ranks'?'Taxi ranks':'Toilets')+' could not load ('+P.err[kind]+'). Check your signal and try again.':''); } });
+  }
+  function pmFilter(kind){
+    var P=S.pm, d=P.data[kind]; if(!d) return [];
+    var q=String(P.q||'').trim().toLowerCase();
+    return d.features.filter(function(f){
+      var p=f.properties||{};
+      if(kind==='ranks'){
+        if(P.rcat!=='all'&&p.category!==P.rcat) return false;
+        if(P.rst!=='all'&&p.status!==P.rst) return false;
+        if(q&&[p.name,p.location,p.station,p.reference,p.borough].join(' ').toLowerCase().indexOf(q)<0) return false;
+        return true;
+      }
+      var closed=p.status==='reported_closed', restr=['customers','ticket','permission'].indexOf(p.access)>=0, hard=p.access==='customers'||p.access==='ticket', tf=P.tf;
+      var avail=!closed&&!hard;
+      var ok= tf==='all'?!closed : tf==='available'?avail : tf==='public'?(!closed&&p.access==='public') : tf==='free'?(!closed&&!hard&&p.fee==='free')
+        : tf==='community'?(avail&&p.category==='community') : tf==='accessible'?(avail&&(p.accessible===true||p.changingPlaces===true)) : tf==='baby'?(avail&&p.babyChange===true)
+        : tf==='radar'?(!closed&&p.radar===true) : tf==='customers'?(!closed&&restr) : tf==='closed'?closed : avail;
+      if(!ok) return false;
+      if(q&&[p.name,p.address,p.borough].join(' ').toLowerCase().indexOf(q)<0) return false;
+      return true;
+    });
+  }
+  function pmMiles(a,b){ var R=3958.8, r=Math.PI/180, dl=(b[1]-a[1])*r, dn=(b[0]-a[0])*r, x=Math.sin(dl/2)*Math.sin(dl/2)+Math.cos(a[1]*r)*Math.cos(b[1]*r)*Math.sin(dn/2)*Math.sin(dn/2); return 2*R*Math.asin(Math.sqrt(x)); }
+  function pmMsg(t){ var m=$('pm-msg'); if(m){ m.textContent=t||''; m.hidden=!t; } }
+  function renderPM(el,kind){
+    var P=S.pm, web=!!FX_CFG;
+    if(P.kind!==kind){ pmDrop(); P.kind=kind; P.q=''; }
+    if(!web){
+      el.innerHTML='<div class="card">'+toolNav()+'</div><div class="card empty"><b>'+(kind==='ranks'?'Taxi ranks':'Toilets')+' map</b>The map works on the Cab Books website. Inside Claude it cannot reach the map or the '+(kind==='ranks'?'TfL rank':'toilets')+' data.</div>';
+      return;
+    }
+    if(P.map&&el.getAttribute('data-pm')===kind&&$('pm-box')){ pmUpdate(); return; }
+    pmDrop(); el.setAttribute('data-pm',kind);
+    var h='<div class="card">'+toolNav()+'</div><div class="card" style="padding:12px">'
+      +'<div class="pm-row"><input type="search" id="pm-q" autocomplete="off" placeholder="'+(kind==='ranks'?'Rank, street, station or reference':'Toilet, venue, street or borough')+'" aria-label="Search" value="'+esc(P.q)+'">'
+      +'<button type="button" class="iconbtn" id="pm-loc" aria-label="Show my location" title="Show my location">◎</button></div>';
+    if(kind==='ranks'){
+      h+='<div class="pm-row" style="margin-top:8px"><div class="chips tight" role="group" aria-label="Rank type" style="flex:1">'+[['all','All'],['rest','Rest ranks'],['refreshment','Refreshment']].map(function(c){ return '<button type="button" data-pmcat="'+c[0]+'" aria-pressed="'+(P.rcat===c[0])+'">'+c[1]+'</button>'; }).join('')+'</div></div>'
+        +'<div class="pm-row" style="margin-top:8px"><select id="pm-st" aria-label="Rank status" style="flex:1">'+[['all','All ranks'],['active','Active'],['suspended','Suspended']].map(function(o){ return '<option value="'+o[0]+'"'+(P.rst===o[0]?' selected':'')+'>'+o[1]+'</option>'; }).join('')+'</select><span class="pm-count" id="pm-count"></span></div>'
+        +'<div class="pm-key"><span><i style="background:#ffd447"></i>Rank</span><span><i style="background:#48cf7b"></i>Rest / refreshment</span><span><i style="background:#ff6b6b"></i>Suspended</span></div>';
+    } else {
+      h+='<div class="pm-row" style="margin-top:8px"><select id="pm-tf" aria-label="Filter toilets" style="flex:1">'+PM_T_FILTERS.map(function(o){ return '<option value="'+o[0]+'"'+(P.tf===o[0]?' selected':'')+'>'+o[1]+'</option>'; }).join('')+'</select><span class="pm-count" id="pm-count"></span></div>'
+        +'<div class="pm-key"><span><i style="background:#ffd447"></i>Listed</span><span><i style="background:#48cf7b"></i>Community scheme</span><span><i style="background:#c2a1ff"></i>Restricted</span><span><i style="background:#ff6b6b"></i>Closure reported</span></div>';
+    }
+    h+='<div id="pm-res" class="pm-res" hidden></div></div>'
+      +'<div class="pm-map" id="pm-box"><div id="pm-map"></div><div class="pm-msg" id="pm-msg">Loading the map…</div></div>'
+      +'<div id="pm-detail"></div>'
+      +'<p class="note" style="margin:0">'+(kind==='ranks'?'Taxi rank data: Transport for London open data, as in TaxiTracker.':'Toilets: Toilet Map, © OpenStreetMap contributors, London councils and TfL, as combined by TaxiTracker. A listing does not mean it is open now.')+'</p>';
+    el.innerHTML=h;
+    pmLoad(kind);
+    fxLoadLibs().then(function(style){
+      if(S.tool!==kind||!$('pm-map')||P.map) return;
+      var m=P.map=new window.maplibregl.Map({container:'pm-map',style:style,center:LONDON,zoom:kind==='ranks'?11:12,attributionControl:true});
+      m.on('load',function(){ pmLayers(m,kind); pmMsg(P.data[kind]?'':P.err[kind]?'Could not load the data.':'Loading '+(kind==='ranks'?'taxi ranks':'toilets')+'…'); pmUpdate(); });
+      m.on('error',function(e){ if(!m.loaded()) pmMsg('Map: '+((e&&e.error&&e.error.message)||'part of the map could not load')); });
+    }).catch(function(e){ pmMsg('The map could not load ('+e.message+').'); });
+  }
+  function pmLayers(m,kind){
+    m.addSource('pm-pts',{type:'geojson',data:{type:'FeatureCollection',features:[]}});
+    m.addSource('pm-sel',{type:'geojson',data:{type:'FeatureCollection',features:[]}});
+    m.addLayer({id:'pm-sel',type:'circle',source:'pm-sel',paint:{'circle-color':'rgba(255,212,71,0.22)','circle-radius':18,'circle-stroke-color':'#17212d','circle-stroke-width':3}});
+    var colour=kind==='ranks'
+      ?['case',['==',['get','status'],'suspended'],'#ff6b6b',['in',['get','category'],['literal',['rest','refreshment']]],'#48cf7b','#ffd447']
+      :['case',['==',['get','status'],'reported_closed'],'#ff6b6b',['in',['get','access'],['literal',['customers','ticket','permission']]],'#c2a1ff',['==',['get','category'],'community'],'#48cf7b','#ffd447'];
+    m.addLayer({id:'pm-pt',type:'circle',source:'pm-pts',paint:{'circle-color':colour,'circle-radius':['interpolate',['linear'],['zoom'],10,6,16,kind==='ranks'?10:12],'circle-stroke-color':'#17212d','circle-stroke-width':2}});
+    m.addLayer({id:'pm-lbl',type:'symbol',source:'pm-pts',layout:{'text-field':kind==='ranks'?'T':'WC','text-font':['Noto Sans Bold'],'text-size':['interpolate',['linear'],['zoom'],10,kind==='ranks'?8:6,16,kind==='ranks'?12:10],'text-allow-overlap':true,'text-ignore-placement':true},paint:{'text-color':'#17212d'}});
+    ['pm-pt','pm-lbl'].forEach(function(l){
+      m.on('click',l,function(e){ var id=e.features&&e.features[0]&&e.features[0].properties&&e.features[0].properties.id; pmShow(id,false); });
+      m.on('mouseenter',l,function(){ m.getCanvas().style.cursor='pointer'; }); m.on('mouseleave',l,function(){ m.getCanvas().style.cursor=''; });
+    });
+  }
+  function pmFind(id){ var d=S.pm.data[S.pm.kind]; if(!d) return null; for(var i=0;i<d.features.length;i++){ if(String(d.features[i].properties.id)===String(id)) return d.features[i]; } return null; }
+  function pmUpdate(){
+    var P=S.pm, kind=P.kind, L=pmFilter(kind), m=P.map;
+    if(m&&m.getSource&&m.getSource('pm-pts')) m.getSource('pm-pts').setData({type:'FeatureCollection',features:L.map(function(f){ return {type:'Feature',geometry:f.geometry,properties:{id:f.properties.id,status:f.properties.status,category:f.properties.category,access:f.properties.access}}; })});
+    var c=$('pm-count'); if(c) c.textContent=P.data[kind]?L.length+(kind==='ranks'?' rank'+(L.length===1?'':'s'):' shown'):'';
+    var r=$('pm-res'); if(r){
+      if(!String(P.q||'').trim()||!P.data[kind]){ r.hidden=true; }
+      else {
+        var items=L.map(function(f){ return {f:f,d:P.user?pmMiles(P.user,f.geometry.coordinates):null}; });
+        items.sort(function(a,b){ return a.d!=null&&b.d!=null?a.d-b.d:String(a.f.properties.name).localeCompare(String(b.f.properties.name)); });
+        r.innerHTML=items.length?items.slice(0,10).map(function(x){ var p=x.f.properties;
+          return '<button type="button" data-pmres="'+esc(p.id)+'"><span><b>'+esc(p.name)+'</b><small>'+esc(kind==='ranks'?(p.location||p.station||PM_RANK_CAT[p.category]||''):((p.borough||'')+' · '+(PM_T_ACCESS[p.access]||'')))+'</small></span>'+(x.d!=null?'<small>'+(x.d<0.1?'<0.1':x.d.toFixed(1))+' mi</small>':'')+'</button>'; }).join(''):'<p class="note">Nothing matches. Try another search or filter.</p>';
+        r.hidden=false;
+      }
+    }
+    if(P.sel&&!L.some(function(f){ return String(f.properties.id)===String(P.sel); })) pmClose();
+  }
+  function pmRow(k,v){ return v?'<div class="kv"><span class="k">'+esc(k)+'</span><span class="v" style="white-space:pre-line">'+esc(v)+'</span></div>':''; }
+  function pmYes(v){ return v===true?'Yes':v===false?'Not reported':'Not supplied'; }
+  function pmShow(id,fly){
+    var P=S.pm, f=pmFind(id), el=$('pm-detail'); if(!f||!el) return;
+    P.sel=f.properties.id; var p=f.properties, c=f.geometry.coordinates, h='';
+    if(P.kind==='ranks'){
+      h='<div class="card"><div class="cardhead"><div><span class="pm-badge '+(p.status==='suspended'?'bad':'ok')+'">'+(p.status==='suspended'?'Suspended':'Active')+'</span><span class="pm-badge amb">'+esc(PM_RANK_CAT[p.category]||'Taxi rank')+'</span><h2 style="margin:6px 0 0;text-transform:none;letter-spacing:0;color:var(--ink);font-size:17px">'+esc(p.name)+'</h2></div><button type="button" class="iconbtn" data-pmclose aria-label="Close">✕</button></div>'
+        +pmRow('Location',p.location)+pmRow('Spaces',p.spaces)+pmRow('Operating days',p.days)+pmRow('Operating times',p.times||'Not supplied by TfL')+pmRow('Type',p.featureType||PM_RANK_CAT[p.category])+pmRow('Nearby station',p.station)+pmRow('Location details',p.locationDetails)+pmRow('Highway authority',p.highwayAuthority)+pmRow('TfL reference',p.reference)
+        +(p.corrected?'<p class="note">TfL publishes this rank in the wrong place; this is TaxiTracker’s checked street-level position.</p>':'');
+    } else {
+      var badge=p.status==='reported_closed'?['bad','Closure reported']:['customers','ticket','permission'].indexOf(p.access)>=0?['pur','Restricted']:p.category==='community'?['ok','Community scheme']:['amb','Listed facility'];
+      var g=[p.men===true&&'Men',p.women===true&&'Women',p.allGender===true&&'All gender'].filter(Boolean).join(', ');
+      h='<div class="card"><div class="cardhead"><div><span class="pm-badge '+badge[0]+'">'+badge[1]+'</span>'+(p.urinalOnly===true?'<span class="pm-badge amb">Urinal only</span>':'')+'<h2 style="margin:6px 0 0;text-transform:none;letter-spacing:0;color:var(--ink);font-size:17px">'+esc(p.name)+'</h2><p class="note" style="margin:2px 0 0">'+esc(p.address||p.borough||'')+'</p></div><button type="button" class="iconbtn" data-pmclose aria-label="Close">✕</button></div>'
+        +pmRow('Access',PM_T_ACCESS[p.access])+pmRow('Charge',PM_T_FEE[p.fee])+pmRow('Borough',p.borough)+pmRow('Wheelchair accessible',pmYes(p.accessible))
+        +pmRow('RADAR key',p.radar===true?'Required / reported':p.radar===false?'Not reported as required':'Not supplied')+pmRow('Baby changing',pmYes(p.babyChange))+pmRow('Changing Places',pmYes(p.changingPlaces))+pmRow('Facilities',g)
+        +pmRow('Opening times',p.hours||'Not supplied, check before going')
+        +(p.notes?'<p class="note" style="white-space:pre-line">'+esc(p.notes)+'</p>':'')
+        +'<p class="note">'+(p.access==='unknown'?'Public access has not been confirmed. Check with the venue. ':'')+'A listing does not guarantee it is open now.</p>';
+    }
+    h+='<a class="btn" style="display:block;text-align:center;text-decoration:none;margin-top:10px" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination='+c[1]+','+c[0]+'">Navigate</a></div>';
+    el.innerHTML=h;
+    var r=$('pm-res'); if(r) r.hidden=true;
+    var m=P.map; if(m&&m.getSource('pm-sel')){ m.getSource('pm-sel').setData({type:'FeatureCollection',features:[{type:'Feature',geometry:f.geometry,properties:{}}]}); if(fly!==false) m.flyTo({center:c,zoom:Math.max(m.getZoom(),16),duration:450,essential:true}); }
+    if(fly===false) el.scrollIntoView({behavior:'smooth',block:'nearest'});
+  }
+  function pmClose(){ var P=S.pm; P.sel=null; var el=$('pm-detail'); if(el) el.innerHTML=''; if(P.map&&P.map.getSource('pm-sel')) P.map.getSource('pm-sel').setData({type:'FeatureCollection',features:[]}); }
+  function pmLocate(){
+    if(!navigator.geolocation){ pmMsg('Location is not available on this phone.'); return; }
+    pmMsg('Finding you…');
+    navigator.geolocation.getCurrentPosition(function(pos){
+      var P=S.pm; P.user=[pos.coords.longitude,pos.coords.latitude]; pmMsg('');
+      if(P.map){ if(!P.userMark){ var d=document.createElement('div'); d.className='pm-user'; P.userMark=new window.maplibregl.Marker({element:d}); } P.userMark.setLngLat(P.user).addTo(P.map); P.map.flyTo({center:P.user,zoom:15,duration:500,essential:true}); }
+      pmUpdate();
+    },function(){ pmMsg('Could not get your location. Allow location for Cab Books and try again.'); setTimeout(function(){ pmMsg(''); },4000); },{enableHighAccuracy:true,timeout:10000,maximumAge:60000});
+  }
+  document.addEventListener('input',function(ev){ if(ev.target&&ev.target.id==='pm-q'){ S.pm.q=ev.target.value; pmUpdate(); } });
+  document.addEventListener('change',function(ev){ var t=ev.target; if(!t) return; if(t.id==='pm-st'){ S.pm.rst=t.value; pmUpdate(); } if(t.id==='pm-tf'){ S.pm.tf=t.value; pmUpdate(); } });
+  document.addEventListener('click',function(ev){
+    var t=ev.target; if(!t||!t.closest) return; var b;
+    if((b=t.closest('[data-pmcat]'))){ S.pm.rcat=b.getAttribute('data-pmcat'); Array.prototype.forEach.call(document.querySelectorAll('[data-pmcat]'),function(x){ x.setAttribute('aria-pressed',String(x===b)); }); pmUpdate(); return; }
+    if((b=t.closest('[data-pmres]'))){ pmShow(b.getAttribute('data-pmres'),true); return; }
+    if(t.closest('[data-pmclose]')){ pmClose(); return; }
+    if(t.id==='pm-loc'||t.closest('#pm-loc')){ pmLocate(); return; }
+  });
+
   function renderTools(){
     var el=$('tab-tools'); if(!el) return;
-    if(S.tool==='flights'){ if(S.fx.map){ try{ S.fx.map.remove(); }catch(e){} S.fx.map=null; S.fx.marks=[]; } renderFlights(el); return; }
+    if(S.tool!=='fare'&&S.fx.map){ try{ S.fx.map.remove(); }catch(e){} S.fx.map=null; S.fx.marks=[]; }
+    if(S.tool!=='ranks'&&S.tool!=='toilets') pmDrop();
+    if(S.tool==='flights'){ renderFlights(el); return; }
+    if(S.tool==='ranks'||S.tool==='toilets'){ renderPM(el,S.tool); return; }
     renderFare(el);
   }
 
@@ -3565,7 +3737,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
      so the tool explains that it works on the website. */
   S.tool=lsGet('cb-tool')||'fare'; S.fl={ap:lsGet('cb-fl-ap')||'LHR',term:'',n:40,data:{},err:{},busy:{}};
   function toolNav(){
-    return '<div class="seg" style="margin:0" role="group" aria-label="Tool"><button type="button" data-tool="fare" aria-pressed="'+(S.tool==='fare')+'">Fare calculator</button><button type="button" data-tool="flights" aria-pressed="'+(S.tool==='flights')+'">Flight arrivals</button></div>';
+    return '<div class="seg" style="margin:0" role="group" aria-label="Tool">'+[['fare','Fares'],['flights','Flights'],['ranks','Ranks'],['toilets','Toilets']].map(function(t){ return '<button type="button" data-tool="'+t[0]+'" aria-pressed="'+(S.tool===t[0])+'">'+t[1]+'</button>'; }).join('')+'</div>';
   }
   document.addEventListener('click',function(ev){ var b=ev.target.closest&&ev.target.closest('[data-tool]'); if(!b) return; S.tool=b.getAttribute('data-tool'); lsSet('cb-tool',S.tool); renderTools(); if(typeof markCurrentTab==='function') markCurrentTab(); });
   var LTZ={timeZone:'Europe/London',hour:'2-digit',minute:'2-digit',hour12:false};
@@ -3648,8 +3820,8 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   /* ---------- user mode: Full books vs Just tracking ---------- */
   var FULLTABS=['receipts','months','log','import','receipt'];
   /* ---------- bottom bar: each driver picks which buttons they see (Matt, 28 Oct) ---------- */
-  var BAR_ITEMS=[['today','Today'],['position','Position'],['receipts','Receipts'],['reports','Reports'],['months','Data'],['log','Log'],['import','Import'],['tools','Tools'],['fare','Fare calculator'],['flights','Flight arrivals']];
-  var BAR_GROUPS=[['Your books',['today','position','receipts','reports','months','log','import']],['On the road',['tools','fare','flights']]];
+  var BAR_ITEMS=[['today','Today'],['position','Position'],['receipts','Receipts'],['reports','Reports'],['months','Data'],['log','Log'],['import','Import'],['tools','Tools'],['fare','Fare calculator'],['flights','Flight arrivals'],['ranks','Taxi ranks'],['toilets','Toilets']];
+  var BAR_GROUPS=[['Your books',['today','position','receipts','reports','months','log','import']],['On the road',['tools','fare','flights','ranks','toilets']]];
   var BAR_DEFAULT=['today','position','receipts','reports','months','log','tools','import'];
   var BAR_FULLONLY=['receipts','months','log','import'];
   S.bar=null;
