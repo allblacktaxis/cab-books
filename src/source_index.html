@@ -1938,7 +1938,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
 
   /* ---------- day page ---------- */
   S.prov='Freenow'; S.pay='Account'; S.day=todayISO(); S.editId=null; S.addOpen=null;
-  var EXPCATS=['Car rental','Petrol','Electric charging','Parking / drop-off','Car wash','Cleaning / admin supplies','Union','Phone / broadband','Other'];
+  var EXPCATS=['Car rental','Petrol','Electric charging','Parking / drop-off','Car wash','Cab repairs / parts','Cleaning / admin supplies','Union','Phone / broadband','Other'];
   function dayLabel(iso){var p=iso.split('-'),d=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][dowOf(iso)],ML=['January','February','March','April','May','June','July','August','September','October','November','December'];return d+' '+(+p[2])+' '+ML[+p[1]-1]+(p[0]!==String(new Date().getFullYear())?' '+p[0]:'')}
   function dayData(iso){
     var C=compute(S.entries), EI=expImpMap(), D={rows:[],gross:0,fees:0,tips:0,pay:{},exp:[],expTotal:0,expEst:0};
@@ -2281,6 +2281,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     ['Cleaning / admin supplies',/AMAZON|AMZN/],
     ['Car wash',/CAR ?WASH|LUXE SHINE|VM CAR|VALETING/],
     ['Union',/LICENSED TAXI DRIV/],
+    ['Cab repairs / parts',/TIPSEAT|TIP SEAT|UBIQUITOUS LIMITED/],
     ['Other',/BERKS & SPARKS|VISTAPRINT/],
     ['ignore',/MIDNITE|AMEX|\bTO A\/C\b|PARKING CONTROL/]
   ];
@@ -3539,7 +3540,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   document.addEventListener('keydown',function(ev){ if(ev.key==='Escape' && !$('setovl').hidden) closeSettings(); });
   $('jsum').addEventListener('click',function(ev){ if(ev.target===$('jsum')) $('jsum').hidden=true; });
   $('m-prov').innerHTML=PROVS.map(function(x){return '<option>'+x+'</option>'}).join('');
-  $('m-cat').innerHTML=['Car rental','Petrol','Electric charging','Parking / drop-off','Car wash','Cleaning / admin supplies','Union','Phone / broadband','Other'].map(function(x){return '<option>'+x+'</option>'}).join('');
+  $('m-cat').innerHTML=['Car rental','Petrol','Electric charging','Parking / drop-off','Car wash','Cab repairs / parts','Cleaning / admin supplies','Union','Phone / broadband','Other'].map(function(x){return '<option>'+x+'</option>'}).join('');
   $('i-file').addEventListener('change',function(){
     var f=this.files&&this.files[0]; if(!f) return;
     var rd=new FileReader(); rd.onload=function(){ $('i-text').value=String(rd.result).slice(0,2000000); readCSV(String(rd.result)); }; rd.readAsText(f);
