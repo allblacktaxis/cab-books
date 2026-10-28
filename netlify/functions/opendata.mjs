@@ -1,9 +1,12 @@
 // Cab Books – London taxi ranks and toilets for the Tools maps (same sources as TaxiTracker).
-// GET /.netlify/functions/opendata?d=ranks|toilets|tube
+// GET /.netlify/functions/opendata?d=ranks|toilets|tube|rail
 //  ranks   : TfL's live taxi-rank layer (ArcGIS open data), tidied into simple records.
 //  toilets : TaxiTracker's combined London toilets file (Toilet Map, OpenStreetMap, councils, TfL).
 //  tube    : TfL line status for Underground, DLR, Overground lines and the Elizabeth line
 //            (free TfL feed, cached for 60 seconds), as TaxiTracker's tfl_line_status.php.
+//  rail    : cancellations in the next 2 hours at the 11 London terminals, from National Rail's
+//            live departure boards (Rail Data Marketplace), as TaxiTracker's rail_departures.php.
+//            Needs the Netlify environment variable RAIL_API_KEY; cached for 60 seconds.
 // Fetched here on the server so the page never depends on another site allowing it,
 // and cached by Netlify for 6 hours, so the sources are asked only a few times a day.
 const RANKS_URL = 'https://services1.arcgis.com/YswvgzOodUvqkoCN/arcgis/rest/services/Taxi_Ranks/FeatureServer/37/query';
@@ -119,13 +122,49 @@ async function getTube() {
   return { checkedAt: new Date().toISOString(), lines };
 }
 
+const RAIL_BASE = 'https://api1.raildata.org.uk/1010-live-departure-board-dep1_2/LDBWS/api/20220120';
+export const RAIL_STATIONS = ['CHX', 'EUS', 'FST', 'KGX', 'LST', 'LBG', 'MYB', 'PAD', 'STP', 'VIC', 'WAT'];
+function railCancelled(s) {
+  const f = s && s.isCancelled;
+  return f === true || f === 1 || f === '1' || f === 'true' || txt(s && s.etd).toLowerCase() === 'cancelled';
+}
+function railNames(d) {
+  if (!d) return [];
+  if (!Array.isArray(d) && typeof d === 'object' && d.locationName) return [txt(d.locationName)].filter(Boolean);
+  if (Array.isArray(d)) return [...new Set(d.flatMap(railNames))];
+  if (typeof d === 'object') return [...new Set(Object.values(d).flatMap(railNames))];
+  return [];
+}
+export function summariseBoard(crs, board) {
+  if (!board) return { crs, available: false, cancellationCount: 0, cancelledServices: [] };
+  const list = (Array.isArray(board.trainServices) ? board.trainServices : []).filter(railCancelled).map(s => ({
+    time: txt(s.std || s.sta) || 'Time unavailable',
+    destination: railNames(s.destination).join(' / ') || 'Destination unavailable',
+    operator: txt(s.operator) || 'Operator unavailable'
+  }));
+  return { crs, available: true, cancellationCount: list.length, cancelledServices: list };
+}
+async function getRail() {
+  const key = process.env.RAIL_API_KEY;
+  if (!key) { const e = new Error('not_set_up'); e.status = 503; throw e; }
+  const stations = {};
+  await Promise.all(RAIL_STATIONS.map(async crs => {
+    try {
+      const r = await fetch(`${RAIL_BASE}/GetDepartureBoard/${crs}?numRows=150&timeOffset=0&timeWindow=120`, { headers: { Accept: 'application/json', 'x-apikey': key } });
+      stations[crs] = summariseBoard(crs, r.ok ? await r.json() : null);
+    } catch (e) { stations[crs] = summariseBoard(crs, null); }
+  }));
+  return { checkedAt: new Date().toISOString(), timeWindowMinutes: 120, stations };
+}
+
 export default async (req) => {
   const d = new URL(req.url).searchParams.get('d');
-  if (d !== 'ranks' && d !== 'toilets' && d !== 'tube') return json({ error: 'Use ?d=ranks, ?d=toilets or ?d=tube' }, 400);
+  if (!['ranks', 'toilets', 'tube', 'rail'].includes(d)) return json({ error: 'Use ?d=ranks, ?d=toilets, ?d=tube or ?d=rail' }, 400);
   try {
     if (d === 'tube') return json(await getTube(), 200, true, true);
+    if (d === 'rail') return json(await getRail(), 200, true, true);
     return json(d === 'ranks' ? await getRanks() : await getToilets(), 200, true);
   } catch (e) {
-    return json({ error: String((e && e.message) || 'source_unreachable') }, 502);
+    return json({ error: String((e && e.message) || 'source_unreachable') }, (e && e.status) || 502);
   }
 };

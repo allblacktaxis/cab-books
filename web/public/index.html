@@ -235,6 +235,15 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 #signin .fine a{color:var(--muted)}
 .acct{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
 .acct .em{font-size:14px;word-break:break-all}
+.seg.toolseg{grid-auto-flow:row;grid-template-columns:repeat(3,1fr)}
+.tr-st{display:flex;align-items:center;gap:10px;border-top:1px solid var(--line);padding:8px 0}
+.tr-st:first-of-type{border-top:0}
+.tr-st a{flex:1;color:var(--ink);text-decoration:none;font-weight:600;min-height:40px;display:flex;align-items:center}
+.tr-n{min-width:96px;border:1px solid var(--line);background:var(--bg);color:var(--muted);border-radius:999px;padding:6px 10px;font-size:12px;font-weight:700;cursor:pointer;text-align:center}
+.tr-n.low{background:var(--ok-soft);color:var(--ok);border-color:transparent} .tr-n.warn{background:#3a1f00;color:#ff9d3a;border-color:transparent} .tr-n.bad{background:var(--bad-soft);color:var(--bad);border-color:transparent}
+.tr-n:disabled{cursor:default}
+.tr-list{font-size:13px;padding:0 0 10px 4px}
+.tr-list div{padding:3px 0;border-bottom:1px dashed var(--line)}
 .tb-line{border-top:1px solid var(--line)}
 .tb-line:first-of-type{border-top:0}
 .tb-line summary{display:flex;align-items:center;gap:10px;padding:11px 0;cursor:pointer;list-style:none;min-height:48px}
@@ -912,6 +921,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   <button type="button" data-tab="tools" data-sub="ranks" data-bar="ranks" hidden><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6-5.6-6-10.5a6 6 0 0 1 12 0C18 15.4 12 21 12 21zM9.5 8h5M12 8v5"/></svg><span>Ranks</span></button>
   <button type="button" data-tab="tools" data-sub="toilets" data-bar="toilets" hidden><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6-5.6-6-10.5a6 6 0 0 1 12 0C18 15.4 12 21 12 21zM8.5 8l1 4 1-3 1 3 1-4M14 8h2v4"/></svg><span>Toilets</span></button>
   <button type="button" data-tab="tools" data-sub="tube" data-bar="tube" hidden><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7zM3 12h18"/></svg><span>Tube</span></button>
+  <button type="button" data-tab="tools" data-sub="trains" data-bar="trains" hidden><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 16V6c0-2 2.5-3 7-3s7 1 7 3v10c0 1.1-.9 2-2 2H7c-1.1 0-2-.9-2-2zM5 11h14M8 21l2-3M16 21l-2-3"/></svg><span>Trains</span></button>
   <button type="button" data-tab="import"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg><span>Import</span></button>
 </nav>
 <div id="signin" hidden role="dialog" aria-modal="true" aria-labelledby="si-t">
@@ -3579,6 +3589,49 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     var a=F.pts[0]&&F.pts[0].label, b=F.pts[F.pts.length-1]&&F.pts[F.pts.length-1].label; if(a&&b&&a!=='Dropped pin'&&b!=='Dropped pin'){ $('j-note').value=(a+' – '+b).slice(0,120); $('j-notebox').open=true; }
     S.addOpen=true; showTab('today'); renderDay(); updatePreview(); var f=$('d-form'); if(f) f.scrollIntoView({block:'start'}); toast('Fare filled in. Change it to what the meter showed, pick the provider and save.'); }
 
+  /* ---------- Tools: train status at the London terminals (Matt, 28 Oct) ----------
+     As TaxiTracker: the 11 terminals A–Z; each shows how many trains are cancelled in the next
+     2 hours (none = plain, 1–3 green, 4–9 orange, 10+ red). Tap the station for National Rail's
+     live departure board; tap the count for the cancelled trains. Counts come from National Rail's
+     live departure boards via /.netlify/functions/opendata?d=rail, which needs RAIL_API_KEY set in
+     Netlify (Marcin's TaxiTracker key or our own). Refreshes every minute. Website only for counts. */
+  S.tr={data:null,err:'',busy:false,at:0,open:null};
+  var TR_ST=[['Charing Cross','CHX','london-charing-cross'],['Euston','EUS','london-euston'],['Fenchurch Street','FST','london-fenchurch-street'],["King's Cross",'KGX','london-kings-cross'],['Liverpool Street','LST','london-liverpool-street'],['London Bridge','LBG','london-bridge'],['Marylebone','MYB','london-marylebone'],['Paddington','PAD','london-paddington'],['St Pancras','STP','london-st-pancras-international'],['Victoria','VIC','london-victoria'],['Waterloo','WAT','london-waterloo']];
+  function trLoad(force){
+    var T=S.tr; if(T.busy||!FX_CFG) return; if(!force&&(T.data||T.err)&&Date.now()-T.at<55000) return;
+    T.busy=true;
+    fetch('/.netlify/functions/opendata?d=rail',{cache:'no-store'}).then(function(r){ return r.json().catch(function(){return {}}).then(function(j){ if(!r.ok||!j||!j.stations) throw new Error(j&&j.error||('HTTP '+r.status)); return j; }); })
+      .then(function(j){ T.data=j; T.err=''; })
+      .catch(function(e){ T.err=e.message||'could not load'; })
+      .then(function(){ T.busy=false; T.at=Date.now(); if(S.tab==='tools'&&S.tool==='trains') renderTools(); });
+  }
+  function renderTrains(el){
+    var T=S.tr; if(FX_CFG) trLoad(false);
+    var notSet=T.err==='not_set_up', h='<div class="card">'+toolNav()+'</div><div class="card">';
+    h+='<div class="cardhead"><h2>London train stations</h2>'+(FX_CFG?'<button type="button" class="iconbtn" id="tr-ref" aria-label="Refresh" title="Refresh">↻</button>':'')+'</div>';
+    h+='<p class="note" style="margin:0 0 6px">'+(!FX_CFG?'Tap a station for its live departures. Cancellation counts work on the Cab Books website.'
+      :notSet?'Tap a station for its live departures. Cancellation counts start once the National Rail data key is added.'
+      :T.data?'Cancellations in the next 2 hours. Updated '+esc(hm(T.data.checkedAt))+'. Tap a station for live departures, or a count for the trains.'+(T.err?' (Last refresh failed.)':'')
+      :T.err?'Could not load cancellations ('+esc(T.err)+'). Tap refresh to try again.':'Checking cancellations…')+'</p>';
+    TR_ST.forEach(function(st){
+      var x=T.data&&T.data.stations&&T.data.stations[st[1]], n=x&&x.available?x.cancellationCount:null;
+      var cls=n==null?'':n===0?'':n<=3?'low':n<=9?'warn':'bad';
+      var lbl=n==null?(FX_CFG&&!notSet&&!T.data&&!T.err?'Checking…':'–'):n===0?'No cancellations':n+' cancelled';
+      var open=T.open===st[1]&&n>0;
+      h+='<div class="tr-st"><a href="https://www.nationalrail.co.uk/live-trains/departures/'+st[2]+'/" target="_blank" rel="noopener noreferrer">'+esc(st[0])+'</a>'
+        +'<button type="button" class="tr-n '+cls+'" data-trn="'+st[1]+'"'+(n>0?' aria-expanded="'+open+'"':' disabled')+'>'+lbl+(n>0?(open?' ▴':' ▾'):'')+'</button></div>';
+      if(open) h+='<div class="tr-list">'+x.cancelledServices.map(function(sv){ return '<div><b>'+esc(sv.time)+'</b> '+esc(sv.destination)+' <span class="note" style="margin:0">· '+esc(sv.operator)+'</span></div>'; }).join('')+'</div>';
+    });
+    h+='</div><p class="note" style="margin:0">Live running data supplied by National Rail.</p>';
+    el.innerHTML=h;
+  }
+  document.addEventListener('click',function(ev){
+    var t=ev.target; if(!t||!t.closest) return; var b;
+    if((b=t.closest('[data-trn]'))&&!b.disabled){ var c=b.getAttribute('data-trn'); S.tr.open=S.tr.open===c?null:c; renderTools(); return; }
+    if(t.id==='tr-ref'||t.closest('#tr-ref')){ trLoad(true); var r=$('tr-ref'); if(r) r.disabled=true; }
+  });
+  setInterval(function(){ if(S.tab==='tools'&&S.tool==='trains'&&!document.hidden) trLoad(false); },60000);
+
   /* ---------- Tools: tube status (Matt, 28 Oct) ----------
      Every TfL line (Underground, DLR, the six Overground lines, Elizabeth line) in A–Z order with
      its status; tap a line for TfL's reason. Data from TfL's free line-status feed through the
@@ -3784,6 +3837,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     if(S.tool!=='ranks'&&S.tool!=='toilets') pmDrop();
     if(S.tool==='flights'){ renderFlights(el); return; }
     if(S.tool==='tube'){ renderTube(el); return; }
+    if(S.tool==='trains'){ renderTrains(el); return; }
     if(S.tool==='ranks'||S.tool==='toilets'){ renderPM(el,S.tool); return; }
     renderFare(el);
   }
@@ -3794,7 +3848,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
      so the tool explains that it works on the website. */
   S.tool=lsGet('cb-tool')||'fare'; S.fl={ap:lsGet('cb-fl-ap')||'LHR',term:'',n:40,data:{},err:{},busy:{}};
   function toolNav(){
-    return '<div class="seg" style="margin:0" role="group" aria-label="Tool">'+[['fare','Fares'],['flights','Flights'],['ranks','Ranks'],['toilets','Toilets'],['tube','Tube']].map(function(t){ return '<button type="button" data-tool="'+t[0]+'" aria-pressed="'+(S.tool===t[0])+'">'+t[1]+'</button>'; }).join('')+'</div>';
+    return '<div class="seg toolseg" style="margin:0" role="group" aria-label="Tool">'+[['fare','Fares'],['flights','Flights'],['ranks','Ranks'],['toilets','Toilets'],['tube','Tube'],['trains','Trains']].map(function(t){ return '<button type="button" data-tool="'+t[0]+'" aria-pressed="'+(S.tool===t[0])+'">'+t[1]+'</button>'; }).join('')+'</div>';
   }
   document.addEventListener('click',function(ev){ var b=ev.target.closest&&ev.target.closest('[data-tool]'); if(!b) return; S.tool=b.getAttribute('data-tool'); lsSet('cb-tool',S.tool); renderTools(); if(typeof markCurrentTab==='function') markCurrentTab(); });
   var LTZ={timeZone:'Europe/London',hour:'2-digit',minute:'2-digit',hour12:false};
@@ -3877,8 +3931,8 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   /* ---------- user mode: Full books vs Just tracking ---------- */
   var FULLTABS=['receipts','months','log','import','receipt'];
   /* ---------- bottom bar: each driver picks which buttons they see (Matt, 28 Oct) ---------- */
-  var BAR_ITEMS=[['today','Today'],['position','Position'],['receipts','Receipts'],['reports','Reports'],['months','Data'],['log','Log'],['import','Import'],['tools','Tools'],['fare','Fare calculator'],['flights','Flight arrivals'],['ranks','Taxi ranks'],['toilets','Toilets'],['tube','Tube status']];
-  var BAR_GROUPS=[['Your books',['today','position','receipts','reports','months','log','import']],['On the road',['tools','fare','flights','ranks','toilets','tube']]];
+  var BAR_ITEMS=[['today','Today'],['position','Position'],['receipts','Receipts'],['reports','Reports'],['months','Data'],['log','Log'],['import','Import'],['tools','Tools'],['fare','Fare calculator'],['flights','Flight arrivals'],['ranks','Taxi ranks'],['toilets','Toilets'],['tube','Tube status'],['trains','Train status']];
+  var BAR_GROUPS=[['Your books',['today','position','receipts','reports','months','log','import']],['On the road',['tools','fare','flights','ranks','toilets','tube','trains']]];
   var BAR_DEFAULT=['today','position','receipts','reports','months','log','tools','import'];
   var BAR_FULLONLY=['receipts','months','log','import'];
   S.bar=null;
