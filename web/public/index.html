@@ -235,6 +235,12 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 #signin .fine a{color:var(--muted)}
 .acct{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
 .acct .em{font-size:14px;word-break:break-all}
+.rp-btn{background:none;border:0;color:var(--accent);font-size:12px;cursor:pointer;padding:6px 10px 6px 0;min-height:32px;font-weight:600}
+.rp-btn.has{color:var(--ok)}
+.rp-snap{display:flex;align-items:center;justify-content:center;gap:8px}
+.rp-img{display:block;width:100%;max-height:60vh;object-fit:contain;background:#111;border-radius:8px;margin:0 0 12px}
+.rp-thumb{width:100%;max-height:220px;object-fit:contain;background:#111;border-radius:8px;margin:8px 0}
+.rp-pick{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted)}
 .st-file{border-top:1px solid var(--line);padding:10px 0}
 .st-file .st-top{display:flex;align-items:center;gap:6px}
 .st-file .d{font-size:13px;color:var(--muted);margin:2px 0 4px}
@@ -689,6 +695,8 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     <div class="card" id="d-jobs"></div>
     <div class="card"><h2>Expenses</h2>
       <p class="help" style="margin:0 0 4px">Card and bank payments come in from your bank import. Only add what the bank won't show.</p>
+      <button class="btn ghost rp-snap" id="rp-snap" type="button" style="margin-top:8px"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1zM12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"/></svg>Snap a receipt</button>
+      <input type="file" id="rp-file" accept="image/*" capture="environment" hidden>
       <div id="d-exp" style="margin-top:8px"></div>
       <details class="rulex" id="e-addbox" style="margin-top:4px"><summary><span>Add a cash expense</span><span class="rview">Add</span></summary>
       <div style="padding-bottom:4px">
@@ -698,6 +706,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
         <button class="btn small" id="e-add" type="button">Add</button>
       </div>
       <div class="field" style="margin:10px 0 0"><label><input type="checkbox" id="e-cash" checked> Paid in cash (never goes through the bank)</label></div>
+      <div class="rp-pick" style="margin-top:8px"><button class="btn ghost small" id="e-photo" type="button">Add receipt photo</button><span id="e-photo-st"></span></div>
       </div>
       </details>
 
@@ -876,6 +885,8 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   <button type="button" data-tab="months"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg><span>Data</span></button>
   <button type="button" data-tab="log"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg><span>Log</span></button>
   <button type="button" data-tab="tools"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3h10a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zM9 7h6M9 12h.01M12 12h.01M15 12h.01M9 16h.01M12 16h.01M15 16h.01"/></svg><span>Tools</span></button>
+  <button type="button" data-tab="tools" data-sub="fare" data-bar="fare" hidden><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 17h14M6 17l1.5-6h9L18 17M9 11l1-3h4l1 3M7.5 20a1.5 1.5 0 1 0 0-.01M16.5 20a1.5 1.5 0 1 0 0-.01"/></svg><span>Fares</span></button>
+  <button type="button" data-tab="tools" data-sub="flights" data-bar="flights" hidden><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 14l7-2V6a2 2 0 0 1 4 0v6l7 2v2l-7-1.5V18l2 1.5V21l-4-1-4 1v-1.5l2-1.5v-3.5L3 16z"/></svg><span>Flights</span></button>
   <button type="button" data-tab="import"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg><span>Import</span></button>
 </nav>
 <div id="signin" hidden role="dialog" aria-modal="true" aria-labelledby="si-t">
@@ -895,6 +906,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
 <div class="ovl" id="setovl" hidden role="dialog" aria-modal="true" aria-label="Settings"><div class="sheet"><div class="cardhead"><h2 style="margin:0">Settings</h2><button type="button" class="iconbtn" id="set-close" aria-label="Close settings">✕</button></div><div id="set-body"></div></div></div>
 <div class="ovl" id="welcome" hidden role="dialog" aria-modal="true" aria-labelledby="wl-t"><div class="sheet"><div id="wl-body"></div></div></div>
 <div class="ovl" id="opening" hidden role="dialog" aria-modal="true" aria-labelledby="op-t"><div class="sheet"><div id="op-body"></div></div></div>
+<div class="ovl" id="rpovl" hidden role="dialog" aria-modal="true" aria-label="Receipt photo"><div class="sheet"><div id="rp-body"></div></div></div>
 <div class="ovl" id="jsum" hidden role="dialog" aria-modal="true" aria-label="Jobs summary"><div class="sheet"><div id="js-body"></div></div></div>
 
 <script>
@@ -1254,7 +1266,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     renderSettings();
   }
   /* ---------- backup for the move to the website ---------- */
-  var BACKUP_COLS=['settings','months','plans','events','bankrules','rules','closes','history','bills','receipts','entries'];
+  var BACKUP_COLS=['settings','months','plans','events','bankrules','rules','closes','history','bills','receipts','entries','rphotos','rphotoimg'];
   function renderBackupCard(){
     return '<div class="card"><h2>Moving to the website</h2><p class="help">Saves a copy of all your books (jobs, expenses, months, receipts, calendar, settings) as one file. On the Cab Books website, open Settings and choose Bring in data from the old Cab Books.</p>'
       +'<button class="btn ghost" type="button" id="bk-backup">Save a backup of all my books</button></div>';
@@ -1279,7 +1291,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     var el=$('set-body'); if(!el || $('setovl').hidden) return;
     if(!S.db){ el.innerHTML='<p class="help">Open this page while signed in to change settings.</p>'; return; }
     var ae=document.activeElement; if(ae && el.contains(ae) && /INPUT|TEXTAREA|SELECT/.test(ae.tagName)) return;
-    var st=S.settings, z=S.biz||{}, h=renderAccountCard()+renderModeCard()+renderLookCard()+(S.isOwner?renderBackupCard():'')+renderPracticeCard()+renderSuggest()+renderProvPick()
+    var st=S.settings, z=S.biz||{}, h=renderAccountCard()+renderModeCard()+renderLookCard()+(S.isOwner?renderBackupCard():'')+renderPracticeCard()+renderSuggest()+renderProvPick()+renderBarPick()
       +'<div class="card"><h2>Your details on receipts</h2><p class="help">Printed at the bottom of every receipt and PDF.</p>'
       +'<div class="field"><label for="bz-trade">Name on your receipts</label><input type="text" id="bz-trade" maxlength="60" value="'+esc(z.trade!=null?z.trade:BRAND)+'"><p class="note" style="margin-top:4px">Shown at the top of every receipt. Leave as '+BRAND+' if you drive under our brand, or use your own trading name.</p></div>'
       +'<div class="field"><label for="bz-name">Your name</label><input type="text" id="bz-name" maxlength="60" value="'+esc(z.name||'')+'" placeholder="e.g. your full name"></div>'
@@ -1942,7 +1954,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   }
   function delEntry(id){
     if(armed!==id){ armed=id; renderLog(); renderDay(); clearTimeout(delEntry._t); delEntry._t=setTimeout(function(){armed=null;renderLog();renderDay()},3000); return; }
-    armed=null; S.db.collection('entries').doc(id).delete().then(function(){toast('Deleted')}).catch(fail);
+    armed=null; S.db.collection('entries').doc(id).delete().then(function(){ rpForEntry(id).forEach(function(r){ rpDelete(r.id); }); toast('Deleted'); }).catch(fail);
   }
 
   /* ---------- fees ---------- */
@@ -2030,12 +2042,13 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     var eh='';
     if(!D.exp.length) eh='<p class="note" style="margin:0">No expenses for this day.</p>';
     else {
-      var row=function(e){ var o=''; o+='<div class="logitem"><div>'+esc(e.category||'Expense')+(e.demo?'<span class="badge ind">practice</span>':'')+(e.virtual?'<span class="badge ind">rule \u00b7 estimate</span>':e.src==='import'?'<span class="badge rec">actual</span>':(e.cash?'<span class="badge">cash</span>':'<span class="badge ind">estimate</span>'))+(e.note?'<div class="d">'+esc(e.note)+'</div>':'')+(e.virtual?'':'<button class="del'+(armed===e.id?' arm':'')+'" data-xdel="'+esc(e.id)+'" type="button">'+(armed===e.id?'Tap again to delete':'Delete')+'</button>')+'</div><div class="amt">'+gbp2.format(+e.amount||0)+'</div></div>'; return o; };
+      var row=function(e){ var o=''; o+='<div class="logitem"><div>'+esc(e.category||'Expense')+(e.demo?'<span class="badge ind">practice</span>':'')+(e.virtual?'<span class="badge ind">rule \u00b7 estimate</span>':e.src==='import'?'<span class="badge rec">actual</span>':(e.cash?'<span class="badge">cash</span>':'<span class="badge ind">estimate</span>'))+(e.note?'<div class="d">'+esc(e.note)+'</div>':'')+(e.virtual?'':rpRowBtn(e))+(e.virtual?'':'<button class="del'+(armed===e.id?' arm':'')+'" data-xdel="'+esc(e.id)+'" type="button">'+(armed===e.id?'Tap again to delete':'Delete')+'</button>')+'</div><div class="amt">'+gbp2.format(+e.amount||0)+'</div></div>'; return o; };
       var real=D.exp.filter(function(e){return !e.virtual}), vir=D.exp.filter(function(e){return e.virtual});
       real.forEach(function(e){ eh+=row(e); });
       if(vir.length){ var vt=vir.reduce(function(x,e){return x+(+e.amount||0)},0);
         eh+='<details class="rulex"><summary><span>From your rules ('+vir.length+')</span><span class="v">'+gbp2.format(vt)+'</span><span class="rview">View</span></summary>'+vir.map(row).join('')+'</details>'; }
       eh+='<div class="kv"><span class="k"><b>Total expenses</b></span><span class="v">'+gbp2.format(D.expTotal)+'</span></div>'; }
+    eh+=rpLoose(S.day,D.exp);
     ex.innerHTML=eh;
     var ch=$('d-chart'); if(ch) ch.addEventListener('click',function(){ openJobsSummary(D); });
     Array.prototype.forEach.call(jb.querySelectorAll('[data-rcj]'),function(b){ b.addEventListener('click',function(){ openReceipt(b.getAttribute('data-rcj')); }); });
@@ -2162,8 +2175,150 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     if(!S.db){ toast('Sign in to save.'); return; }
     var a=mv('e-amt'); if(!(a>0)){ toast('Enter an amount.'); return; }
     $('e-add').disabled=true;
-    S.db.collection('entries').doc().set({kind:'expense',date:S.day,m:monthOf(S.day),category:$('e-cat').value,amount:Math.round(a*100)/100,cash:$('e-cash').checked,note:'',src:'manual',ts:Date.now(),demo:!!S.practice})
-      .then(function(){ toast('Expense saved: '+gbp2.format(a)); $('e-amt').value=''; $('e-cash').checked=true; }).catch(fail).then(function(){$('e-add').disabled=false});
+    var ref=S.db.collection('entries').doc(), cat=$('e-cat').value, amt=Math.round(a*100)/100, ph=S.rpPending;
+    ref.set({kind:'expense',date:S.day,m:monthOf(S.day),category:cat,amount:amt,cash:$('e-cash').checked,note:'',src:'manual',ts:Date.now(),demo:!!S.practice})
+      .then(function(){ return ph?rpSave(ph,{date:S.day,eid:ref.id,category:cat,amount:amt}):null; })
+      .then(function(){ toast('Expense saved: '+gbp2.format(a)+(ph?' with receipt photo':'')); $('e-amt').value=''; $('e-cash').checked=true; S.rpPending=null; rpPendingShow(); }).catch(fail).then(function(){$('e-add').disabled=false});
+  }
+
+  /* ---------- receipt photos (Matt, 28 Oct) ----------
+     Photos are shrunk in the phone to a small JPEG (well under 230 KB) and kept in the books database:
+     'rphotos' holds the small details (date, amount, category, which expense), 'rphotoimg' the picture itself,
+     so lists stay quick and a picture is only fetched when someone opens it. Free on Firebase's Spark plan. */
+  S.rph={}; S.rpPending=null; S.rpCur=null; S.rpMode=null;
+  var RP_MAX=230000;
+  function rpList(){ return Object.keys(S.rph||{}).map(function(k){return S.rph[k]}); }
+  function rpForEntry(eid){ return rpList().filter(function(r){ return r.eid===eid; }); }
+  /* A photo snapped at the till before the bank line arrives: match it to a bank expense of the same amount within 7 days. */
+  function rpMatch(e){
+    if(e.src!=='import') return null; var a=Math.round((+e.amount||0)*100), best=null;
+    rpList().forEach(function(r){ if(r.eid||!r.amount||Math.round(r.amount*100)!==a||!r.date||!e.date) return;
+      var d=(new Date(e.date)-new Date(r.date))/864e5; if(d<0||d>7) return; if(!best||r.date>best.date) best=r; });
+    return best;
+  }
+  function rpOf(e){ var l=rpForEntry(e.id); return l.length?l[0]:rpMatch(e); }
+  function rpRowBtn(e){ var r=rpOf(e);
+    return r?'<button class="rp-btn has" type="button" data-rpview="'+esc(r.id)+'">✓ Receipt photo</button>':'<button class="rp-btn" type="button" data-rpadd="'+esc(e.id)+'">Add receipt photo</button>'; }
+  /* Photos for this day not linked to (or matched with) one of the day's expenses yet. */
+  function rpLoose(day,exps){
+    var used={}; (exps||[]).forEach(function(e){ var r=e.virtual?null:rpOf(e); if(r) used[r.id]=1; });
+    var L=rpList().filter(function(r){ return r.date===day && !used[r.id] && !(r.eid&&(exps||[]).some(function(e){return e.id===r.eid})); });
+    if(!L.length) return '';
+    return '<h2 style="margin:14px 0 4px">Receipt photos waiting for the bank</h2><p class="note" style="margin:0 0 4px">These link up when a bank line with the same amount comes in within a week.</p>'
+      +L.map(function(r){ return '<div class="logitem"><div>'+esc(r.category||'Receipt')+'<div class="d">'+(r.note?esc(r.note):'Snapped '+esc(dlabel(r.date)))+'</div><button class="rp-btn has" type="button" data-rpview="'+esc(r.id)+'">View photo</button></div><div class="amt">'+(r.amount?gbp2.format(r.amount):'–')+'</div></div>'; }).join('');
+  }
+  function rpShrink(file){
+    return new Promise(function(res,rej){
+      var url=URL.createObjectURL(file), img=new Image();
+      img.onload=function(){
+        URL.revokeObjectURL(url);
+        var max=1600, w=img.naturalWidth, h=img.naturalHeight, k=Math.min(1,max/Math.max(w,h)), q=0.72, out='';
+        for(var i=0;i<12;i++){
+          var c=document.createElement('canvas'); c.width=Math.max(1,Math.round(w*k)); c.height=Math.max(1,Math.round(h*k));
+          var x=c.getContext('2d'); x.fillStyle='#fff'; x.fillRect(0,0,c.width,c.height); x.drawImage(img,0,0,c.width,c.height);
+          out=c.toDataURL('image/jpeg',q); if(out.length<=RP_MAX) return res({img:out,w:c.width,h:c.height});
+          if(q>0.5) q-=0.1; else k*=0.8;
+        }
+        rej(new Error('too big'));
+      };
+      img.onerror=function(){ URL.revokeObjectURL(url); rej(new Error('not an image')); };
+      img.src=url;
+    });
+  }
+  function rpSave(ph,meta){
+    var ref=S.db.collection('rphotos').doc(), id=ref.id;
+    return S.db.collection('rphotoimg').doc(id).set({img:ph.img,ts:Date.now()}).then(function(){
+      return ref.set({date:meta.date,m:monthOf(meta.date),eid:meta.eid||'',category:meta.category||'',amount:+meta.amount||0,note:meta.note||'',w:ph.w,h:ph.h,size:ph.img.length,ts:Date.now()});
+    }).then(function(){ return id; });
+  }
+  function rpMeta(r,extra){ var o={}; ['date','m','eid','category','amount','note','w','h','size','ts'].forEach(function(k){ if(r[k]!==undefined) o[k]=r[k]; }); return Object.assign(o,extra||{}); }
+  function rpDelete(id){
+    return S.db.collection('rphotos').doc(id).delete().then(function(){ return S.db.collection('rphotoimg').doc(id).delete(); }).catch(fail);
+  }
+  function rpPick(mode){
+    if(!S.db){ toast('Sign in to save photos.'); return; }
+    S.rpMode=mode; var f=$('rp-file'); f.value=''; f.click();
+  }
+  function rpPendingShow(){ var st=$('e-photo-st'), b=$('e-photo'); if(!st) return; st.textContent=S.rpPending?'✓ Photo ready, saved when you tap Add':''; b.textContent=S.rpPending?'Change photo':'Add receipt photo'; }
+  function rpOpen(){ $('rpovl').hidden=false; rpRenderView(); }
+  function rpClose(){ $('rpovl').hidden=true; S.rpCur=null; S.rpDelArm=false; }
+  function rpRenderView(){
+    var el=$('rp-body'), c=S.rpCur; if(!el||!c) return;
+    var h='<div class="cardhead"><h2 style="margin:0">Receipt photo</h2><button type="button" class="iconbtn" data-rpclose aria-label="Close">✕</button></div>';
+    if(c.kind==='new'){
+      h+='<img class="rp-img" alt="Receipt photo" src="'+c.img.img+'">'
+        +'<div class="two"><div class="field"><label for="rp-cat">Category</label><select id="rp-cat">'+(($('e-cat')&&$('e-cat').innerHTML)||'')+'</select></div>'
+        +'<div class="field"><label for="rp-amt">Amount</label><input type="text" class="money" id="rp-amt" inputmode="numeric" autocomplete="off" placeholder="0.00"></div></div>'
+        +'<div class="field"><label for="rp-note">Note (optional)</label><input type="text" id="rp-note" maxlength="80" placeholder="e.g. Shell, Park Royal"></div>'
+        +'<p class="help">Paid by card? Just save the photo: it links itself to the bank line when your bank import brings in the same amount. Paid in cash? Use Add a cash expense instead, so the cost counts.</p>'
+        +'<button class="btn" type="button" id="rp-keep">Save photo for '+esc(dlabel(S.day))+'</button>';
+      el.innerHTML=h; var a=$('rp-amt'); if(a) moneyInput(a);
+      var cs=$('rp-cat'); if(cs){ for(var i=0;i<cs.options.length;i++){ if(/fuel|diesel|petrol/i.test(cs.options[i].value||cs.options[i].text)){ cs.selectedIndex=i; break; } } }
+      return;
+    }
+    var r=S.rph[c.id]; if(!r){ rpClose(); return; }
+    h+=(c.img?'<img class="rp-img" alt="Receipt photo" src="'+c.img+'">':'<p class="note">Loading the photo…</p>')
+      +'<div class="kv"><span class="k">Date</span><span class="v">'+esc(dlabel(r.date))+'</span></div>'
+      +(r.category?'<div class="kv"><span class="k">Category</span><span class="v">'+esc(r.category)+'</span></div>':'')
+      +(r.amount?'<div class="kv"><span class="k">Amount</span><span class="v">'+gbp2.format(r.amount)+'</span></div>':'')
+      +(r.note?'<div class="kv"><span class="k">Note</span><span class="v">'+esc(r.note)+'</span></div>':'')
+      +'<div class="two" style="margin-top:12px"><button class="btn ghost small" type="button" id="rp-swap">Replace photo</button><button class="btn ghost small" type="button" id="rp-del" style="'+(S.rpDelArm?'color:var(--bad);border-color:var(--bad)':'')+'">'+(S.rpDelArm?'Tap again to delete':'Delete photo')+'</button></div>';
+    el.innerHTML=h;
+  }
+  function rpView(id){
+    S.rpCur={kind:'view',id:id,img:null}; S.rpDelArm=false; rpOpen();
+    S.db.collection('rphotoimg').doc(id).get().then(function(d){ if(S.rpCur&&S.rpCur.id===id){ S.rpCur.img=d.exists?(d.data()||{}).img:null; if(!S.rpCur.img) toast('Photo not found.'); rpRenderView(); } }).catch(fail);
+  }
+  $('rp-file').addEventListener('change',function(){
+    var f=this.files&&this.files[0]; if(!f) return; var mode=S.rpMode||{kind:'snap'};
+    toast('Preparing the photo…');
+    rpShrink(f).then(function(ph){
+      if(mode.kind==='pending'){ S.rpPending=ph; rpPendingShow(); toast('Photo ready'); return; }
+      if(mode.kind==='entry'){ var e=S.entries.filter(function(x){return x.id===mode.id})[0]||{};
+        return rpSave(ph,{date:e.date||S.day,eid:mode.id,category:e.category||'',amount:+e.amount||0}).then(function(){ toast('Receipt photo saved'); }); }
+      if(mode.kind==='replace'){ var r=S.rph[mode.id]; if(!r) return;
+        return S.db.collection('rphotoimg').doc(mode.id).set({img:ph.img,ts:Date.now()}).then(function(){ return S.db.collection('rphotos').doc(mode.id).set(rpMeta(r,{w:ph.w,h:ph.h,size:ph.img.length,ts:Date.now()})); })
+          .then(function(){ if(S.rpCur&&S.rpCur.id===mode.id){ S.rpCur.img=ph.img; rpRenderView(); } toast('Photo replaced'); }); }
+      S.rpCur={kind:'new',img:ph}; rpOpen();
+    }).catch(function(e){ toast(e&&e.message==='not an image'?'That file is not a photo this phone can read.':'Could not use that photo. Try again.'); });
+  });
+  document.addEventListener('click',function(ev){
+    var t=ev.target; if(!t||!t.closest) return; var b;
+    if(t.id==='rp-snap'||t.closest('#rp-snap')){ rpPick({kind:'snap'}); return; }
+    if(t.id==='e-photo'){ rpPick({kind:'pending'}); return; }
+    if((b=t.closest('[data-rpadd]'))){ rpPick({kind:'entry',id:b.getAttribute('data-rpadd')}); return; }
+    if((b=t.closest('[data-rpview]'))){ rpView(b.getAttribute('data-rpview')); return; }
+    if(t.closest('[data-rpclose]')){ rpClose(); return; }
+    if(t.id==='rp-swap'&&S.rpCur){ rpPick({kind:'replace',id:S.rpCur.id}); return; }
+    if(t.id==='rp-del'&&S.rpCur){ if(!S.rpDelArm){ S.rpDelArm=true; rpRenderView(); setTimeout(function(){ if(S.rpDelArm){ S.rpDelArm=false; rpRenderView(); } },3000); return; }
+      var id=S.rpCur.id; rpClose(); rpDelete(id).then(function(){ toast('Photo deleted'); }); return; }
+    if(t.id==='rp-keep'&&S.rpCur&&S.rpCur.kind==='new'){
+      t.disabled=true; var ph=S.rpCur.img;
+      rpSave(ph,{date:S.day,category:$('rp-cat').value,amount:mv('rp-amt'),note:$('rp-note').value.trim()}).then(function(){ rpClose(); toast('Receipt photo saved'); })
+        .catch(function(e){ t.disabled=false; fail(e); });
+      return;
+    }
+    if(t.id==='rpovl') rpClose();
+  });
+  /* All receipt photos in a tax year, one per page, for the accountant. */
+  function rpPDF(y){
+    if(!window.jspdf||!window.jspdf.jsPDF){ toast('The PDF maker did not load. Check your connection and try again.'); return; }
+    var a=y+'-04-06', b=(y+1)+'-04-05';
+    var L=rpList().filter(function(r){ return r.date>=a&&r.date<=b; }).sort(function(p,q){ return p.date<q.date?-1:p.date>q.date?1:0; });
+    if(!L.length){ toast('No receipt photos in tax year '+tyLabel(y)+' yet.'); return; }
+    var bt=$('acc-photos'); if(bt){ bt.disabled=true; bt.textContent='Collecting '+L.length+' photos…'; }
+    Promise.all(L.map(function(r){ return S.db.collection('rphotoimg').doc(r.id).get().then(function(d){ return d.exists?(d.data()||{}).img:null; }).catch(function(){ return null; }); }))
+    .then(function(imgs){
+      var doc=new window.jspdf.jsPDF({unit:'mm',format:'a4'}), n=0;
+      L.forEach(function(r,i){ var im=imgs[i]; if(!im) return; if(n) doc.addPage(); n++;
+        doc.setFontSize(12); doc.text(dlabel(r.date)+'   '+(r.category||'Receipt')+(r.amount?'   '+gbp2.format(r.amount):''),18,16);
+        if(r.note){ doc.setFontSize(9); doc.text(String(r.note),18,22); }
+        var mw=174, mh=255, w=r.w||1000, h=r.h||1400, k=Math.min(mw/w,mh/h);
+        doc.addImage(im,'JPEG',18,28,w*k,h*k);
+        doc.setFontSize(8); doc.setTextColor(140); doc.text('Cab Books  ·  '+brandName()+'  ·  Receipt photos, tax year '+tyLabel(y)+'  ·  '+n+' of '+L.length,18,289); doc.setTextColor(0);
+      });
+      offerFile('Receipt photos '+tyLabel(y).replace(/\//g,'-')+'.pdf',doc.output('arraybuffer'),'Receipt photos ready');
+    }).catch(fail).then(function(){ var b2=$('acc-photos'); if(b2){ b2.disabled=false; b2.textContent='Receipt photos for this tax year (PDF)'; } });
   }
 
   /* ---------- expense rules ---------- */
@@ -2973,6 +3128,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
       +'<div class="field" style="margin:12px 0 0"><label for="acc-notes">Notes for your accountant (printed on the PDF)</label><textarea id="acc-notes" maxlength="1500" style="font-family:var(--font-body);font-size:15px;min-height:90px" placeholder="e.g. Mobile phone about 80% business. Charge point installed at home in December. Heathrow drop-offs paid from another account.">'+esc(z.accNotes||'')+'</textarea></div>'
       +'<button class="btn ghost small" type="button" id="acc-save" style="width:100%;margin-top:8px">Save notes</button>'
       +'<div class="two" style="margin-top:12px"><button class="btn" type="button" id="acc-pdf">Download PDF</button><button class="btn ghost" type="button" id="acc-csv">Spreadsheet (CSV)</button></div>'
+      +'<button class="btn ghost" type="button" id="acc-photos" style="margin-top:10px">Receipt photos for this tax year (PDF)</button>'
       +'<p class="note">Accounts run April to March by calendar month. HMRC treats accounts made up to 31 March the same as 5 April. Turnover on the return includes tips; VAT turnover does not. Not included: capital items (such as a charge point), the home-working flat rate, and any private-use share of costs. Your accountant adds those.</p></div>';
     return h;
   }
@@ -3057,6 +3213,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   document.addEventListener('click',function(ev){
     var id=ev.target&&ev.target.id; if(!id||id.indexOf('acc-')!==0) return;
     if(id==='acc-pdf') accPDF(accY());
+    else if(id==='acc-photos') rpPDF(accY());
     else if(id==='acc-csv') offerFile(accFileBase(accY())+'.csv',new Blob([accCSV(accY())],{type:'text/csv;charset=utf-8'}),'Spreadsheet ready for your accountant');
     else if(id==='acc-save'){
       var u=+$('acc-union').value; if(isNaN(u)||u<0||u>100){ toast('Union fee % must be between 0 and 100.'); return; }
@@ -3410,7 +3567,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   function toolNav(){
     return '<div class="seg" style="margin:0" role="group" aria-label="Tool"><button type="button" data-tool="fare" aria-pressed="'+(S.tool==='fare')+'">Fare calculator</button><button type="button" data-tool="flights" aria-pressed="'+(S.tool==='flights')+'">Flight arrivals</button></div>';
   }
-  document.addEventListener('click',function(ev){ var b=ev.target.closest&&ev.target.closest('[data-tool]'); if(!b) return; S.tool=b.getAttribute('data-tool'); lsSet('cb-tool',S.tool); renderTools(); });
+  document.addEventListener('click',function(ev){ var b=ev.target.closest&&ev.target.closest('[data-tool]'); if(!b) return; S.tool=b.getAttribute('data-tool'); lsSet('cb-tool',S.tool); renderTools(); if(typeof markCurrentTab==='function') markCurrentTab(); });
   var LTZ={timeZone:'Europe/London',hour:'2-digit',minute:'2-digit',hour12:false};
   function hm(iso){ try{ return new Date(iso).toLocaleTimeString('en-GB',LTZ); }catch(e){ return ''; } }
   function flEta(f){ return f.est||f.sched; }
@@ -3490,12 +3647,55 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
 
   /* ---------- user mode: Full books vs Just tracking ---------- */
   var FULLTABS=['receipts','months','log','import','receipt'];
-  function applyMode(){
+  /* ---------- bottom bar: each driver picks which buttons they see (Matt, 28 Oct) ---------- */
+  var BAR_ITEMS=[['today','Today'],['position','Position'],['receipts','Receipts'],['reports','Reports'],['months','Data'],['log','Log'],['import','Import'],['tools','Tools'],['fare','Fare calculator'],['flights','Flight arrivals']];
+  var BAR_GROUPS=[['Your books',['today','position','receipts','reports','months','log','import']],['On the road',['tools','fare','flights']]];
+  var BAR_DEFAULT=['today','position','receipts','reports','months','log','tools','import'];
+  var BAR_FULLONLY=['receipts','months','log','import'];
+  S.bar=null;
+  function barName(k){ for(var i=0;i<BAR_ITEMS.length;i++) if(BAR_ITEMS[i][0]===k) return BAR_ITEMS[i][1]; return k; }
+  function barKey(b){ return b.getAttribute('data-bar')||b.getAttribute('data-tab'); }
+  function barOn(k){ return (S.bar||BAR_DEFAULT).indexOf(k)>=0; }
+  function barVisible(k){ return barOn(k) && !(S.mode==='track'&&BAR_FULLONLY.indexOf(k)>=0); }
+  function renderBarPick(){
     var track=S.mode==='track';
-    Array.prototype.forEach.call(document.querySelectorAll('.tabs button'),function(b){
-      var t=b.getAttribute('data-tab'); b.hidden=track&&FULLTABS.indexOf(t)>=0;
+    var h='<div class="card" id="bar-card"><h2>Bottom bar</h2><p class="help">Choose the buttons you want along the bottom of the screen. Hidden sections are not deleted; turn them back on here at any time.</p>';
+    BAR_GROUPS.forEach(function(g){
+      h+='<label style="margin-top:10px">'+esc(g[0])+'</label><div class="chips tight" role="group" aria-label="'+esc(g[0])+'">'
+        +g[1].map(function(k){ var dis=track&&BAR_FULLONLY.indexOf(k)>=0, on=barOn(k)&&!dis;
+          return '<button type="button" data-barpick="'+k+'" aria-pressed="'+on+'"'+(dis?' disabled title="Only in Full books"':'')+'>'+(on?'✓ ':'')+esc(barName(k))+'</button>'; }).join('')+'</div>';
     });
+    var n=BAR_ITEMS.filter(function(x){return barVisible(x[0])}).length;
+    h+='<p class="note">'+n+' showing.'+(n>6?' With more than 6 the bar scrolls sideways on a phone.':'')+(track?' Statements, imports and the log are part of Full books.':'')+'</p>';
+    return h+'</div>';
+  }
+  function toggleBar(k){
+    if(!S.db) return;
+    var cur=(S.bar||BAR_DEFAULT).slice(), i=cur.indexOf(k);
+    if(i>=0){
+      var left=cur.filter(function(x){ return x!==k && !(S.mode==='track'&&BAR_FULLONLY.indexOf(x)>=0); });
+      if(!left.length){ toast('Keep at least one button.'); return; }
+      cur.splice(i,1);
+    } else cur.push(k);
+    cur=BAR_ITEMS.map(function(x){return x[0]}).filter(function(x){return cur.indexOf(x)>=0});
+    S.bar=cur; applyMode(); renderSettings();
+    S.db.collection('settings').doc('tabs').set({shown:cur,ts:Date.now()}).then(function(){ toast(barName(k)+(i>=0?' removed from':' added to')+' the bottom bar'); }).catch(fail);
+  }
+  document.addEventListener('click',function(ev){ var b=ev.target.closest&&ev.target.closest('[data-barpick]'); if(b&&!b.disabled) toggleBar(b.getAttribute('data-barpick')); });
+  function markCurrentTab(){
+    var subShown=S.tab==='tools'&&barVisible(S.tool);
+    Array.prototype.forEach.call(document.querySelectorAll('.tabs button'),function(b){
+      var t=b.getAttribute('data-tab'), sub=b.getAttribute('data-sub'), cur;
+      if(t!==S.tab) cur=false; else if(t!=='tools') cur=true; else if(sub) cur=sub===S.tool; else cur=!subShown;
+      if(cur) b.setAttribute('aria-current','page'); else b.removeAttribute('aria-current');
+    });
+  }
+
+  function applyMode(){
+    Array.prototype.forEach.call(document.querySelectorAll('.tabs button'),function(b){ b.hidden=!barVisible(barKey(b)); });
+    var track=S.mode==='track';
     if(track&&FULLTABS.indexOf(S.tab)>=0&&!(S.tab==='import'&&S.forceImport)) showTab('today');
+    else if(typeof markCurrentTab==='function'&&S.tab) markCurrentTab();
     var needWelcome=S.loaded.settings&&!S.mode;
     if(needWelcome) openWelcome(); else if(!$('welcome').hidden&&S.mode) $('welcome').hidden=true;
   }
@@ -3567,12 +3767,13 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     if(S.mode==='track'&&FULLTABS.indexOf(t)>=0&&!(t==='import'&&S.forceImport)) t='today';
     S.tab=t; lsSet('cb-tab',t); if(t==='log') setTimeout(renderLog,0); if(t==='tools') setTimeout(renderTools,0);
     ['today','day','cal','receipt','receipts','position','reports','months','log','tools','import'].forEach(function(n){ $('tab-'+n).hidden=n!==t; });
-    Array.prototype.forEach.call(document.querySelectorAll('.tabs button'),function(b){
-      if(b.getAttribute('data-tab')===t) b.setAttribute('aria-current','page'); else b.removeAttribute('aria-current');
-    });
+    markCurrentTab();
     window.scrollTo(0,0);
   }
-  Array.prototype.forEach.call(document.querySelectorAll('.tabs button'),function(b){ b.addEventListener('click',function(){showTab(b.getAttribute('data-tab'))}); });
+  Array.prototype.forEach.call(document.querySelectorAll('.tabs button'),function(b){ b.addEventListener('click',function(){
+    var sub=b.getAttribute('data-sub'); if(sub){ S.tool=sub; lsSet('cb-tool',sub); }
+    showTab(b.getAttribute('data-tab'));
+  }); });
   Array.prototype.forEach.call(document.querySelectorAll('input.money'),moneyInput);
   ['j-amt','j-tips','j-fix'].forEach(function(id){ $(id).addEventListener('input',updatePreview); });
   $('fm-rule').addEventListener('click',function(){ if(feeDefault(S.prov,S.pay)){ S.feeManual=false; renderFee(); updatePreview(); } });
@@ -4189,7 +4390,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     function onErr(name){return function(e){ $('sync').textContent='Could not load '+name; }}
     unsubs.push(db.collection('settings').onSnapshot(function(snap){
       snap.docs.forEach(function(d){ if(d.id==='stopts'&&d.exists){ S.stopts=d.data()||{}; stSyncVia(); } if(d.id==='tipstats'&&d.exists){ S.tipstats=d.data(); } if(d.id==='business'&&d.exists){ S.biz=d.data()||{}; } if(d.id==='practice'){ S.practice=!!(d.exists&&d.data().on); } if(d.id==='drivers'&&d.exists){ var nm=d.data().names; if(Array.isArray(nm)&&nm.length) S.drivers=nm; } if(d.id==='providers'&&d.exists){ var sv=d.data().shown; S.shown=Array.isArray(sv)&&sv.length?sv:null; if(S.shown&&S.shown.indexOf(S.prov)<0&&!S.editId){ S.prov=S.shown[0]; if(typeof applyFeeDefaults==='function') applyFeeDefaults(); } if(typeof buildChips==='function') buildChips(); } if(d.id==='bank'&&d.exists){ S.bankCov=d.data().covered||''; } if(d.id==='main'&&d.exists){ var v=d.data(); S.settings=Object.assign({},DEF,{threshold:+v.threshold||DEF.threshold,amberPct:+v.amberPct||DEF.amberPct,redPct:+v.redPct||DEF.redPct,start:v.start||DEF.start,fees:v.fees||{}}); } });
-      var md=null; snap.docs.forEach(function(d){ if(d.id==='look'&&d.exists){ var lk=(d.data()||{}).theme; if(lk&&lk!==S.look) applyLook(lk); } if(d.id==='opening'&&d.exists) S.opening=d.data()||{}; if(d.id==='tax'&&d.exists) S.tax=d.data()||{}; if(d.id==='mode'&&d.exists){ var mv=(d.data()||{}).mode; if(mv==='full'||mv==='track') md=mv; } }); S.mode=md||null; S.loaded.settings=true; applyMode(); renderAll();
+      var md=null; snap.docs.forEach(function(d){ if(d.id==='look'&&d.exists){ var lk=(d.data()||{}).theme; if(lk&&lk!==S.look) applyLook(lk); } if(d.id==='opening'&&d.exists) S.opening=d.data()||{}; if(d.id==='tax'&&d.exists) S.tax=d.data()||{}; if(d.id==='mode'&&d.exists){ var mv=(d.data()||{}).mode; if(mv==='full'||mv==='track') md=mv; } if(d.id==='tabs'&&d.exists){ var tv=(d.data()||{}).shown; S.bar=Array.isArray(tv)&&tv.length?tv:null; } }); S.mode=md||null; S.loaded.settings=true; applyMode(); renderAll();
     },onErr('settings')));
     unsubs.push(db.collection('months').onSnapshot(function(snap){
       var o={}; snap.docs.forEach(function(d){ if(d.exists) o[d.id]=d.data(); }); S.months=o; S.loaded.months=true; renderAll(); $('sync').textContent=S.syncLabel||'Saved to your account';
@@ -4203,6 +4404,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     unsubs.push(db.collection('stmts').onSnapshot(function(snap){ var o={}; snap.docs.forEach(function(d){ if(d.exists) o[d.id]=Object.assign({id:d.id},d.data()); }); S.stmts=o; if(S.tab==='months') renderMonths(); },function(){}));
     unsubs.push(db.collection('closes').onSnapshot(function(snap){ var o={}; snap.docs.forEach(function(d){ if(d.exists) o[d.id]=d.data(); }); S.closes=o; renderMonths(); },function(){}));
     unsubs.push(db.collection('history').onSnapshot(function(snap){ var o={}; snap.docs.forEach(function(d){ if(d.exists) o[d.id]=d.data(); }); S.hist=o; if(S.tab==='log') renderLog(); },function(){}));
+    unsubs.push(db.collection('rphotos').onSnapshot(function(snap){ var o={}; snap.docs.forEach(function(d){ if(d.exists) o[d.id]=Object.assign({id:d.id},d.data()); }); S.rph=o; if(S.tab==='today') renderDay(); if(!$('rpovl').hidden) rpRenderView(); },function(){}));
     unsubs.push(db.collection('suggestions').onSnapshot(function(snap){ var o={}; snap.docs.forEach(function(d){ if(d.exists) o[d.id]=d.data(); }); S.sugg=o; renderSettings(); },function(){}));
     unsubs.push(db.collection('bills').onSnapshot(function(snap){ var o={}; snap.docs.forEach(function(d){ if(d.exists) o[d.id]=d.data(); }); S.bills=o; mergeEntries(); renderAll(); },function(){}));
     unsubs.push(db.collection('receipts').onSnapshot(function(snap){ var o={}; snap.docs.forEach(function(d){ if(d.exists) o[d.id]=d.data(); }); S.receipts=o; },function(){}));
@@ -4297,8 +4499,9 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
       (fresh?clearAll():Promise.resolve()).then(function(){ next(); }).catch(function(e){ toast('Could not clear: '+((e&&e.message)||'try again')); });
       function next(){
         if(i>=ops.length){ toast('Brought in '+done+' records.'); return; }
-        var b=S.fs.batch(), n=0;
-        while(i<ops.length&&n<400){ var o=ops[i++]; b.set(home.collection(o[0]).doc(String(o[1])),o[2]); n++; }
+        var b=S.fs.batch(), n=0, sz=0;
+        /* receipt photos are large: keep each write well under Firestore's 10 MB request limit */
+        while(i<ops.length&&n<400&&sz<6000000){ var o=ops[i++]; sz+=JSON.stringify(o[2]).length; b.set(home.collection(o[0]).doc(String(o[1])),o[2]); n++; }
         toast('Bringing in '+Math.min(i,ops.length)+' of '+ops.length+'…');
         b.commit().then(function(){ done+=n; next(); }).catch(function(e){ toast('Stopped after '+done+' records: '+((e&&e.message)||'try again')); });
       }

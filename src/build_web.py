@@ -212,8 +212,9 @@ BOOT = r"""  /* ---------- website plumbing: Firebase sign-in + each driver's pr
       (fresh?clearAll():Promise.resolve()).then(function(){ next(); }).catch(function(e){ toast('Could not clear: '+((e&&e.message)||'try again')); });
       function next(){
         if(i>=ops.length){ toast('Brought in '+done+' records.'); return; }
-        var b=S.fs.batch(), n=0;
-        while(i<ops.length&&n<400){ var o=ops[i++]; b.set(home.collection(o[0]).doc(String(o[1])),o[2]); n++; }
+        var b=S.fs.batch(), n=0, sz=0;
+        /* receipt photos are large: keep each write well under Firestore's 10 MB request limit */
+        while(i<ops.length&&n<400&&sz<6000000){ var o=ops[i++]; sz+=JSON.stringify(o[2]).length; b.set(home.collection(o[0]).doc(String(o[1])),o[2]); n++; }
         toast('Bringing in '+Math.min(i,ops.length)+' of '+ops.length+'…');
         b.commit().then(function(){ done+=n; next(); }).catch(function(e){ toast('Stopped after '+done+' records: '+((e&&e.message)||'try again')); });
       }
