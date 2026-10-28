@@ -117,6 +117,7 @@ rep("+(S.isOwner?'':'<p class=\"privnote\" style=\"margin-top:10px\">Your figure
     "      +'<button class=\"btn ghost small\" type=\"button\" id=\"acct-out\">Sign out</button></div>'\n"
     "      +'<div style=\"margin-top:12px\"><label for=\"acct-imp\">Bring in data from the old Cab Books</label>'\n"
     "      +'<p class=\"help\" style=\"margin:0 0 8px\">Choose the backup file (.json) saved from the old app. Records already here with the same number are replaced, nothing else is touched.</p>'\n"
+    "      +'<label style=\"display:flex;gap:8px;align-items:center;margin:0 0 8px;font-weight:400\"><input type=\"checkbox\" id=\"acct-rep\"> Start fresh: clear what is already here first (use this on switch-over day)</label>'\n"
     "      +'<input type=\"file\" id=\"acct-imp\" accept=\".json,application/json\"></div>'\n"
     "      +'<p class=\"help\" style=\"margin:12px 0 0\"><a href=\"/help.html\" style=\"color:var(--accent)\">Getting-started guide</a> &middot; <a href=\"/privacy.html\" style=\"color:var(--accent)\">Privacy notice</a></p></div>';")
 rep("h=renderModeCard()+renderLookCard()", "h=renderAccountCard()+renderModeCard()+renderLookCard()")
@@ -196,15 +197,26 @@ BOOT = r"""  /* ---------- website plumbing: Firebase sign-in + each driver's pr
       var ops=[]; Object.keys(cols).forEach(function(c){ if(SHARED_COLS[c]||!/^[A-Za-z0-9_-]+$/.test(c)) return; var docs=cols[c]||{};
         Object.keys(docs).forEach(function(id){ if(id&&docs[id]&&typeof docs[id]==='object') ops.push([c,id,docs[id]]); }); });
       if(!ops.length){ toast('Nothing to bring in from that file.'); return; }
-      if(!confirm('Bring in '+ops.length+' records from the backup? Records with the same number already here will be replaced.')) return;
+      var fresh=!!($('acct-rep')&&$('acct-rep').checked);
+      if(!confirm(fresh?'Start fresh: everything already here (jobs, expenses, receipts, months, settings) is cleared, then '+ops.length+' records are brought in from the backup. Carry on?':'Bring in '+ops.length+' records from the backup? Records with the same number already here will be replaced.')) return;
       var i=0, done=0, home=S.fs.collection('users').doc(S.uid);
-      (function next(){
+      function clearAll(){
+        var cs=Object.keys(cols).filter(function(c){ return !SHARED_COLS[c]&&/^[A-Za-z0-9_-]+$/.test(c); });
+        toast('Clearing what was here…');
+        return Promise.all(cs.map(function(c){ return home.collection(c).get(); })).then(function(snaps){
+          var refs=[]; snaps.forEach(function(sn){ sn.docs.forEach(function(d){ refs.push(d.ref); }); });
+          var k=0;
+          return (function del(){ if(k>=refs.length) return Promise.resolve(); var b=S.fs.batch(), n=0; while(k<refs.length&&n<400){ b.delete(refs[k++]); n++; } return b.commit().then(del); })();
+        });
+      }
+      (fresh?clearAll():Promise.resolve()).then(function(){ next(); }).catch(function(e){ toast('Could not clear: '+((e&&e.message)||'try again')); });
+      function next(){
         if(i>=ops.length){ toast('Brought in '+done+' records.'); return; }
         var b=S.fs.batch(), n=0;
         while(i<ops.length&&n<400){ var o=ops[i++]; b.set(home.collection(o[0]).doc(String(o[1])),o[2]); n++; }
         toast('Bringing in '+Math.min(i,ops.length)+' of '+ops.length+'…');
         b.commit().then(function(){ done+=n; next(); }).catch(function(e){ toast('Stopped after '+done+' records: '+((e&&e.message)||'try again')); });
-      })();
+      }
     };
     rd.readAsText(file);
   }
