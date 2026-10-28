@@ -235,6 +235,56 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 #signin .fine a{color:var(--muted)}
 .acct{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
 .acct .em{font-size:14px;word-break:break-all}
+.seg.toolseg{grid-auto-flow:row;grid-template-columns:repeat(3,1fr)}
+.adm-tot{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:8px 0 12px}
+.adm-tot div{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px}
+.adm-tot b{display:block;font-family:var(--font-num);font-size:20px}
+.adm-tot span{font-size:11px;color:var(--muted)}
+.adm-u{border-top:1px solid var(--line);padding:9px 0;font-size:13px}
+.adm-u .e{font-weight:600;font-size:14px;overflow-wrap:anywhere}
+.adm-u .m{color:var(--muted)}
+.alertbar{border:1px solid var(--warn);background:var(--warn-soft);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:6px}
+.alertbar .al{display:flex;align-items:flex-start;gap:8px;font-size:14px;color:var(--ink)}
+.alertbar .al b{color:var(--warn)}
+.alertbar .al span{flex:1}
+.alertbar .row{display:flex;gap:8px}
+.alertbar button{min-height:36px}
+.tr-st{display:flex;align-items:center;gap:10px;border-top:1px solid var(--line);padding:8px 0}
+.tr-st:first-of-type{border-top:0}
+.tr-st a{flex:1;color:var(--ink);text-decoration:none;font-weight:600;min-height:40px;display:flex;align-items:center}
+.tr-n{min-width:96px;border:1px solid var(--line);background:var(--bg);color:var(--muted);border-radius:999px;padding:6px 10px;font-size:12px;font-weight:700;cursor:pointer;text-align:center}
+.tr-n.low{background:var(--ok-soft);color:var(--ok);border-color:transparent} .tr-n.warn{background:#3a1f00;color:#ff9d3a;border-color:transparent} .tr-n.bad{background:var(--bad-soft);color:var(--bad);border-color:transparent}
+.tr-n:disabled{cursor:default}
+.tr-list{font-size:13px;padding:0 0 10px 4px}
+.tr-list div{padding:3px 0;border-bottom:1px dashed var(--line)}
+.tb-line{border-top:1px solid var(--line)}
+.tb-line:first-of-type{border-top:0}
+.tb-line summary{display:flex;align-items:center;gap:10px;padding:11px 0;cursor:pointer;list-style:none;min-height:48px}
+.tb-line summary::-webkit-details-marker{display:none}
+.tb-bar{width:6px;align-self:stretch;border-radius:3px;flex:0 0 6px;min-height:28px}
+.tb-name{flex:1;font-weight:600}
+.tb-st{font-size:12px;font-weight:700;padding:3px 9px;border-radius:999px;white-space:nowrap;text-align:right}
+.tb-st.ok{background:var(--ok-soft);color:var(--ok)} .tb-st.amb{background:var(--warn-soft);color:var(--warn)} .tb-st.org{background:#3a1f00;color:#ff9d3a} .tb-st.bad{background:var(--bad-soft);color:var(--bad)} .tb-st.off{background:var(--surface2);color:var(--muted)}
+.tb-why{font-size:14px;color:var(--ink);padding:0 0 12px 16px;white-space:pre-line}
+.pm-map{position:relative;height:min(58vh,520px);border-radius:10px;overflow:hidden;border:1px solid var(--line);background:#0d1117}
+.pm-map>div{position:absolute;inset:0}
+.pm-msg{position:absolute;left:10px;right:10px;top:10px;z-index:2;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13px}
+.pm-row{display:flex;gap:8px;align-items:center}
+.pm-row input[type=search]{flex:1;min-width:0;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:11px 12px;min-height:44px;color:var(--ink)}
+.pm-count{font-family:var(--font-num);font-size:13px;color:var(--muted);white-space:nowrap}
+.pm-res button{display:flex;justify-content:space-between;gap:10px;width:100%;text-align:left;background:none;border:0;border-top:1px solid var(--line);padding:10px 0;color:var(--ink);cursor:pointer;min-height:48px}
+.pm-res button small{display:block;color:var(--muted);font-size:12px}
+.pm-badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:2px 8px;border-radius:999px;margin-right:6px}
+.pm-badge.ok{background:var(--ok-soft);color:var(--ok)} .pm-badge.bad{background:var(--bad-soft);color:var(--bad)} .pm-badge.amb{background:var(--warn-soft);color:var(--warn)} .pm-badge.pur{background:#2a1f45;color:#c2a1ff}
+.pm-key{display:flex;flex-wrap:wrap;gap:10px;font-size:12px;color:var(--muted);margin-top:8px}
+.pm-key i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:-1px;border:1px solid #17212d}
+.pm-user{width:18px;height:18px;background:#3288ff;border:3px solid #fff;border-radius:50%;box-shadow:0 0 0 7px rgba(50,136,255,.22)}
+.rp-btn{background:none;border:0;color:var(--accent);font-size:12px;cursor:pointer;padding:6px 10px 6px 0;min-height:32px;font-weight:600}
+.rp-btn.has{color:var(--ok)}
+.rp-snap{display:flex;align-items:center;justify-content:center;gap:8px}
+.rp-img{display:block;width:100%;max-height:60vh;object-fit:contain;background:#111;border-radius:8px;margin:0 0 12px}
+.rp-thumb{width:100%;max-height:220px;object-fit:contain;background:#111;border-radius:8px;margin:8px 0}
+.rp-pick{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted)}
 .st-file{border-top:1px solid var(--line);padding:10px 0}
 .st-file .st-top{display:flex;align-items:center;gap:6px}
 .st-file .d{font-size:13px;color:var(--muted);margin:2px 0 4px}
@@ -625,6 +675,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
 <body>
 <div class="wrap">
   <header class="top"><div class="brandrow"><img class="logo" alt="All Black Taxis" width="44" height="44" src="data:image/png;base64,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"><div><div class="brand">Cab Books</div><div class="sub">All Black Taxis</div></div></div><div class="hdr-r"><div class="sync" id="sync">Connecting…</div><button type="button" class="gear" id="gear" aria-label="Settings" aria-haspopup="dialog">⚙︎<span>Settings</span></button></div></header>
+  <div id="alertbar" class="alertbar" hidden></div>
 
   <section id="tab-position" hidden></section>
 
@@ -689,6 +740,8 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     <div class="card" id="d-jobs"></div>
     <div class="card"><h2>Expenses</h2>
       <p class="help" style="margin:0 0 4px">Card and bank payments come in from your bank import. Only add what the bank won't show.</p>
+      <button class="btn ghost rp-snap" id="rp-snap" type="button" style="margin-top:8px"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1zM12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"/></svg>Snap a receipt</button>
+      <input type="file" id="rp-file" accept="image/*" capture="environment" hidden>
       <div id="d-exp" style="margin-top:8px"></div>
       <details class="rulex" id="e-addbox" style="margin-top:4px"><summary><span>Add a cash expense</span><span class="rview">Add</span></summary>
       <div style="padding-bottom:4px">
@@ -698,6 +751,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
         <button class="btn small" id="e-add" type="button">Add</button>
       </div>
       <div class="field" style="margin:10px 0 0"><label><input type="checkbox" id="e-cash" checked> Paid in cash (never goes through the bank)</label></div>
+      <div class="rp-pick" style="margin-top:8px"><button class="btn ghost small" id="e-photo" type="button">Add receipt photo</button><span id="e-photo-st"></span></div>
       </div>
       </details>
 
@@ -876,6 +930,12 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   <button type="button" data-tab="months"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg><span>Data</span></button>
   <button type="button" data-tab="log"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg><span>Log</span></button>
   <button type="button" data-tab="tools"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3h10a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zM9 7h6M9 12h.01M12 12h.01M15 12h.01M9 16h.01M12 16h.01M15 16h.01"/></svg><span>Tools</span></button>
+  <button type="button" data-tab="tools" data-sub="fare" data-bar="fare" hidden><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 17h14M6 17l1.5-6h9L18 17M9 11l1-3h4l1 3M7.5 20a1.5 1.5 0 1 0 0-.01M16.5 20a1.5 1.5 0 1 0 0-.01"/></svg><span>Fares</span></button>
+  <button type="button" data-tab="tools" data-sub="flights" data-bar="flights" hidden><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 14l7-2V6a2 2 0 0 1 4 0v6l7 2v2l-7-1.5V18l2 1.5V21l-4-1-4 1v-1.5l2-1.5v-3.5L3 16z"/></svg><span>Flights</span></button>
+  <button type="button" data-tab="tools" data-sub="ranks" data-bar="ranks" hidden><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6-5.6-6-10.5a6 6 0 0 1 12 0C18 15.4 12 21 12 21zM9.5 8h5M12 8v5"/></svg><span>Ranks</span></button>
+  <button type="button" data-tab="tools" data-sub="toilets" data-bar="toilets" hidden><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6-5.6-6-10.5a6 6 0 0 1 12 0C18 15.4 12 21 12 21zM8.5 8l1 4 1-3 1 3 1-4M14 8h2v4"/></svg><span>Toilets</span></button>
+  <button type="button" data-tab="tools" data-sub="tube" data-bar="tube" hidden><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7zM3 12h18"/></svg><span>Tube</span></button>
+  <button type="button" data-tab="tools" data-sub="trains" data-bar="trains" hidden><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 16V6c0-2 2.5-3 7-3s7 1 7 3v10c0 1.1-.9 2-2 2H7c-1.1 0-2-.9-2-2zM5 11h14M8 21l2-3M16 21l-2-3"/></svg><span>Trains</span></button>
   <button type="button" data-tab="import"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg><span>Import</span></button>
 </nav>
 <div id="signin" hidden role="dialog" aria-modal="true" aria-labelledby="si-t">
@@ -895,6 +955,8 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
 <div class="ovl" id="setovl" hidden role="dialog" aria-modal="true" aria-label="Settings"><div class="sheet"><div class="cardhead"><h2 style="margin:0">Settings</h2><button type="button" class="iconbtn" id="set-close" aria-label="Close settings">✕</button></div><div id="set-body"></div></div></div>
 <div class="ovl" id="welcome" hidden role="dialog" aria-modal="true" aria-labelledby="wl-t"><div class="sheet"><div id="wl-body"></div></div></div>
 <div class="ovl" id="opening" hidden role="dialog" aria-modal="true" aria-labelledby="op-t"><div class="sheet"><div id="op-body"></div></div></div>
+<div class="ovl" id="admovl" hidden role="dialog" aria-modal="true" aria-label="Admin"><div class="sheet" style="width:min(100%,760px)"><div id="adm-body"></div></div></div>
+<div class="ovl" id="rpovl" hidden role="dialog" aria-modal="true" aria-label="Receipt photo"><div class="sheet"><div id="rp-body"></div></div></div>
 <div class="ovl" id="jsum" hidden role="dialog" aria-modal="true" aria-label="Jobs summary"><div class="sheet"><div id="js-body"></div></div></div>
 
 <script>
@@ -1254,7 +1316,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     renderSettings();
   }
   /* ---------- backup for the move to the website ---------- */
-  var BACKUP_COLS=['settings','months','plans','events','bankrules','rules','closes','history','bills','receipts','entries'];
+  var BACKUP_COLS=['settings','months','plans','events','bankrules','rules','closes','history','bills','receipts','entries','rphotos','rphotoimg'];
   function renderBackupCard(){
     return '<div class="card"><h2>Moving to the website</h2><p class="help">Saves a copy of all your books (jobs, expenses, months, receipts, calendar, settings) as one file. On the Cab Books website, open Settings and choose Bring in data from the old Cab Books.</p>'
       +'<button class="btn ghost" type="button" id="bk-backup">Save a backup of all my books</button></div>';
@@ -1279,7 +1341,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     var el=$('set-body'); if(!el || $('setovl').hidden) return;
     if(!S.db){ el.innerHTML='<p class="help">Open this page while signed in to change settings.</p>'; return; }
     var ae=document.activeElement; if(ae && el.contains(ae) && /INPUT|TEXTAREA|SELECT/.test(ae.tagName)) return;
-    var st=S.settings, z=S.biz||{}, h=renderAccountCard()+renderModeCard()+renderLookCard()+(S.isOwner?renderBackupCard():'')+renderPracticeCard()+renderSuggest()+renderProvPick()
+    var st=S.settings, z=S.biz||{}, h=renderAccountCard()+renderModeCard()+renderLookCard()+(S.isOwner?renderBackupCard():'')+renderPracticeCard()+renderSuggest()+renderProvPick()+renderBarPick()+renderAlertPick()+renderAdminCard()
       +'<div class="card"><h2>Your details on receipts</h2><p class="help">Printed at the bottom of every receipt and PDF.</p>'
       +'<div class="field"><label for="bz-trade">Name on your receipts</label><input type="text" id="bz-trade" maxlength="60" value="'+esc(z.trade!=null?z.trade:BRAND)+'"><p class="note" style="margin-top:4px">Shown at the top of every receipt. Leave as '+BRAND+' if you drive under our brand, or use your own trading name.</p></div>'
       +'<div class="field"><label for="bz-name">Your name</label><input type="text" id="bz-name" maxlength="60" value="'+esc(z.name||'')+'" placeholder="e.g. your full name"></div>'
@@ -1942,7 +2004,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   }
   function delEntry(id){
     if(armed!==id){ armed=id; renderLog(); renderDay(); clearTimeout(delEntry._t); delEntry._t=setTimeout(function(){armed=null;renderLog();renderDay()},3000); return; }
-    armed=null; S.db.collection('entries').doc(id).delete().then(function(){toast('Deleted')}).catch(fail);
+    armed=null; S.db.collection('entries').doc(id).delete().then(function(){ rpForEntry(id).forEach(function(r){ rpDelete(r.id); }); toast('Deleted'); }).catch(fail);
   }
 
   /* ---------- fees ---------- */
@@ -1985,7 +2047,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
 
   /* ---------- day page ---------- */
   S.prov='Freenow'; S.pay='Account'; S.day=todayISO(); S.editId=null; S.addOpen=null;
-  var EXPCATS=['Car rental','Petrol','Electric charging','Parking / drop-off','Car wash','Cleaning / admin supplies','Union','Phone / broadband','Other'];
+  var EXPCATS=['Car rental','Petrol','Electric charging','Parking / drop-off','Car wash','Cab repairs / parts','Cleaning / admin supplies','Union','Phone / broadband','Other'];
   function dayLabel(iso){var p=iso.split('-'),d=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][dowOf(iso)],ML=['January','February','March','April','May','June','July','August','September','October','November','December'];return d+' '+(+p[2])+' '+ML[+p[1]-1]+(p[0]!==String(new Date().getFullYear())?' '+p[0]:'')}
   function dayData(iso){
     var C=compute(S.entries), EI=expImpMap(), D={rows:[],gross:0,fees:0,tips:0,pay:{},exp:[],expTotal:0,expEst:0};
@@ -2030,12 +2092,13 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     var eh='';
     if(!D.exp.length) eh='<p class="note" style="margin:0">No expenses for this day.</p>';
     else {
-      var row=function(e){ var o=''; o+='<div class="logitem"><div>'+esc(e.category||'Expense')+(e.demo?'<span class="badge ind">practice</span>':'')+(e.virtual?'<span class="badge ind">rule \u00b7 estimate</span>':e.src==='import'?'<span class="badge rec">actual</span>':(e.cash?'<span class="badge">cash</span>':'<span class="badge ind">estimate</span>'))+(e.note?'<div class="d">'+esc(e.note)+'</div>':'')+(e.virtual?'':'<button class="del'+(armed===e.id?' arm':'')+'" data-xdel="'+esc(e.id)+'" type="button">'+(armed===e.id?'Tap again to delete':'Delete')+'</button>')+'</div><div class="amt">'+gbp2.format(+e.amount||0)+'</div></div>'; return o; };
+      var row=function(e){ var o=''; o+='<div class="logitem"><div>'+esc(e.category||'Expense')+(e.demo?'<span class="badge ind">practice</span>':'')+(e.virtual?'<span class="badge ind">rule \u00b7 estimate</span>':e.src==='import'?'<span class="badge rec">actual</span>':(e.cash?'<span class="badge">cash</span>':'<span class="badge ind">estimate</span>'))+(e.note?'<div class="d">'+esc(e.note)+'</div>':'')+(e.virtual?'':rpRowBtn(e))+(e.virtual?'':'<button class="del'+(armed===e.id?' arm':'')+'" data-xdel="'+esc(e.id)+'" type="button">'+(armed===e.id?'Tap again to delete':'Delete')+'</button>')+'</div><div class="amt">'+gbp2.format(+e.amount||0)+'</div></div>'; return o; };
       var real=D.exp.filter(function(e){return !e.virtual}), vir=D.exp.filter(function(e){return e.virtual});
       real.forEach(function(e){ eh+=row(e); });
       if(vir.length){ var vt=vir.reduce(function(x,e){return x+(+e.amount||0)},0);
         eh+='<details class="rulex"><summary><span>From your rules ('+vir.length+')</span><span class="v">'+gbp2.format(vt)+'</span><span class="rview">View</span></summary>'+vir.map(row).join('')+'</details>'; }
       eh+='<div class="kv"><span class="k"><b>Total expenses</b></span><span class="v">'+gbp2.format(D.expTotal)+'</span></div>'; }
+    eh+=rpLoose(S.day,D.exp);
     ex.innerHTML=eh;
     var ch=$('d-chart'); if(ch) ch.addEventListener('click',function(){ openJobsSummary(D); });
     Array.prototype.forEach.call(jb.querySelectorAll('[data-rcj]'),function(b){ b.addEventListener('click',function(){ openReceipt(b.getAttribute('data-rcj')); }); });
@@ -2162,8 +2225,150 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     if(!S.db){ toast('Sign in to save.'); return; }
     var a=mv('e-amt'); if(!(a>0)){ toast('Enter an amount.'); return; }
     $('e-add').disabled=true;
-    S.db.collection('entries').doc().set({kind:'expense',date:S.day,m:monthOf(S.day),category:$('e-cat').value,amount:Math.round(a*100)/100,cash:$('e-cash').checked,note:'',src:'manual',ts:Date.now(),demo:!!S.practice})
-      .then(function(){ toast('Expense saved: '+gbp2.format(a)); $('e-amt').value=''; $('e-cash').checked=true; }).catch(fail).then(function(){$('e-add').disabled=false});
+    var ref=S.db.collection('entries').doc(), cat=$('e-cat').value, amt=Math.round(a*100)/100, ph=S.rpPending;
+    ref.set({kind:'expense',date:S.day,m:monthOf(S.day),category:cat,amount:amt,cash:$('e-cash').checked,note:'',src:'manual',ts:Date.now(),demo:!!S.practice})
+      .then(function(){ return ph?rpSave(ph,{date:S.day,eid:ref.id,category:cat,amount:amt}):null; })
+      .then(function(){ toast('Expense saved: '+gbp2.format(a)+(ph?' with receipt photo':'')); $('e-amt').value=''; $('e-cash').checked=true; S.rpPending=null; rpPendingShow(); }).catch(fail).then(function(){$('e-add').disabled=false});
+  }
+
+  /* ---------- receipt photos (Matt, 28 Oct) ----------
+     Photos are shrunk in the phone to a small JPEG (well under 230 KB) and kept in the books database:
+     'rphotos' holds the small details (date, amount, category, which expense), 'rphotoimg' the picture itself,
+     so lists stay quick and a picture is only fetched when someone opens it. Free on Firebase's Spark plan. */
+  S.rph={}; S.rpPending=null; S.rpCur=null; S.rpMode=null;
+  var RP_MAX=230000;
+  function rpList(){ return Object.keys(S.rph||{}).map(function(k){return S.rph[k]}); }
+  function rpForEntry(eid){ return rpList().filter(function(r){ return r.eid===eid; }); }
+  /* A photo snapped at the till before the bank line arrives: match it to a bank expense of the same amount within 7 days. */
+  function rpMatch(e){
+    if(e.src!=='import') return null; var a=Math.round((+e.amount||0)*100), best=null;
+    rpList().forEach(function(r){ if(r.eid||!r.amount||Math.round(r.amount*100)!==a||!r.date||!e.date) return;
+      var d=(new Date(e.date)-new Date(r.date))/864e5; if(d<0||d>7) return; if(!best||r.date>best.date) best=r; });
+    return best;
+  }
+  function rpOf(e){ var l=rpForEntry(e.id); return l.length?l[0]:rpMatch(e); }
+  function rpRowBtn(e){ var r=rpOf(e);
+    return r?'<button class="rp-btn has" type="button" data-rpview="'+esc(r.id)+'">✓ Receipt photo</button>':'<button class="rp-btn" type="button" data-rpadd="'+esc(e.id)+'">Add receipt photo</button>'; }
+  /* Photos for this day not linked to (or matched with) one of the day's expenses yet. */
+  function rpLoose(day,exps){
+    var used={}; (exps||[]).forEach(function(e){ var r=e.virtual?null:rpOf(e); if(r) used[r.id]=1; });
+    var L=rpList().filter(function(r){ return r.date===day && !used[r.id] && !(r.eid&&(exps||[]).some(function(e){return e.id===r.eid})); });
+    if(!L.length) return '';
+    return '<h2 style="margin:14px 0 4px">Receipt photos waiting for the bank</h2><p class="note" style="margin:0 0 4px">These link up when a bank line with the same amount comes in within a week.</p>'
+      +L.map(function(r){ return '<div class="logitem"><div>'+esc(r.category||'Receipt')+'<div class="d">'+(r.note?esc(r.note):'Snapped '+esc(dlabel(r.date)))+'</div><button class="rp-btn has" type="button" data-rpview="'+esc(r.id)+'">View photo</button></div><div class="amt">'+(r.amount?gbp2.format(r.amount):'–')+'</div></div>'; }).join('');
+  }
+  function rpShrink(file){
+    return new Promise(function(res,rej){
+      var url=URL.createObjectURL(file), img=new Image();
+      img.onload=function(){
+        URL.revokeObjectURL(url);
+        var max=1600, w=img.naturalWidth, h=img.naturalHeight, k=Math.min(1,max/Math.max(w,h)), q=0.72, out='';
+        for(var i=0;i<12;i++){
+          var c=document.createElement('canvas'); c.width=Math.max(1,Math.round(w*k)); c.height=Math.max(1,Math.round(h*k));
+          var x=c.getContext('2d'); x.fillStyle='#fff'; x.fillRect(0,0,c.width,c.height); x.drawImage(img,0,0,c.width,c.height);
+          out=c.toDataURL('image/jpeg',q); if(out.length<=RP_MAX) return res({img:out,w:c.width,h:c.height});
+          if(q>0.5) q-=0.1; else k*=0.8;
+        }
+        rej(new Error('too big'));
+      };
+      img.onerror=function(){ URL.revokeObjectURL(url); rej(new Error('not an image')); };
+      img.src=url;
+    });
+  }
+  function rpSave(ph,meta){
+    var ref=S.db.collection('rphotos').doc(), id=ref.id;
+    return S.db.collection('rphotoimg').doc(id).set({img:ph.img,ts:Date.now()}).then(function(){
+      return ref.set({date:meta.date,m:monthOf(meta.date),eid:meta.eid||'',category:meta.category||'',amount:+meta.amount||0,note:meta.note||'',w:ph.w,h:ph.h,size:ph.img.length,ts:Date.now()});
+    }).then(function(){ return id; });
+  }
+  function rpMeta(r,extra){ var o={}; ['date','m','eid','category','amount','note','w','h','size','ts'].forEach(function(k){ if(r[k]!==undefined) o[k]=r[k]; }); return Object.assign(o,extra||{}); }
+  function rpDelete(id){
+    return S.db.collection('rphotos').doc(id).delete().then(function(){ return S.db.collection('rphotoimg').doc(id).delete(); }).catch(fail);
+  }
+  function rpPick(mode){
+    if(!S.db){ toast('Sign in to save photos.'); return; }
+    S.rpMode=mode; var f=$('rp-file'); f.value=''; f.click();
+  }
+  function rpPendingShow(){ var st=$('e-photo-st'), b=$('e-photo'); if(!st) return; st.textContent=S.rpPending?'✓ Photo ready, saved when you tap Add':''; b.textContent=S.rpPending?'Change photo':'Add receipt photo'; }
+  function rpOpen(){ $('rpovl').hidden=false; rpRenderView(); }
+  function rpClose(){ $('rpovl').hidden=true; S.rpCur=null; S.rpDelArm=false; }
+  function rpRenderView(){
+    var el=$('rp-body'), c=S.rpCur; if(!el||!c) return;
+    var h='<div class="cardhead"><h2 style="margin:0">Receipt photo</h2><button type="button" class="iconbtn" data-rpclose aria-label="Close">✕</button></div>';
+    if(c.kind==='new'){
+      h+='<img class="rp-img" alt="Receipt photo" src="'+c.img.img+'">'
+        +'<div class="two"><div class="field"><label for="rp-cat">Category</label><select id="rp-cat">'+(($('e-cat')&&$('e-cat').innerHTML)||'')+'</select></div>'
+        +'<div class="field"><label for="rp-amt">Amount</label><input type="text" class="money" id="rp-amt" inputmode="numeric" autocomplete="off" placeholder="0.00"></div></div>'
+        +'<div class="field"><label for="rp-note">Note (optional)</label><input type="text" id="rp-note" maxlength="80" placeholder="e.g. Shell, Park Royal"></div>'
+        +'<p class="help">Paid by card? Just save the photo: it links itself to the bank line when your bank import brings in the same amount. Paid in cash? Use Add a cash expense instead, so the cost counts.</p>'
+        +'<button class="btn" type="button" id="rp-keep">Save photo for '+esc(dlabel(S.day))+'</button>';
+      el.innerHTML=h; var a=$('rp-amt'); if(a) moneyInput(a);
+      var cs=$('rp-cat'); if(cs){ for(var i=0;i<cs.options.length;i++){ if(/fuel|diesel|petrol/i.test(cs.options[i].value||cs.options[i].text)){ cs.selectedIndex=i; break; } } }
+      return;
+    }
+    var r=S.rph[c.id]; if(!r){ rpClose(); return; }
+    h+=(c.img?'<img class="rp-img" alt="Receipt photo" src="'+c.img+'">':'<p class="note">Loading the photo…</p>')
+      +'<div class="kv"><span class="k">Date</span><span class="v">'+esc(dlabel(r.date))+'</span></div>'
+      +(r.category?'<div class="kv"><span class="k">Category</span><span class="v">'+esc(r.category)+'</span></div>':'')
+      +(r.amount?'<div class="kv"><span class="k">Amount</span><span class="v">'+gbp2.format(r.amount)+'</span></div>':'')
+      +(r.note?'<div class="kv"><span class="k">Note</span><span class="v">'+esc(r.note)+'</span></div>':'')
+      +'<div class="two" style="margin-top:12px"><button class="btn ghost small" type="button" id="rp-swap">Replace photo</button><button class="btn ghost small" type="button" id="rp-del" style="'+(S.rpDelArm?'color:var(--bad);border-color:var(--bad)':'')+'">'+(S.rpDelArm?'Tap again to delete':'Delete photo')+'</button></div>';
+    el.innerHTML=h;
+  }
+  function rpView(id){
+    S.rpCur={kind:'view',id:id,img:null}; S.rpDelArm=false; rpOpen();
+    S.db.collection('rphotoimg').doc(id).get().then(function(d){ if(S.rpCur&&S.rpCur.id===id){ S.rpCur.img=d.exists?(d.data()||{}).img:null; if(!S.rpCur.img) toast('Photo not found.'); rpRenderView(); } }).catch(fail);
+  }
+  $('rp-file').addEventListener('change',function(){
+    var f=this.files&&this.files[0]; if(!f) return; var mode=S.rpMode||{kind:'snap'};
+    toast('Preparing the photo…');
+    rpShrink(f).then(function(ph){
+      if(mode.kind==='pending'){ S.rpPending=ph; rpPendingShow(); toast('Photo ready'); return; }
+      if(mode.kind==='entry'){ var e=S.entries.filter(function(x){return x.id===mode.id})[0]||{};
+        return rpSave(ph,{date:e.date||S.day,eid:mode.id,category:e.category||'',amount:+e.amount||0}).then(function(){ toast('Receipt photo saved'); }); }
+      if(mode.kind==='replace'){ var r=S.rph[mode.id]; if(!r) return;
+        return S.db.collection('rphotoimg').doc(mode.id).set({img:ph.img,ts:Date.now()}).then(function(){ return S.db.collection('rphotos').doc(mode.id).set(rpMeta(r,{w:ph.w,h:ph.h,size:ph.img.length,ts:Date.now()})); })
+          .then(function(){ if(S.rpCur&&S.rpCur.id===mode.id){ S.rpCur.img=ph.img; rpRenderView(); } toast('Photo replaced'); }); }
+      S.rpCur={kind:'new',img:ph}; rpOpen();
+    }).catch(function(e){ toast(e&&e.message==='not an image'?'That file is not a photo this phone can read.':'Could not use that photo. Try again.'); });
+  });
+  document.addEventListener('click',function(ev){
+    var t=ev.target; if(!t||!t.closest) return; var b;
+    if(t.id==='rp-snap'||t.closest('#rp-snap')){ rpPick({kind:'snap'}); return; }
+    if(t.id==='e-photo'){ rpPick({kind:'pending'}); return; }
+    if((b=t.closest('[data-rpadd]'))){ rpPick({kind:'entry',id:b.getAttribute('data-rpadd')}); return; }
+    if((b=t.closest('[data-rpview]'))){ rpView(b.getAttribute('data-rpview')); return; }
+    if(t.closest('[data-rpclose]')){ rpClose(); return; }
+    if(t.id==='rp-swap'&&S.rpCur){ rpPick({kind:'replace',id:S.rpCur.id}); return; }
+    if(t.id==='rp-del'&&S.rpCur){ if(!S.rpDelArm){ S.rpDelArm=true; rpRenderView(); setTimeout(function(){ if(S.rpDelArm){ S.rpDelArm=false; rpRenderView(); } },3000); return; }
+      var id=S.rpCur.id; rpClose(); rpDelete(id).then(function(){ toast('Photo deleted'); }); return; }
+    if(t.id==='rp-keep'&&S.rpCur&&S.rpCur.kind==='new'){
+      t.disabled=true; var ph=S.rpCur.img;
+      rpSave(ph,{date:S.day,category:$('rp-cat').value,amount:mv('rp-amt'),note:$('rp-note').value.trim()}).then(function(){ rpClose(); toast('Receipt photo saved'); })
+        .catch(function(e){ t.disabled=false; fail(e); });
+      return;
+    }
+    if(t.id==='rpovl') rpClose();
+  });
+  /* All receipt photos in a tax year, one per page, for the accountant. */
+  function rpPDF(y){
+    if(!window.jspdf||!window.jspdf.jsPDF){ toast('The PDF maker did not load. Check your connection and try again.'); return; }
+    var a=y+'-04-06', b=(y+1)+'-04-05';
+    var L=rpList().filter(function(r){ return r.date>=a&&r.date<=b; }).sort(function(p,q){ return p.date<q.date?-1:p.date>q.date?1:0; });
+    if(!L.length){ toast('No receipt photos in tax year '+tyLabel(y)+' yet.'); return; }
+    var bt=$('acc-photos'); if(bt){ bt.disabled=true; bt.textContent='Collecting '+L.length+' photos…'; }
+    Promise.all(L.map(function(r){ return S.db.collection('rphotoimg').doc(r.id).get().then(function(d){ return d.exists?(d.data()||{}).img:null; }).catch(function(){ return null; }); }))
+    .then(function(imgs){
+      var doc=new window.jspdf.jsPDF({unit:'mm',format:'a4'}), n=0;
+      L.forEach(function(r,i){ var im=imgs[i]; if(!im) return; if(n) doc.addPage(); n++;
+        doc.setFontSize(12); doc.text(dlabel(r.date)+'   '+(r.category||'Receipt')+(r.amount?'   '+gbp2.format(r.amount):''),18,16);
+        if(r.note){ doc.setFontSize(9); doc.text(String(r.note),18,22); }
+        var mw=174, mh=255, w=r.w||1000, h=r.h||1400, k=Math.min(mw/w,mh/h);
+        doc.addImage(im,'JPEG',18,28,w*k,h*k);
+        doc.setFontSize(8); doc.setTextColor(140); doc.text('Cab Books  ·  '+brandName()+'  ·  Receipt photos, tax year '+tyLabel(y)+'  ·  '+n+' of '+L.length,18,289); doc.setTextColor(0);
+      });
+      offerFile('Receipt photos '+tyLabel(y).replace(/\//g,'-')+'.pdf',doc.output('arraybuffer'),'Receipt photos ready');
+    }).catch(fail).then(function(){ var b2=$('acc-photos'); if(b2){ b2.disabled=false; b2.textContent='Receipt photos for this tax year (PDF)'; } });
   }
 
   /* ---------- expense rules ---------- */
@@ -2328,6 +2533,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     ['Cleaning / admin supplies',/AMAZON|AMZN/],
     ['Car wash',/CAR ?WASH|LUXE SHINE|VM CAR|VALETING/],
     ['Union',/LICENSED TAXI DRIV/],
+    ['Cab repairs / parts',/TIPSEAT|TIP SEAT|UBIQUITOUS LIMITED/],
     ['Other',/BERKS & SPARKS|VISTAPRINT/],
     ['ignore',/MIDNITE|AMEX|\bTO A\/C\b|PARKING CONTROL/]
   ];
@@ -2972,6 +3178,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
       +'<div class="field" style="margin:12px 0 0"><label for="acc-notes">Notes for your accountant (printed on the PDF)</label><textarea id="acc-notes" maxlength="1500" style="font-family:var(--font-body);font-size:15px;min-height:90px" placeholder="e.g. Mobile phone about 80% business. Charge point installed at home in December. Heathrow drop-offs paid from another account.">'+esc(z.accNotes||'')+'</textarea></div>'
       +'<button class="btn ghost small" type="button" id="acc-save" style="width:100%;margin-top:8px">Save notes</button>'
       +'<div class="two" style="margin-top:12px"><button class="btn" type="button" id="acc-pdf">Download PDF</button><button class="btn ghost" type="button" id="acc-csv">Spreadsheet (CSV)</button></div>'
+      +'<button class="btn ghost" type="button" id="acc-photos" style="margin-top:10px">Receipt photos for this tax year (PDF)</button>'
       +'<p class="note">Accounts run April to March by calendar month. HMRC treats accounts made up to 31 March the same as 5 April. Turnover on the return includes tips; VAT turnover does not. Not included: capital items (such as a charge point), the home-working flat rate, and any private-use share of costs. Your accountant adds those.</p></div>';
     return h;
   }
@@ -3056,6 +3263,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   document.addEventListener('click',function(ev){
     var id=ev.target&&ev.target.id; if(!id||id.indexOf('acc-')!==0) return;
     if(id==='acc-pdf') accPDF(accY());
+    else if(id==='acc-photos') rpPDF(accY());
     else if(id==='acc-csv') offerFile(accFileBase(accY())+'.csv',new Blob([accCSV(accY())],{type:'text/csv;charset=utf-8'}),'Spreadsheet ready for your accountant');
     else if(id==='acc-save'){
       var u=+$('acc-union').value; if(isNaN(u)||u<0||u>100){ toast('Union fee % must be between 0 and 100.'); return; }
@@ -3395,9 +3603,423 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     S.day=iso; setEditing(null); S.prov=provShown('Hand')?'Hand':S.prov; applyFeeDefaults(); buildChips(); setMoney('j-amt',E.central);
     var a=F.pts[0]&&F.pts[0].label, b=F.pts[F.pts.length-1]&&F.pts[F.pts.length-1].label; if(a&&b&&a!=='Dropped pin'&&b!=='Dropped pin'){ $('j-note').value=(a+' – '+b).slice(0,120); $('j-notebox').open=true; }
     S.addOpen=true; showTab('today'); renderDay(); updatePreview(); var f=$('d-form'); if(f) f.scrollIntoView({block:'start'}); toast('Fare filled in. Change it to what the meter showed, pick the provider and save.'); }
+
+  /* ---------- Tools: train status at the London terminals (Matt, 28 Oct) ----------
+     As TaxiTracker: the 11 terminals A–Z; each shows how many trains are cancelled in the next
+     2 hours (none = plain, 1–3 green, 4–9 orange, 10+ red). Tap the station for National Rail's
+     live departure board; tap the count for the cancelled trains. Counts come from National Rail's
+     live departure boards via /.netlify/functions/opendata?d=rail, which needs RAIL_API_KEY set in
+     Netlify (Marcin's TaxiTracker key or our own). Refreshes every minute. Website only for counts. */
+  S.tr={data:null,err:'',busy:false,at:0,open:null};
+  var TR_ST=[['Charing Cross','CHX','london-charing-cross'],['Euston','EUS','london-euston'],['Fenchurch Street','FST','london-fenchurch-street'],["King's Cross",'KGX','london-kings-cross'],['Liverpool Street','LST','london-liverpool-street'],['London Bridge','LBG','london-bridge'],['Marylebone','MYB','london-marylebone'],['Paddington','PAD','london-paddington'],['St Pancras','STP','london-st-pancras-international'],['Victoria','VIC','london-victoria'],['Waterloo','WAT','london-waterloo']];
+  function trLoad(force){
+    var T=S.tr; if(T.busy||!FX_CFG) return; if(force!==true&&(T.data||T.err)&&Date.now()-T.at<(typeof force==='number'?force:55000)) return;
+    T.busy=true;
+    fetch('/.netlify/functions/opendata?d=rail',{cache:'no-store'}).then(function(r){ return r.json().catch(function(){return {}}).then(function(j){ if(!r.ok||!j||!j.stations) throw new Error(j&&j.error||('HTTP '+r.status)); return j; }); })
+      .then(function(j){ T.data=j; T.err=''; })
+      .catch(function(e){ T.err=e.message||'could not load'; })
+      .then(function(){ T.busy=false; T.at=Date.now(); if(S.tab==='tools'&&S.tool==='trains') renderTools(); alRender(); });
+  }
+  function renderTrains(el){
+    var T=S.tr; if(FX_CFG) trLoad(false);
+    var notSet=T.err==='not_set_up', h='<div class="card">'+toolNav()+'</div><div class="card">';
+    h+='<div class="cardhead"><h2>London train stations</h2>'+(FX_CFG?'<button type="button" class="iconbtn" id="tr-ref" aria-label="Refresh" title="Refresh">↻</button>':'')+'</div>';
+    h+='<p class="note" style="margin:0 0 6px">'+(!FX_CFG?'Tap a station for its live departures. Cancellation counts work on the Cab Books website.'
+      :notSet?'Tap a station for its live departures. Cancellation counts start once the National Rail data key is added.'
+      :T.data?'Cancellations in the next 2 hours. Updated '+esc(hm(T.data.checkedAt))+'. Tap a station for live departures, or a count for the trains.'+(T.err?' (Last refresh failed.)':'')
+      :T.err?'Could not load cancellations ('+esc(T.err)+'). Tap refresh to try again.':'Checking cancellations…')+'</p>';
+    TR_ST.forEach(function(st){
+      var x=T.data&&T.data.stations&&T.data.stations[st[1]], n=x&&x.available?x.cancellationCount:null;
+      var cls=n==null?'':n===0?'':n<=3?'low':n<=9?'warn':'bad';
+      var lbl=n==null?(FX_CFG&&!notSet&&!T.data&&!T.err?'Checking…':'–'):n===0?'No cancellations':n+' cancelled';
+      var open=T.open===st[1]&&n>0;
+      h+='<div class="tr-st"><a href="https://www.nationalrail.co.uk/live-trains/departures/'+st[2]+'/" target="_blank" rel="noopener noreferrer">'+esc(st[0])+'</a>'
+        +'<button type="button" class="tr-n '+cls+'" data-trn="'+st[1]+'"'+(n>0?' aria-expanded="'+open+'"':' disabled')+'>'+lbl+(n>0?(open?' ▴':' ▾'):'')+'</button></div>';
+      if(open) h+='<div class="tr-list">'+x.cancelledServices.map(function(sv){ return '<div><b>'+esc(sv.time)+'</b> '+esc(sv.destination)+' <span class="note" style="margin:0">· '+esc(sv.operator)+'</span></div>'; }).join('')+'</div>';
+    });
+    h+='</div><p class="note" style="margin:0">Live running data supplied by National Rail.</p>';
+    el.innerHTML=h;
+  }
+  document.addEventListener('click',function(ev){
+    var t=ev.target; if(!t||!t.closest) return; var b;
+    if((b=t.closest('[data-trn]'))&&!b.disabled){ var c=b.getAttribute('data-trn'); S.tr.open=S.tr.open===c?null:c; renderTools(); return; }
+    if(t.id==='tr-ref'||t.closest('#tr-ref')){ trLoad(true); var r=$('tr-ref'); if(r) r.disabled=true; }
+  });
+  setInterval(function(){ if(S.tab==='tools'&&S.tool==='trains'&&!document.hidden) trLoad(false); },60000);
+
+  /* ---------- Admin panel (Matt and Marcin, 28 Oct) ----------
+     Website only. Shows who has signed up and how they use Cab Books: email, name, sign-up date,
+     last sign-in and last use, Full books / Just tracking, phones with train alerts, plan (all Free
+     until payments exist). NEVER anyone's jobs, money or expenses – the server function only reads
+     account details. Admins are set in the function (Matt's and Marcin's emails, or ADMIN_EMAILS).
+     Each driver's app notes when it was last used (users/<uid>/meta/seen) at most once an hour. */
+  S.adm={is:false,checked:false,data:null,err:'',busy:false};
+  function admUser(){ return S.auth&&S.auth.currentUser; }
+  function admDevice(){ var u=navigator.userAgent; return /iPhone|iPad|iPod/.test(u)?'iPhone':/Android/.test(u)?'Android':/Macintosh/.test(u)?'Mac':/Windows/.test(u)?'Windows':'Other'; }
+  function admCall(q){ var u=admUser(); if(!u) return Promise.reject(new Error('not_signed_in'));
+    return u.getIdToken().then(function(tk){ return fetch('/.netlify/functions/admin'+(q||''),{headers:{Authorization:'Bearer '+tk},cache:'no-store'}); })
+      .then(function(r){ return r.json().catch(function(){return {}}).then(function(j){ if(!r.ok) throw new Error(j&&j.error||('HTTP '+r.status)); return j; }); }); }
+  setInterval(function(){
+    if(!FX_CFG||!admUser()||!S.db) return;
+    var last=+lsGet('cb-seen')||0; if(Date.now()-last>3600000){ lsSet('cb-seen',String(Date.now())); S.db.collection('meta').doc('seen').set({at:Date.now(),device:admDevice()}).catch(function(){}); }
+    if(!S.adm.checked){ S.adm.checked=true; admCall('?check=1').then(function(j){ S.adm.is=!!j.admin; renderSettings(); }).catch(function(){ S.adm.checked=false; }); }
+  },10000);
+  function renderAdminCard(){
+    if(!S.adm.is) return '';
+    return '<div class="card"><h2>Admin</h2><p class="help">Who has signed up and how they use Cab Books. Account details only: nobody’s jobs or money.</p><button class="btn ghost" type="button" id="adm-open">Open admin panel</button></div>';
+  }
+  function admWhen(ms){ if(!ms) return '–'; var d=new Date(ms), now=new Date(), days=Math.floor((now-d)/864e5);
+    if(d.toDateString()===now.toDateString()) return 'today '+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+    if(days<7) return days<=1?'yesterday':days+' days ago';
+    return d.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}); }
+  function admRender(){
+    var A=S.adm, el=$('adm-body'); if(!el) return;
+    var h='<div class="cardhead"><h2 style="margin:0">Admin</h2><div style="display:flex;gap:8px"><button type="button" class="iconbtn" id="adm-ref" aria-label="Refresh">↻</button><button type="button" class="iconbtn" id="adm-close" aria-label="Close">✕</button></div></div>';
+    if(A.busy&&!A.data) h+='<p class="note">Loading…</p>';
+    else if(A.err&&!A.data) h+='<p class="note">'+(A.err==='not_set_up'?'The admin panel starts working once the Firebase key is added in Netlify (parked on your to-do list).':'Could not load ('+esc(A.err)+').')+'</p>';
+    if(A.data){
+      var T=A.data.totals, U=A.data.users||[];
+      h+='<div class="adm-tot">'+[['Signed up',T.signedUp],['Used today',T.activeToday],['Used this week',T.activeWeek],['Used in 30 days',T.activeMonth],['New this month',T.newThisMonth],['Paying',T.paying]].map(function(x){ return '<div><b>'+x[1]+'</b><span>'+x[0]+'</span></div>'; }).join('')+'</div>';
+      h+='<p class="note" style="margin:0 0 6px">'+T.phoneAlerts+' with train alerts on their phone. Updated '+esc(hm(A.data.checkedAt))+'.</p>';
+      U.forEach(function(u){
+        h+='<div class="adm-u"><div class="e">'+esc(u.email||'(no email)')+(u.name?' <span class="m" style="font-weight:400">· '+esc(u.name)+'</span>':'')+(u.disabled?' <span class="badge ind">disabled</span>':'')+'</div>'
+          +'<div class="m">Last used '+esc(admWhen(u.lastSeen||u.lastSignIn))+(u.device?' on '+esc(u.device):'')+' · signed up '+esc(admWhen(u.created))+'</div>'
+          +'<div class="m">'+esc(u.mode)+' · '+esc(u.subscription)+(u.phoneAlerts?' · train alerts on '+u.phoneAlerts+' phone'+(u.phoneAlerts>1?'s':''):'')+'</div></div>';
+      });
+      if(!U.length) h+='<p class="note">Nobody has signed up yet.</p>';
+    }
+    el.innerHTML=h;
+  }
+  function admLoad(){ var A=S.adm; A.busy=true; A.err=''; admRender();
+    admCall('').then(function(j){ A.data=j; }).catch(function(e){ A.err=e.message||'error'; }).then(function(){ A.busy=false; admRender(); }); }
+  document.addEventListener('click',function(ev){ var t=ev.target; if(!t) return;
+    if(t.id==='adm-open'){ $('admovl').hidden=false; admLoad(); }
+    if(t.id==='adm-close'||t.id==='admovl'){ $('admovl').hidden=true; }
+    if(t.id==='adm-ref'){ admLoad(); } });
+
+  /* ---------- Train alerts, stage 1: banner inside the app (Matt, 28 Oct) ----------
+     Standard rules are on for everyone (Matt: most drivers won't change them): warn when a London
+     terminal has 4 or more trains cancelled in the next 2 hours (orange or red on the Trains screen),
+     and when Heathrow Express or Gatwick Express has 2 or more cancelled. Each driver can change the
+     number, switch stations off, or turn alerts off in Settings → Train alerts (settings/alerts).
+     While the app is open on the website it checks every 3 minutes. Dismissing hides that warning
+     until it gets worse (3 more cancellations) or a new station has problems.
+     Stage 2 (phone notifications when the app is closed) needs the National Rail key first. */
+  var AL_DEF={on:true,min:4,express:true,off:[]};
+  S.al=Object.assign({},AL_DEF); S.alHide={};
+  try{ S.alHide=JSON.parse(lsGet('cb-al-hide')||'{}')||{}; }catch(e){ S.alHide={}; }
+  function alList(){
+    var A=S.al, d=S.tr.data; if(!A.on||!d||!d.stations) return [];
+    var out=[];
+    TR_ST.forEach(function(st){ var x=d.stations[st[1]]; if(!x||!x.available||(A.off||[]).indexOf(st[1])>=0) return;
+      if(x.cancellationCount>=A.min) out.push({k:st[1],n:x.cancellationCount,t:'Train problems at '+st[0]+': '+x.cancellationCount+' cancelled in the next 2 hours.'}); });
+    if(A.express){
+      [['PAD',/heathrow express/i,'Heathrow Express'],['VIC',/gatwick express/i,'Gatwick Express']].forEach(function(e){
+        var x=d.stations[e[0]]; if(!x||!x.available) return;
+        var n=(x.cancelledServices||[]).filter(function(s){ return e[1].test(s.operator||''); }).length;
+        if(n>=2) out.push({k:e[2],n:n,t:e[2]+' problems: '+n+' trains cancelled in the next 2 hours.'});
+      });
+    }
+    return out.filter(function(a){ var h=S.alHide[a.k]; return !(h!=null&&a.n<h+3); });
+  }
+  function alRender(){
+    var el=$('alertbar'); if(!el) return;
+    var L=FX_CFG?alList():[];
+    if(!L.length){ el.hidden=true; el.innerHTML=''; return; }
+    el.innerHTML=L.map(function(a){ return '<div class="al"><span><b>⚠</b> '+esc(a.t)+'</span><button type="button" class="iconbtn" style="min-width:36px;min-height:36px;font-size:14px" data-alhide="'+esc(a.k)+'" data-aln="'+a.n+'" aria-label="Dismiss">✕</button></div>'; }).join('')
+      +'<div class="row"><button type="button" class="btn small" id="al-go">Check trains</button></div>';
+    el.hidden=false;
+  }
+  function alPrune(){ var d=S.tr.data, ch=false; if(!d||!d.stations) return; Object.keys(S.alHide).forEach(function(k){ var x=d.stations[k]; if(x&&x.available&&x.cancellationCount<S.al.min){ delete S.alHide[k]; ch=true; } }); if(ch) lsSet('cb-al-hide',JSON.stringify(S.alHide)); }
+  function renderAlertPick(){
+    var A=S.al, h='<div class="card" id="al-card"><h2>Train alerts</h2><p class="help">Cab Books warns you when trains are being cancelled at the London terminals, so you know where to head. The standard settings suit most drivers.</p>';
+    h+='<div class="chips tight" role="group" aria-label="Train alerts on or off"><button type="button" data-alon="1" aria-pressed="'+!!A.on+'">'+(A.on?'✓ ':'')+'Alerts on</button><button type="button" data-alon="0" aria-pressed="'+!A.on+'">'+(!A.on?'✓ ':'')+'Off</button></div>';
+    if(A.on){
+      h+='<label style="margin-top:12px">Warn me when a station has this many cancelled</label><div class="chips tight" role="group" aria-label="Cancellations">'+[2,4,6,10].map(function(n){ return '<button type="button" data-almin="'+n+'" aria-pressed="'+(A.min===n)+'">'+(A.min===n?'✓ ':'')+n+' or more'+(n===4?' (standard)':'')+'</button>'; }).join('')+'</div>'
+        +'<label style="margin-top:12px">Stations</label><div class="chips tight" role="group" aria-label="Stations">'+TR_ST.map(function(st){ var on=(A.off||[]).indexOf(st[1])<0; return '<button type="button" data-alst="'+st[1]+'" aria-pressed="'+on+'">'+(on?'✓ ':'')+esc(st[0])+'</button>'; }).join('')+'</div>'
+        +'<label style="margin-top:12px">Airport trains</label><div class="chips tight"><button type="button" data-alex="1" aria-pressed="'+!!A.express+'">'+(A.express?'✓ ':'')+'Heathrow Express and Gatwick Express problems</button></div>';
+    }
+    if(A.on) h+=pushCard();
+    h+='<p class="note">'+(S.tr.err==='not_set_up'?'Alerts start once the National Rail data is connected. ':'')+'While Cab Books is open, warnings also show at the top of the screen.</p>';
+    return h+'</div>';
+  }
+  function alSave(ch){
+    S.al=Object.assign({},S.al,ch); renderSettings(); alRender();
+    if(S.db) S.db.collection('settings').doc('alerts').set({on:!!S.al.on,min:+S.al.min||4,express:!!S.al.express,off:S.al.off||[],ts:Date.now()}).catch(fail);
+    if(S.db&&S.push.state==='on') S.db.collection('push').doc(pushDev()).set({rules:alRules(),ts:Date.now()},{merge:true}).catch(function(){});
+  }
+  /* ---------- Train alerts, stage 2: notifications on the phone when Cab Books is closed ----------
+     Website only. The phone signs up once (button in Settings → Train alerts); its push address and
+     this driver's rules are saved in users/<uid>/push/<this phone>. The server function train-alerts
+     checks every 5 minutes and sends the notification (sw.js shows it; tapping opens Trains).
+     iPhone: only works when Cab Books is opened from the Home Screen icon (iOS 16.4+). */
+  S.push={state:'checking'};
+  function alRules(){ return {on:!!S.al.on,min:+S.al.min||4,express:!!S.al.express,off:S.al.off||[]}; }
+  function pushDev(){ var d=lsGet('cb-dev'); if(!d){ d='d'+Date.now().toString(36)+Math.random().toString(36).slice(2,8); lsSet('cb-dev',d); } return d; }
+  function pushIOS(){ return /iPhone|iPad|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1); }
+  function pushStandalone(){ return (window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches)||navigator.standalone===true; }
+  function pushCheck(){
+    var P=S.push;
+    if(!FX_CFG){ P.state='website'; return; }
+    if(pushIOS()&&!pushStandalone()){ P.state='home'; renderSettings(); return; }
+    if(!('serviceWorker' in navigator)||!('PushManager' in window)||!('Notification' in window)){ P.state='unsupported'; renderSettings(); return; }
+    if(Notification.permission==='denied'){ P.state='denied'; renderSettings(); return; }
+    navigator.serviceWorker.register('/sw.js').then(function(reg){ P.reg=reg; return reg.pushManager.getSubscription(); })
+      .then(function(sub){ P.state=sub&&lsGet('cb-push')==='1'?'on':'off'; renderSettings(); })
+      .catch(function(){ P.state='unsupported'; renderSettings(); });
+  }
+  function pushB64(s){ s=s.replace(/-/g,'+').replace(/_/g,'/'); while(s.length%4) s+='='; var r=atob(s), a=new Uint8Array(r.length); for(var i=0;i<r.length;i++) a[i]=r.charCodeAt(i); return a; }
+  function pushOn(){
+    var P=S.push; if(!S.db||!P.reg) return;
+    P.state='busy'; renderSettings();
+    Notification.requestPermission().then(function(perm){
+      if(perm!=='granted') throw new Error(perm==='denied'?'denied':'not allowed');
+      return fetch('/.netlify/functions/opendata?d=vapid').then(function(r){ return r.json().then(function(j){ if(!r.ok||!j.key) throw new Error(j&&j.error==='not_set_up'?'not_set_up':'no key'); return j.key; }); });
+    }).then(function(key){
+      return P.reg.pushManager.getSubscription().then(function(old){ return old?old.unsubscribe():null; }).then(function(){ return P.reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:pushB64(key)}); });
+    }).then(function(sub){
+      return S.db.collection('push').doc(pushDev()).set({sub:JSON.stringify(sub),rules:alRules(),sent:{},device:navigator.userAgent.slice(0,120),ts:Date.now()});
+    }).then(function(){ lsSet('cb-push','1'); P.state='on'; renderSettings(); toast('Train alerts are on for this phone'); })
+      .catch(function(e){ var m=e&&e.message; P.state=m==='denied'?'denied':'off'; renderSettings(); toast(m==='denied'?'Notifications are blocked for Cab Books. Allow them in your phone settings.':m==='not_set_up'?'Phone alerts are not switched on at our end yet. The banner still works.':'Could not turn on alerts. Try again.'); });
+  }
+  function pushOff(){
+    var P=S.push;
+    (P.reg?P.reg.pushManager.getSubscription():Promise.resolve(null)).then(function(sub){ return sub?sub.unsubscribe():null; })
+      .then(function(){ return S.db?S.db.collection('push').doc(pushDev()).delete():null; })
+      .then(function(){ lsSet('cb-push','0'); P.state='off'; renderSettings(); toast('Train alerts are off for this phone'); }).catch(fail);
+  }
+  function pushCard(){
+    var st=S.push.state, h='<label style="margin-top:14px">Alerts on this phone when Cab Books is closed</label>';
+    if(st==='website') return h+'<p class="note">Works on the Cab Books website.</p>';
+    if(st==='home') return h+'<p class="note">On iPhone, add Cab Books to your Home Screen first (Safari: Share → Add to Home Screen), then open it from the icon and come back here.</p>';
+    if(st==='unsupported') return h+'<p class="note">This phone or browser cannot show alerts from Cab Books. The banner inside the app still works.</p>';
+    if(st==='denied') return h+'<p class="note">Notifications are blocked for Cab Books. Allow them in your phone’s settings, then come back here.</p>';
+    if(st==='on') return h+'<p class="note" style="color:var(--ok)">✓ On for this phone.</p><button class="btn ghost small" type="button" id="push-off">Turn off on this phone</button>';
+    if(st==='checking'||st==='busy') return h+'<p class="note">Checking…</p>';
+    return h+'<button class="btn small" type="button" id="push-on">Turn on alerts on this phone</button><p class="note">Your phone will ask once to allow notifications. On iPhone they can now and then arrive late; the banner inside Cab Books always shows the same warning.</p>';
+  }
+  document.addEventListener('click',function(ev){ var t=ev.target; if(!t) return; if(t.id==='push-on') pushOn(); if(t.id==='push-off') pushOff(); });
+  setTimeout(pushCheck,1500);
+  document.addEventListener('click',function(ev){
+    var t=ev.target; if(!t||!t.closest) return; var b;
+    if((b=t.closest('[data-alon]'))){ alSave({on:b.getAttribute('data-alon')==='1'}); return; }
+    if((b=t.closest('[data-almin]'))){ alSave({min:+b.getAttribute('data-almin')}); return; }
+    if((b=t.closest('[data-alex]'))){ alSave({express:!S.al.express}); return; }
+    if((b=t.closest('[data-alst]'))){ var c=b.getAttribute('data-alst'), off=(S.al.off||[]).slice(), i=off.indexOf(c); if(i>=0) off.splice(i,1); else off.push(c); alSave({off:off}); return; }
+    if((b=t.closest('[data-alhide]'))){ S.alHide[b.getAttribute('data-alhide')]=+b.getAttribute('data-aln')||0; lsSet('cb-al-hide',JSON.stringify(S.alHide)); alRender(); return; }
+    if(t.id==='al-go'){ S.tool='trains'; lsSet('cb-tool','trains'); showTab('tools'); return; }
+  });
+  setInterval(function(){ if(S.al.on&&FX_CFG&&!document.hidden){ trLoad(170000); alPrune(); } },60000);
+  document.addEventListener('visibilitychange',function(){ if(!document.hidden&&S.al.on&&FX_CFG) trLoad(170000); });
+  setTimeout(function(){ if(S.al.on&&FX_CFG) trLoad(false); },4000);
+
+  /* ---------- Tools: tube status (Matt, 28 Oct) ----------
+     Every TfL line (Underground, DLR, the six Overground lines, Elizabeth line) in A–Z order with
+     its status; tap a line for TfL's reason. Data from TfL's free line-status feed through the
+     website's server function /.netlify/functions/opendata?d=tube (cached 60 seconds), refreshed
+     every minute while open. Website only. */
+  S.tb={data:null,err:'',busy:false,at:0,open:{}};
+  var TB_COL={bakerloo:'#B36305',central:'#E32017',circle:'#FFD300',district:'#00782A',dlr:'#00A4A7','elizabeth':'#6950A1','hammersmith-city':'#F3A9BB',jubilee:'#A0A5A9',metropolitan:'#9B0056',northern:'#8a8a8a',piccadilly:'#2a5bd7',victoria:'#0098D4','waterloo-city':'#95CDBA',liberty:'#7a8085',lioness:'#FAA61A',mildmay:'#437EC1',suffragette:'#5BBD72',weaver:'#a2477a',windrush:'#ED1B00'};
+  function tbClass(st){ var s=String(st||'').toLowerCase();
+    if(/good service/.test(s)) return 'ok';
+    if(/service closed/.test(s)) return 'off';
+    if(/minor|reduced|special/.test(s)) return 'amb';
+    if(/part suspended|severe|part closure/.test(s)) return 'org';
+    if(/suspended|closed|closure|not running/.test(s)) return 'bad';
+    return 'amb'; }
+  function tbLoad(force){
+    var T=S.tb; if(T.busy||!FX_CFG) return; if(!force&&T.data&&Date.now()-T.at<55000) return;
+    T.busy=true;
+    fetch('/.netlify/functions/opendata?d=tube',{cache:'no-store'}).then(function(r){ return r.json().catch(function(){return {}}).then(function(j){ if(!r.ok||!j||!Array.isArray(j.lines)) throw new Error(j&&j.error||('HTTP '+r.status)); return j; }); })
+      .then(function(j){ T.data=j; T.err=''; T.at=Date.now(); })
+      .catch(function(e){ T.err=e.message||'could not load'; })
+      .then(function(){ T.busy=false; if(S.tab==='tools'&&S.tool==='tube') renderTools(); });
+  }
+  function renderTube(el){
+    var T=S.tb;
+    if(!FX_CFG){ el.innerHTML='<div class="card">'+toolNav()+'</div><div class="card empty"><b>Tube status</b>Live line status works on the Cab Books website. Inside Claude it cannot reach TfL.</div>'; return; }
+    tbLoad(false);
+    var h='<div class="card">'+toolNav()+'</div><div class="card">';
+    var L=T.data&&T.data.lines||[];
+    var bad=L.filter(function(l){ var c=tbClass(l.status); return c!=='ok'&&c!=='off'; });
+    h+='<div class="cardhead"><h2>Tube status</h2><button type="button" class="iconbtn" id="tb-ref" aria-label="Refresh" title="Refresh">↻</button></div>';
+    if(!T.data){ h+=T.err?'<p class="note">Could not load the tube status ('+esc(T.err)+'). Check your signal and tap refresh.</p>':'<p class="note">Loading the latest from TfL…</p>'; }
+    else {
+      h+='<p class="note" style="margin:0 0 6px">'+(bad.length?'<b style="color:var(--warn)">'+bad.length+' line'+(bad.length===1?'':'s')+' with problems.</b> ':'Good service on all lines. ')+'Updated '+esc(hm(T.data.checkedAt))+'. Tap a line for details.'+(T.err?' (Last refresh failed.)':'')+'</p>';
+      L.forEach(function(l){
+        var c=tbClass(l.status), why=l.reason||((l.statuses||[]).length>1?'Also: '+l.statuses.slice(1).join(', '):(c==='ok'?'Good service on the whole line.':''));
+        h+='<details class="tb-line" data-tbl="'+esc(l.id)+'"'+(T.open[l.id]?' open':'')+'><summary><span class="tb-bar" style="background:'+(TB_COL[l.id]||'var(--muted)')+'"></span><span class="tb-name">'+esc(l.name)+'</span><span class="tb-st '+c+'">'+esc(l.status)+'</span></summary>'
+          +(why?'<div class="tb-why">'+esc(why)+'</div>':'')+'</details>';
+      });
+    }
+    h+='</div><p class="note" style="margin:0">Live status from Transport for London.</p>';
+    el.innerHTML=h;
+  }
+  document.addEventListener('toggle',function(ev){ var d=ev.target; if(d&&d.getAttribute&&d.getAttribute('data-tbl')) S.tb.open[d.getAttribute('data-tbl')]=d.open; },true);
+  document.addEventListener('click',function(ev){ var t=ev.target; if(t&&(t.id==='tb-ref'||(t.closest&&t.closest('#tb-ref')))){ tbLoad(true); var b=$('tb-ref'); if(b) b.disabled=true; } });
+  setInterval(function(){ if(S.tab==='tools'&&S.tool==='tube'&&!document.hidden) tbLoad(false); },60000);
+
+  /* ---------- Tools: taxi ranks and toilets maps (Matt, 28 Oct) ----------
+     The same data and colours as TaxiTracker: TfL's live rank layer (728 ranks; yellow = rank,
+     green = rest/refreshment, red = suspended) and TaxiTracker's combined London toilets file
+     (yellow listed, green community scheme, purple restricted, red closure reported).
+     Data comes through the website's own server function /.netlify/functions/opendata, which
+     caches it for 6 hours. The map is the fare calculator's (MapLibre + TaxiTracker's GB map),
+     so it only works on the website, not inside Claude. */
+  S.pm={kind:null,map:null,data:{},err:{},busy:{},sel:null,user:null,userMark:null,q:'',rcat:'all',rst:'all',tf:'available'};
+  var PM_RANK_CAT={standard:'TfL rank',temporary:'Temporary rank',rest:'Rest rank',refreshment:'Refreshment rank',private:'Private rank',city:'City of London rank',feeder:'Taxi rank feeder'};
+  var PM_T_ACCESS={public:'Public access reported',unknown:'Access not confirmed',permission:'Ask staff',customers:'Customers only',ticket:'Ticket required'};
+  var PM_T_FEE={free:'Free reported',paid:'Charge reported',unknown:'Not supplied'};
+  var PM_T_FILTERS=[['all','All access'],['available','Public'],['public','Public access reported'],['free','Free reported'],['community','Community scheme'],['accessible','Accessible'],['baby','Baby change'],['radar','RADAR key'],['customers','Restricted / ask staff'],['closed','Closure reported']];
+  function pmDrop(){ var P=S.pm; if(P.map){ try{ P.map.remove(); }catch(e){} } P.map=null; P.userMark=null; P.sel=null; }
+  function pmLoad(kind){
+    var P=S.pm; if(P.data[kind]||P.busy[kind]) return;
+    P.busy[kind]=true; P.err[kind]='';
+    fetch('/.netlify/functions/opendata?d='+kind).then(function(r){ return r.json().catch(function(){return {}}).then(function(j){ if(!r.ok||!j||!Array.isArray(j.features)) throw new Error(j&&j.error||('HTTP '+r.status)); return j; }); })
+      .then(function(j){ j.features.forEach(function(f,i){ if(f.properties&&f.properties.id==null) f.properties.id=f.id!=null?f.id:i; }); P.data[kind]=j; })
+      .catch(function(e){ P.err[kind]=e.message||'could not load'; })
+      .then(function(){ P.busy[kind]=false; if(S.tab==='tools'&&S.tool===kind){ pmUpdate(); pmMsg(P.err[kind]?(kind==='ranks'?'Taxi ranks':'Toilets')+' could not load ('+P.err[kind]+'). Check your signal and try again.':''); } });
+  }
+  function pmFilter(kind){
+    var P=S.pm, d=P.data[kind]; if(!d) return [];
+    var q=String(P.q||'').trim().toLowerCase();
+    return d.features.filter(function(f){
+      var p=f.properties||{};
+      if(kind==='ranks'){
+        if(P.rcat!=='all'&&p.category!==P.rcat) return false;
+        if(P.rst!=='all'&&p.status!==P.rst) return false;
+        if(q&&[p.name,p.location,p.station,p.reference,p.borough].join(' ').toLowerCase().indexOf(q)<0) return false;
+        return true;
+      }
+      var closed=p.status==='reported_closed', restr=['customers','ticket','permission'].indexOf(p.access)>=0, hard=p.access==='customers'||p.access==='ticket', tf=P.tf;
+      var avail=!closed&&!hard;
+      var ok= tf==='all'?!closed : tf==='available'?avail : tf==='public'?(!closed&&p.access==='public') : tf==='free'?(!closed&&!hard&&p.fee==='free')
+        : tf==='community'?(avail&&p.category==='community') : tf==='accessible'?(avail&&(p.accessible===true||p.changingPlaces===true)) : tf==='baby'?(avail&&p.babyChange===true)
+        : tf==='radar'?(!closed&&p.radar===true) : tf==='customers'?(!closed&&restr) : tf==='closed'?closed : avail;
+      if(!ok) return false;
+      if(q&&[p.name,p.address,p.borough].join(' ').toLowerCase().indexOf(q)<0) return false;
+      return true;
+    });
+  }
+  function pmMiles(a,b){ var R=3958.8, r=Math.PI/180, dl=(b[1]-a[1])*r, dn=(b[0]-a[0])*r, x=Math.sin(dl/2)*Math.sin(dl/2)+Math.cos(a[1]*r)*Math.cos(b[1]*r)*Math.sin(dn/2)*Math.sin(dn/2); return 2*R*Math.asin(Math.sqrt(x)); }
+  function pmMsg(t){ var m=$('pm-msg'); if(m){ m.textContent=t||''; m.hidden=!t; } }
+  function renderPM(el,kind){
+    var P=S.pm, web=!!FX_CFG;
+    if(P.kind!==kind){ pmDrop(); P.kind=kind; P.q=''; }
+    if(!web){
+      el.innerHTML='<div class="card">'+toolNav()+'</div><div class="card empty"><b>'+(kind==='ranks'?'Taxi ranks':'Toilets')+' map</b>The map works on the Cab Books website. Inside Claude it cannot reach the map or the '+(kind==='ranks'?'TfL rank':'toilets')+' data.</div>';
+      return;
+    }
+    if(P.map&&el.getAttribute('data-pm')===kind&&$('pm-box')){ pmUpdate(); return; }
+    pmDrop(); el.setAttribute('data-pm',kind);
+    var h='<div class="card">'+toolNav()+'</div><div class="card" style="padding:12px">'
+      +'<div class="pm-row"><input type="search" id="pm-q" autocomplete="off" placeholder="'+(kind==='ranks'?'Rank, street, station or reference':'Toilet, venue, street or borough')+'" aria-label="Search" value="'+esc(P.q)+'">'
+      +'<button type="button" class="iconbtn" id="pm-loc" aria-label="Show my location" title="Show my location">◎</button></div>';
+    if(kind==='ranks'){
+      h+='<div class="pm-row" style="margin-top:8px"><div class="chips tight" role="group" aria-label="Rank type" style="flex:1">'+[['all','All'],['rest','Rest ranks'],['refreshment','Refreshment']].map(function(c){ return '<button type="button" data-pmcat="'+c[0]+'" aria-pressed="'+(P.rcat===c[0])+'">'+c[1]+'</button>'; }).join('')+'</div></div>'
+        +'<div class="pm-row" style="margin-top:8px"><select id="pm-st" aria-label="Rank status" style="flex:1">'+[['all','All ranks'],['active','Active'],['suspended','Suspended']].map(function(o){ return '<option value="'+o[0]+'"'+(P.rst===o[0]?' selected':'')+'>'+o[1]+'</option>'; }).join('')+'</select><span class="pm-count" id="pm-count"></span></div>'
+        +'<div class="pm-key"><span><i style="background:#ffd447"></i>Rank</span><span><i style="background:#48cf7b"></i>Rest / refreshment</span><span><i style="background:#ff6b6b"></i>Suspended</span></div>';
+    } else {
+      h+='<div class="pm-row" style="margin-top:8px"><select id="pm-tf" aria-label="Filter toilets" style="flex:1">'+PM_T_FILTERS.map(function(o){ return '<option value="'+o[0]+'"'+(P.tf===o[0]?' selected':'')+'>'+o[1]+'</option>'; }).join('')+'</select><span class="pm-count" id="pm-count"></span></div>'
+        +'<div class="pm-key"><span><i style="background:#ffd447"></i>Listed</span><span><i style="background:#48cf7b"></i>Community scheme</span><span><i style="background:#c2a1ff"></i>Restricted</span><span><i style="background:#ff6b6b"></i>Closure reported</span></div>';
+    }
+    h+='<div id="pm-res" class="pm-res" hidden></div></div>'
+      +'<div class="pm-map" id="pm-box"><div id="pm-map"></div><div class="pm-msg" id="pm-msg">Loading the map…</div></div>'
+      +'<div id="pm-detail"></div>'
+      +'<p class="note" style="margin:0">'+(kind==='ranks'?'Taxi rank data: Transport for London open data, as in TaxiTracker.':'Toilets: Toilet Map, © OpenStreetMap contributors, London councils and TfL, as combined by TaxiTracker. A listing does not mean it is open now.')+'</p>';
+    el.innerHTML=h;
+    pmLoad(kind);
+    fxLoadLibs().then(function(style){
+      if(S.tool!==kind||!$('pm-map')||P.map) return;
+      var m=P.map=new window.maplibregl.Map({container:'pm-map',style:style,center:LONDON,zoom:kind==='ranks'?11:12,attributionControl:true});
+      m.on('load',function(){ pmLayers(m,kind); pmMsg(P.data[kind]?'':P.err[kind]?'Could not load the data.':'Loading '+(kind==='ranks'?'taxi ranks':'toilets')+'…'); pmUpdate(); });
+      m.on('error',function(e){ if(!m.loaded()) pmMsg('Map: '+((e&&e.error&&e.error.message)||'part of the map could not load')); });
+    }).catch(function(e){ pmMsg('The map could not load ('+e.message+').'); });
+  }
+  function pmLayers(m,kind){
+    m.addSource('pm-pts',{type:'geojson',data:{type:'FeatureCollection',features:[]}});
+    m.addSource('pm-sel',{type:'geojson',data:{type:'FeatureCollection',features:[]}});
+    m.addLayer({id:'pm-sel',type:'circle',source:'pm-sel',paint:{'circle-color':'rgba(255,212,71,0.22)','circle-radius':18,'circle-stroke-color':'#17212d','circle-stroke-width':3}});
+    var colour=kind==='ranks'
+      ?['case',['==',['get','status'],'suspended'],'#ff6b6b',['in',['get','category'],['literal',['rest','refreshment']]],'#48cf7b','#ffd447']
+      :['case',['==',['get','status'],'reported_closed'],'#ff6b6b',['in',['get','access'],['literal',['customers','ticket','permission']]],'#c2a1ff',['==',['get','category'],'community'],'#48cf7b','#ffd447'];
+    m.addLayer({id:'pm-pt',type:'circle',source:'pm-pts',paint:{'circle-color':colour,'circle-radius':['interpolate',['linear'],['zoom'],10,6,16,kind==='ranks'?10:12],'circle-stroke-color':'#17212d','circle-stroke-width':2}});
+    m.addLayer({id:'pm-lbl',type:'symbol',source:'pm-pts',layout:{'text-field':kind==='ranks'?'T':'WC','text-font':['Noto Sans Bold'],'text-size':['interpolate',['linear'],['zoom'],10,kind==='ranks'?8:6,16,kind==='ranks'?12:10],'text-allow-overlap':true,'text-ignore-placement':true},paint:{'text-color':'#17212d'}});
+    ['pm-pt','pm-lbl'].forEach(function(l){
+      m.on('click',l,function(e){ var id=e.features&&e.features[0]&&e.features[0].properties&&e.features[0].properties.id; pmShow(id,false); });
+      m.on('mouseenter',l,function(){ m.getCanvas().style.cursor='pointer'; }); m.on('mouseleave',l,function(){ m.getCanvas().style.cursor=''; });
+    });
+  }
+  function pmFind(id){ var d=S.pm.data[S.pm.kind]; if(!d) return null; for(var i=0;i<d.features.length;i++){ if(String(d.features[i].properties.id)===String(id)) return d.features[i]; } return null; }
+  function pmUpdate(){
+    var P=S.pm, kind=P.kind, L=pmFilter(kind), m=P.map;
+    if(m&&m.getSource&&m.getSource('pm-pts')) m.getSource('pm-pts').setData({type:'FeatureCollection',features:L.map(function(f){ return {type:'Feature',geometry:f.geometry,properties:{id:f.properties.id,status:f.properties.status,category:f.properties.category,access:f.properties.access}}; })});
+    var c=$('pm-count'); if(c) c.textContent=P.data[kind]?L.length+(kind==='ranks'?' rank'+(L.length===1?'':'s'):' shown'):'';
+    var r=$('pm-res'); if(r){
+      if(!String(P.q||'').trim()||!P.data[kind]){ r.hidden=true; }
+      else {
+        var items=L.map(function(f){ return {f:f,d:P.user?pmMiles(P.user,f.geometry.coordinates):null}; });
+        items.sort(function(a,b){ return a.d!=null&&b.d!=null?a.d-b.d:String(a.f.properties.name).localeCompare(String(b.f.properties.name)); });
+        r.innerHTML=items.length?items.slice(0,10).map(function(x){ var p=x.f.properties;
+          return '<button type="button" data-pmres="'+esc(p.id)+'"><span><b>'+esc(p.name)+'</b><small>'+esc(kind==='ranks'?(p.location||p.station||PM_RANK_CAT[p.category]||''):((p.borough||'')+' · '+(PM_T_ACCESS[p.access]||'')))+'</small></span>'+(x.d!=null?'<small>'+(x.d<0.1?'<0.1':x.d.toFixed(1))+' mi</small>':'')+'</button>'; }).join(''):'<p class="note">Nothing matches. Try another search or filter.</p>';
+        r.hidden=false;
+      }
+    }
+    if(P.sel&&!L.some(function(f){ return String(f.properties.id)===String(P.sel); })) pmClose();
+  }
+  function pmRow(k,v){ return v?'<div class="kv"><span class="k">'+esc(k)+'</span><span class="v" style="white-space:pre-line">'+esc(v)+'</span></div>':''; }
+  function pmYes(v){ return v===true?'Yes':v===false?'Not reported':'Not supplied'; }
+  function pmShow(id,fly){
+    var P=S.pm, f=pmFind(id), el=$('pm-detail'); if(!f||!el) return;
+    P.sel=f.properties.id; var p=f.properties, c=f.geometry.coordinates, h='';
+    if(P.kind==='ranks'){
+      h='<div class="card"><div class="cardhead"><div><span class="pm-badge '+(p.status==='suspended'?'bad':'ok')+'">'+(p.status==='suspended'?'Suspended':'Active')+'</span><span class="pm-badge amb">'+esc(PM_RANK_CAT[p.category]||'Taxi rank')+'</span><h2 style="margin:6px 0 0;text-transform:none;letter-spacing:0;color:var(--ink);font-size:17px">'+esc(p.name)+'</h2></div><button type="button" class="iconbtn" data-pmclose aria-label="Close">✕</button></div>'
+        +pmRow('Location',p.location)+pmRow('Spaces',p.spaces)+pmRow('Operating days',p.days)+pmRow('Operating times',p.times||'Not supplied by TfL')+pmRow('Type',p.featureType||PM_RANK_CAT[p.category])+pmRow('Nearby station',p.station)+pmRow('Location details',p.locationDetails)+pmRow('Highway authority',p.highwayAuthority)+pmRow('TfL reference',p.reference)
+        +(p.corrected?'<p class="note">TfL publishes this rank in the wrong place; this is TaxiTracker’s checked street-level position.</p>':'');
+    } else {
+      var badge=p.status==='reported_closed'?['bad','Closure reported']:['customers','ticket','permission'].indexOf(p.access)>=0?['pur','Restricted']:p.category==='community'?['ok','Community scheme']:['amb','Listed facility'];
+      var g=[p.men===true&&'Men',p.women===true&&'Women',p.allGender===true&&'All gender'].filter(Boolean).join(', ');
+      h='<div class="card"><div class="cardhead"><div><span class="pm-badge '+badge[0]+'">'+badge[1]+'</span>'+(p.urinalOnly===true?'<span class="pm-badge amb">Urinal only</span>':'')+'<h2 style="margin:6px 0 0;text-transform:none;letter-spacing:0;color:var(--ink);font-size:17px">'+esc(p.name)+'</h2><p class="note" style="margin:2px 0 0">'+esc(p.address||p.borough||'')+'</p></div><button type="button" class="iconbtn" data-pmclose aria-label="Close">✕</button></div>'
+        +pmRow('Access',PM_T_ACCESS[p.access])+pmRow('Charge',PM_T_FEE[p.fee])+pmRow('Borough',p.borough)+pmRow('Wheelchair accessible',pmYes(p.accessible))
+        +pmRow('RADAR key',p.radar===true?'Required / reported':p.radar===false?'Not reported as required':'Not supplied')+pmRow('Baby changing',pmYes(p.babyChange))+pmRow('Changing Places',pmYes(p.changingPlaces))+pmRow('Facilities',g)
+        +pmRow('Opening times',p.hours||'Not supplied, check before going')
+        +(p.notes?'<p class="note" style="white-space:pre-line">'+esc(p.notes)+'</p>':'')
+        +'<p class="note">'+(p.access==='unknown'?'Public access has not been confirmed. Check with the venue. ':'')+'A listing does not guarantee it is open now.</p>';
+    }
+    h+='<a class="btn" style="display:block;text-align:center;text-decoration:none;margin-top:10px" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination='+c[1]+','+c[0]+'">Navigate</a></div>';
+    el.innerHTML=h;
+    var r=$('pm-res'); if(r) r.hidden=true;
+    var m=P.map; if(m&&m.getSource('pm-sel')){ m.getSource('pm-sel').setData({type:'FeatureCollection',features:[{type:'Feature',geometry:f.geometry,properties:{}}]}); if(fly!==false) m.flyTo({center:c,zoom:Math.max(m.getZoom(),16),duration:450,essential:true}); }
+    if(fly===false) el.scrollIntoView({behavior:'smooth',block:'nearest'});
+  }
+  function pmClose(){ var P=S.pm; P.sel=null; var el=$('pm-detail'); if(el) el.innerHTML=''; if(P.map&&P.map.getSource('pm-sel')) P.map.getSource('pm-sel').setData({type:'FeatureCollection',features:[]}); }
+  function pmLocate(){
+    if(!navigator.geolocation){ pmMsg('Location is not available on this phone.'); return; }
+    pmMsg('Finding you…');
+    navigator.geolocation.getCurrentPosition(function(pos){
+      var P=S.pm; P.user=[pos.coords.longitude,pos.coords.latitude]; pmMsg('');
+      if(P.map){ if(!P.userMark){ var d=document.createElement('div'); d.className='pm-user'; P.userMark=new window.maplibregl.Marker({element:d}); } P.userMark.setLngLat(P.user).addTo(P.map); P.map.flyTo({center:P.user,zoom:15,duration:500,essential:true}); }
+      pmUpdate();
+    },function(){ pmMsg('Could not get your location. Allow location for Cab Books and try again.'); setTimeout(function(){ pmMsg(''); },4000); },{enableHighAccuracy:true,timeout:10000,maximumAge:60000});
+  }
+  document.addEventListener('input',function(ev){ if(ev.target&&ev.target.id==='pm-q'){ S.pm.q=ev.target.value; pmUpdate(); } });
+  document.addEventListener('change',function(ev){ var t=ev.target; if(!t) return; if(t.id==='pm-st'){ S.pm.rst=t.value; pmUpdate(); } if(t.id==='pm-tf'){ S.pm.tf=t.value; pmUpdate(); } });
+  document.addEventListener('click',function(ev){
+    var t=ev.target; if(!t||!t.closest) return; var b;
+    if((b=t.closest('[data-pmcat]'))){ S.pm.rcat=b.getAttribute('data-pmcat'); Array.prototype.forEach.call(document.querySelectorAll('[data-pmcat]'),function(x){ x.setAttribute('aria-pressed',String(x===b)); }); pmUpdate(); return; }
+    if((b=t.closest('[data-pmres]'))){ pmShow(b.getAttribute('data-pmres'),true); return; }
+    if(t.closest('[data-pmclose]')){ pmClose(); return; }
+    if(t.id==='pm-loc'||t.closest('#pm-loc')){ pmLocate(); return; }
+  });
+
   function renderTools(){
     var el=$('tab-tools'); if(!el) return;
-    if(S.tool==='flights'){ if(S.fx.map){ try{ S.fx.map.remove(); }catch(e){} S.fx.map=null; S.fx.marks=[]; } renderFlights(el); return; }
+    if(S.tool!=='fare'&&S.fx.map){ try{ S.fx.map.remove(); }catch(e){} S.fx.map=null; S.fx.marks=[]; }
+    if(S.tool!=='ranks'&&S.tool!=='toilets') pmDrop();
+    if(S.tool==='flights'){ renderFlights(el); return; }
+    if(S.tool==='tube'){ renderTube(el); return; }
+    if(S.tool==='trains'){ renderTrains(el); return; }
+    if(S.tool==='ranks'||S.tool==='toilets'){ renderPM(el,S.tool); return; }
     renderFare(el);
   }
 
@@ -3407,9 +4029,9 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
      so the tool explains that it works on the website. */
   S.tool=lsGet('cb-tool')||'fare'; S.fl={ap:lsGet('cb-fl-ap')||'LHR',term:'',n:40,data:{},err:{},busy:{}};
   function toolNav(){
-    return '<div class="seg" style="margin:0" role="group" aria-label="Tool"><button type="button" data-tool="fare" aria-pressed="'+(S.tool==='fare')+'">Fare calculator</button><button type="button" data-tool="flights" aria-pressed="'+(S.tool==='flights')+'">Flight arrivals</button></div>';
+    return '<div class="seg toolseg" style="margin:0" role="group" aria-label="Tool">'+[['fare','Fares'],['flights','Flights'],['ranks','Ranks'],['toilets','Toilets'],['tube','Tube'],['trains','Trains']].map(function(t){ return '<button type="button" data-tool="'+t[0]+'" aria-pressed="'+(S.tool===t[0])+'">'+t[1]+'</button>'; }).join('')+'</div>';
   }
-  document.addEventListener('click',function(ev){ var b=ev.target.closest&&ev.target.closest('[data-tool]'); if(!b) return; S.tool=b.getAttribute('data-tool'); lsSet('cb-tool',S.tool); renderTools(); });
+  document.addEventListener('click',function(ev){ var b=ev.target.closest&&ev.target.closest('[data-tool]'); if(!b) return; S.tool=b.getAttribute('data-tool'); lsSet('cb-tool',S.tool); renderTools(); if(typeof markCurrentTab==='function') markCurrentTab(); });
   var LTZ={timeZone:'Europe/London',hour:'2-digit',minute:'2-digit',hour12:false};
   function hm(iso){ try{ return new Date(iso).toLocaleTimeString('en-GB',LTZ); }catch(e){ return ''; } }
   function flEta(f){ return f.est||f.sched; }
@@ -3489,12 +4111,55 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
 
   /* ---------- user mode: Full books vs Just tracking ---------- */
   var FULLTABS=['receipts','months','log','import','receipt'];
-  function applyMode(){
+  /* ---------- bottom bar: each driver picks which buttons they see (Matt, 28 Oct) ---------- */
+  var BAR_ITEMS=[['today','Today'],['position','Position'],['receipts','Receipts'],['reports','Reports'],['months','Data'],['log','Log'],['import','Import'],['tools','Tools'],['fare','Fare calculator'],['flights','Flight arrivals'],['ranks','Taxi ranks'],['toilets','Toilets'],['tube','Tube status'],['trains','Train status']];
+  var BAR_GROUPS=[['Your books',['today','position','receipts','reports','months','log','import']],['On the road',['tools','fare','flights','ranks','toilets','tube','trains']]];
+  var BAR_DEFAULT=['today','position','receipts','reports','months','log','tools','import'];
+  var BAR_FULLONLY=['receipts','months','log','import'];
+  S.bar=null;
+  function barName(k){ for(var i=0;i<BAR_ITEMS.length;i++) if(BAR_ITEMS[i][0]===k) return BAR_ITEMS[i][1]; return k; }
+  function barKey(b){ return b.getAttribute('data-bar')||b.getAttribute('data-tab'); }
+  function barOn(k){ return (S.bar||BAR_DEFAULT).indexOf(k)>=0; }
+  function barVisible(k){ return barOn(k) && !(S.mode==='track'&&BAR_FULLONLY.indexOf(k)>=0); }
+  function renderBarPick(){
     var track=S.mode==='track';
-    Array.prototype.forEach.call(document.querySelectorAll('.tabs button'),function(b){
-      var t=b.getAttribute('data-tab'); b.hidden=track&&FULLTABS.indexOf(t)>=0;
+    var h='<div class="card" id="bar-card"><h2>Bottom bar</h2><p class="help">Choose the buttons you want along the bottom of the screen. Hidden sections are not deleted; turn them back on here at any time.</p>';
+    BAR_GROUPS.forEach(function(g){
+      h+='<label style="margin-top:10px">'+esc(g[0])+'</label><div class="chips tight" role="group" aria-label="'+esc(g[0])+'">'
+        +g[1].map(function(k){ var dis=track&&BAR_FULLONLY.indexOf(k)>=0, on=barOn(k)&&!dis;
+          return '<button type="button" data-barpick="'+k+'" aria-pressed="'+on+'"'+(dis?' disabled title="Only in Full books"':'')+'>'+(on?'✓ ':'')+esc(barName(k))+'</button>'; }).join('')+'</div>';
     });
+    var n=BAR_ITEMS.filter(function(x){return barVisible(x[0])}).length;
+    h+='<p class="note">'+n+' showing.'+(n>6?' With more than 6 the bar scrolls sideways on a phone.':'')+(track?' Statements, imports and the log are part of Full books.':'')+'</p>';
+    return h+'</div>';
+  }
+  function toggleBar(k){
+    if(!S.db) return;
+    var cur=(S.bar||BAR_DEFAULT).slice(), i=cur.indexOf(k);
+    if(i>=0){
+      var left=cur.filter(function(x){ return x!==k && !(S.mode==='track'&&BAR_FULLONLY.indexOf(x)>=0); });
+      if(!left.length){ toast('Keep at least one button.'); return; }
+      cur.splice(i,1);
+    } else cur.push(k);
+    cur=BAR_ITEMS.map(function(x){return x[0]}).filter(function(x){return cur.indexOf(x)>=0});
+    S.bar=cur; applyMode(); renderSettings();
+    S.db.collection('settings').doc('tabs').set({shown:cur,ts:Date.now()}).then(function(){ toast(barName(k)+(i>=0?' removed from':' added to')+' the bottom bar'); }).catch(fail);
+  }
+  document.addEventListener('click',function(ev){ var b=ev.target.closest&&ev.target.closest('[data-barpick]'); if(b&&!b.disabled) toggleBar(b.getAttribute('data-barpick')); });
+  function markCurrentTab(){
+    var subShown=S.tab==='tools'&&barVisible(S.tool);
+    Array.prototype.forEach.call(document.querySelectorAll('.tabs button'),function(b){
+      var t=b.getAttribute('data-tab'), sub=b.getAttribute('data-sub'), cur;
+      if(t!==S.tab) cur=false; else if(t!=='tools') cur=true; else if(sub) cur=sub===S.tool; else cur=!subShown;
+      if(cur) b.setAttribute('aria-current','page'); else b.removeAttribute('aria-current');
+    });
+  }
+
+  function applyMode(){
+    Array.prototype.forEach.call(document.querySelectorAll('.tabs button'),function(b){ b.hidden=!barVisible(barKey(b)); });
+    var track=S.mode==='track';
     if(track&&FULLTABS.indexOf(S.tab)>=0&&!(S.tab==='import'&&S.forceImport)) showTab('today');
+    else if(typeof markCurrentTab==='function'&&S.tab) markCurrentTab();
     var needWelcome=S.loaded.settings&&!S.mode;
     if(needWelcome) openWelcome(); else if(!$('welcome').hidden&&S.mode) $('welcome').hidden=true;
   }
@@ -3515,6 +4180,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
       +'<button class="btn ghost small" type="button" id="acct-out">Sign out</button></div>'
       +'<div style="margin-top:12px"><label for="acct-imp">Bring in data from the old Cab Books</label>'
       +'<p class="help" style="margin:0 0 8px">Choose the backup file (.json) saved from the old app. Records already here with the same number are replaced, nothing else is touched.</p>'
+      +'<label style="display:flex;gap:8px;align-items:center;margin:0 0 8px;font-weight:400"><input type="checkbox" id="acct-rep"> Start fresh: clear what is already here first (use this on switch-over day)</label>'
       +'<input type="file" id="acct-imp" accept=".json,application/json"></div>'
       +'<p class="help" style="margin:12px 0 0"><a href="/help.html" style="color:var(--accent)">Getting-started guide</a> &middot; <a href="/privacy.html" style="color:var(--accent)">Privacy notice</a></p></div>';
   }
@@ -3565,12 +4231,13 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     if(S.mode==='track'&&FULLTABS.indexOf(t)>=0&&!(t==='import'&&S.forceImport)) t='today';
     S.tab=t; lsSet('cb-tab',t); if(t==='log') setTimeout(renderLog,0); if(t==='tools') setTimeout(renderTools,0);
     ['today','day','cal','receipt','receipts','position','reports','months','log','tools','import'].forEach(function(n){ $('tab-'+n).hidden=n!==t; });
-    Array.prototype.forEach.call(document.querySelectorAll('.tabs button'),function(b){
-      if(b.getAttribute('data-tab')===t) b.setAttribute('aria-current','page'); else b.removeAttribute('aria-current');
-    });
+    markCurrentTab();
     window.scrollTo(0,0);
   }
-  Array.prototype.forEach.call(document.querySelectorAll('.tabs button'),function(b){ b.addEventListener('click',function(){showTab(b.getAttribute('data-tab'))}); });
+  Array.prototype.forEach.call(document.querySelectorAll('.tabs button'),function(b){ b.addEventListener('click',function(){
+    var sub=b.getAttribute('data-sub'); if(sub){ S.tool=sub; lsSet('cb-tool',sub); }
+    showTab(b.getAttribute('data-tab'));
+  }); });
   Array.prototype.forEach.call(document.querySelectorAll('input.money'),moneyInput);
   ['j-amt','j-tips','j-fix'].forEach(function(id){ $(id).addEventListener('input',updatePreview); });
   $('fm-rule').addEventListener('click',function(){ if(feeDefault(S.prov,S.pay)){ S.feeManual=false; renderFee(); updatePreview(); } });
@@ -3595,7 +4262,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   document.addEventListener('keydown',function(ev){ if(ev.key==='Escape' && !$('setovl').hidden) closeSettings(); });
   $('jsum').addEventListener('click',function(ev){ if(ev.target===$('jsum')) $('jsum').hidden=true; });
   $('m-prov').innerHTML=PROVS.map(function(x){return '<option>'+x+'</option>'}).join('');
-  $('m-cat').innerHTML=['Car rental','Petrol','Electric charging','Parking / drop-off','Car wash','Cleaning / admin supplies','Union','Phone / broadband','Other'].map(function(x){return '<option>'+x+'</option>'}).join('');
+  $('m-cat').innerHTML=['Car rental','Petrol','Electric charging','Parking / drop-off','Car wash','Cab repairs / parts','Cleaning / admin supplies','Union','Phone / broadband','Other'].map(function(x){return '<option>'+x+'</option>'}).join('');
   $('i-file').addEventListener('change',function(){
     var f=this.files&&this.files[0]; if(!f) return;
     var rd=new FileReader(); rd.onload=function(){ $('i-text').value=String(rd.result).slice(0,2000000); readCSV(String(rd.result)); }; rd.readAsText(f);
@@ -3604,6 +4271,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   ['m-date','m-amt','m-tips','m-desc','m-prov','m-cat','m-from','m-abs'].forEach(function(id){ $(id).addEventListener('change',buildImport); });
   $('ik-fare').addEventListener('click',function(){setIKind('fare')}); $('ik-expense').addEventListener('click',function(){setIKind('expense')});
   $('i-save').addEventListener('click',saveImport);
+  try{ var qtool=new URLSearchParams(location.search).get('tool'); if(qtool&&['fare','flights','ranks','toilets','tube','trains'].indexOf(qtool)>=0){ S.tool=qtool; lsSet('cb-tool',qtool); lsSet('cb-tab','tools'); if(history.replaceState) history.replaceState(null,'',location.pathname); } }catch(e){}
   var st0=lsGet('cb-tab'); showTab(['today','position','receipts','reports','months','log','tools','import'].indexOf(st0)>=0?st0:'today');
   renderAll();
 
@@ -4187,7 +4855,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     function onErr(name){return function(e){ $('sync').textContent='Could not load '+name; }}
     unsubs.push(db.collection('settings').onSnapshot(function(snap){
       snap.docs.forEach(function(d){ if(d.id==='stopts'&&d.exists){ S.stopts=d.data()||{}; stSyncVia(); } if(d.id==='tipstats'&&d.exists){ S.tipstats=d.data(); } if(d.id==='business'&&d.exists){ S.biz=d.data()||{}; } if(d.id==='practice'){ S.practice=!!(d.exists&&d.data().on); } if(d.id==='drivers'&&d.exists){ var nm=d.data().names; if(Array.isArray(nm)&&nm.length) S.drivers=nm; } if(d.id==='providers'&&d.exists){ var sv=d.data().shown; S.shown=Array.isArray(sv)&&sv.length?sv:null; if(S.shown&&S.shown.indexOf(S.prov)<0&&!S.editId){ S.prov=S.shown[0]; if(typeof applyFeeDefaults==='function') applyFeeDefaults(); } if(typeof buildChips==='function') buildChips(); } if(d.id==='bank'&&d.exists){ S.bankCov=d.data().covered||''; } if(d.id==='main'&&d.exists){ var v=d.data(); S.settings=Object.assign({},DEF,{threshold:+v.threshold||DEF.threshold,amberPct:+v.amberPct||DEF.amberPct,redPct:+v.redPct||DEF.redPct,start:v.start||DEF.start,fees:v.fees||{}}); } });
-      var md=null; snap.docs.forEach(function(d){ if(d.id==='look'&&d.exists){ var lk=(d.data()||{}).theme; if(lk&&lk!==S.look) applyLook(lk); } if(d.id==='opening'&&d.exists) S.opening=d.data()||{}; if(d.id==='tax'&&d.exists) S.tax=d.data()||{}; if(d.id==='mode'&&d.exists){ var mv=(d.data()||{}).mode; if(mv==='full'||mv==='track') md=mv; } }); S.mode=md||null; S.loaded.settings=true; applyMode(); renderAll();
+      var md=null; snap.docs.forEach(function(d){ if(d.id==='look'&&d.exists){ var lk=(d.data()||{}).theme; if(lk&&lk!==S.look) applyLook(lk); } if(d.id==='opening'&&d.exists) S.opening=d.data()||{}; if(d.id==='tax'&&d.exists) S.tax=d.data()||{}; if(d.id==='mode'&&d.exists){ var mv=(d.data()||{}).mode; if(mv==='full'||mv==='track') md=mv; } if(d.id==='tabs'&&d.exists){ var tv=(d.data()||{}).shown; S.bar=Array.isArray(tv)&&tv.length?tv:null; } if(d.id==='alerts'&&d.exists){ var av=d.data()||{}; S.al={on:av.on!==false,min:+av.min||4,express:av.express!==false,off:Array.isArray(av.off)?av.off:[]}; if(typeof alRender==='function') alRender(); } }); S.mode=md||null; S.loaded.settings=true; applyMode(); renderAll();
     },onErr('settings')));
     unsubs.push(db.collection('months').onSnapshot(function(snap){
       var o={}; snap.docs.forEach(function(d){ if(d.exists) o[d.id]=d.data(); }); S.months=o; S.loaded.months=true; renderAll(); $('sync').textContent=S.syncLabel||'Saved to your account';
@@ -4201,6 +4869,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     unsubs.push(db.collection('stmts').onSnapshot(function(snap){ var o={}; snap.docs.forEach(function(d){ if(d.exists) o[d.id]=Object.assign({id:d.id},d.data()); }); S.stmts=o; if(S.tab==='months') renderMonths(); },function(){}));
     unsubs.push(db.collection('closes').onSnapshot(function(snap){ var o={}; snap.docs.forEach(function(d){ if(d.exists) o[d.id]=d.data(); }); S.closes=o; renderMonths(); },function(){}));
     unsubs.push(db.collection('history').onSnapshot(function(snap){ var o={}; snap.docs.forEach(function(d){ if(d.exists) o[d.id]=d.data(); }); S.hist=o; if(S.tab==='log') renderLog(); },function(){}));
+    unsubs.push(db.collection('rphotos').onSnapshot(function(snap){ var o={}; snap.docs.forEach(function(d){ if(d.exists) o[d.id]=Object.assign({id:d.id},d.data()); }); S.rph=o; if(S.tab==='today') renderDay(); if(!$('rpovl').hidden) rpRenderView(); },function(){}));
     unsubs.push(db.collection('suggestions').onSnapshot(function(snap){ var o={}; snap.docs.forEach(function(d){ if(d.exists) o[d.id]=d.data(); }); S.sugg=o; renderSettings(); },function(){}));
     unsubs.push(db.collection('bills').onSnapshot(function(snap){ var o={}; snap.docs.forEach(function(d){ if(d.exists) o[d.id]=d.data(); }); S.bills=o; mergeEntries(); renderAll(); },function(){}));
     unsubs.push(db.collection('receipts').onSnapshot(function(snap){ var o={}; snap.docs.forEach(function(d){ if(d.exists) o[d.id]=d.data(); }); S.receipts=o; },function(){}));
@@ -4280,15 +4949,27 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
       var ops=[]; Object.keys(cols).forEach(function(c){ if(SHARED_COLS[c]||!/^[A-Za-z0-9_-]+$/.test(c)) return; var docs=cols[c]||{};
         Object.keys(docs).forEach(function(id){ if(id&&docs[id]&&typeof docs[id]==='object') ops.push([c,id,docs[id]]); }); });
       if(!ops.length){ toast('Nothing to bring in from that file.'); return; }
-      if(!confirm('Bring in '+ops.length+' records from the backup? Records with the same number already here will be replaced.')) return;
+      var fresh=!!($('acct-rep')&&$('acct-rep').checked);
+      if(!confirm(fresh?'Start fresh: everything already here (jobs, expenses, receipts, months, settings) is cleared, then '+ops.length+' records are brought in from the backup. Carry on?':'Bring in '+ops.length+' records from the backup? Records with the same number already here will be replaced.')) return;
       var i=0, done=0, home=S.fs.collection('users').doc(S.uid);
-      (function next(){
+      function clearAll(){
+        var cs=Object.keys(cols).filter(function(c){ return !SHARED_COLS[c]&&/^[A-Za-z0-9_-]+$/.test(c); });
+        toast('Clearing what was here…');
+        return Promise.all(cs.map(function(c){ return home.collection(c).get(); })).then(function(snaps){
+          var refs=[]; snaps.forEach(function(sn){ sn.docs.forEach(function(d){ refs.push(d.ref); }); });
+          var k=0;
+          return (function del(){ if(k>=refs.length) return Promise.resolve(); var b=S.fs.batch(), n=0; while(k<refs.length&&n<400){ b.delete(refs[k++]); n++; } return b.commit().then(del); })();
+        });
+      }
+      (fresh?clearAll():Promise.resolve()).then(function(){ next(); }).catch(function(e){ toast('Could not clear: '+((e&&e.message)||'try again')); });
+      function next(){
         if(i>=ops.length){ toast('Brought in '+done+' records.'); return; }
-        var b=S.fs.batch(), n=0;
-        while(i<ops.length&&n<400){ var o=ops[i++]; b.set(home.collection(o[0]).doc(String(o[1])),o[2]); n++; }
+        var b=S.fs.batch(), n=0, sz=0;
+        /* receipt photos are large: keep each write well under Firestore's 10 MB request limit */
+        while(i<ops.length&&n<400&&sz<6000000){ var o=ops[i++]; sz+=JSON.stringify(o[2]).length; b.set(home.collection(o[0]).doc(String(o[1])),o[2]); n++; }
         toast('Bringing in '+Math.min(i,ops.length)+' of '+ops.length+'…');
         b.commit().then(function(){ done+=n; next(); }).catch(function(e){ toast('Stopped after '+done+' records: '+((e&&e.message)||'try again')); });
-      })();
+      }
     };
     rd.readAsText(file);
   }
