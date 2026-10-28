@@ -902,7 +902,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   'use strict';
   var PROV = {taxiworld:'Taxiworld',helix:'Helix',uber:'Uber',comcab:'ComCab',curb:'Curb',freenow:'FreeNow',gett:'Gett'};
   var DEF = {threshold:90000, amberPct:0.8, redPct:0.9, start:'2025-11', fees:{}};
-  var S = {db:null, settings:Object.assign({},DEF), months:{}, plans:{}, entries:[], loaded:{}, tab:'position', kind:'fare', ikind:'fare', imp:null};
+  var S = {db:null, settings:Object.assign({},DEF), months:{}, plans:{}, entries:[], entriesAll:[], practice:false, pr:{sel:{},arm:false}, loaded:{}, tab:'position', kind:'fare', ikind:'fare', imp:null};
   var $ = function(id){return document.getElementById(id)};
   var gbp0 = new Intl.NumberFormat('en-GB',{style:'currency',currency:'GBP',maximumFractionDigits:0});
   var gbp2 = new Intl.NumberFormat('en-GB',{style:'currency',currency:'GBP',minimumFractionDigits:2,maximumFractionDigits:2});
@@ -1279,7 +1279,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     var el=$('set-body'); if(!el || $('setovl').hidden) return;
     if(!S.db){ el.innerHTML='<p class="help">Open this page while signed in to change settings.</p>'; return; }
     var ae=document.activeElement; if(ae && el.contains(ae) && /INPUT|TEXTAREA|SELECT/.test(ae.tagName)) return;
-    var st=S.settings, z=S.biz||{}, h=renderAccountCard()+renderModeCard()+renderLookCard()+(S.isOwner?renderBackupCard():'')+renderSuggest()+renderProvPick()
+    var st=S.settings, z=S.biz||{}, h=renderAccountCard()+renderModeCard()+renderLookCard()+(S.isOwner?renderBackupCard():'')+renderPracticeCard()+renderSuggest()+renderProvPick()
       +'<div class="card"><h2>Your details on receipts</h2><p class="help">Printed at the bottom of every receipt and PDF.</p>'
       +'<div class="field"><label for="bz-trade">Name on your receipts</label><input type="text" id="bz-trade" maxlength="60" value="'+esc(z.trade!=null?z.trade:BRAND)+'"><p class="note" style="margin-top:4px">Shown at the top of every receipt. Leave as '+BRAND+' if you drive under our brand, or use your own trading name.</p></div>'
       +'<div class="field"><label for="bz-name">Your name</label><input type="text" id="bz-name" maxlength="60" value="'+esc(z.name||'')+'" placeholder="e.g. your full name"></div>'
@@ -1301,9 +1301,53 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     var sv=$('s-save'); if(sv) sv.addEventListener('click',saveSettings);
     var fs=$('fd-save'); if(fs) fs.addEventListener('click',saveFeeDefaults);
     Array.prototype.forEach.call(el.querySelectorAll('[data-show]'),function(b){ b.addEventListener('click',function(){ toggleShown(b.getAttribute('data-show')); }); });
-    bindSuggest(el);
+    bindSuggest(el); bindPractice();
     var dv=$('dv-save'); if(dv) dv.addEventListener('click',function(){ var me=$('dv-me').value.trim(); if(!me){ toast('Type your name as driver.'); return; } var seen={}; seen[me.toLowerCase()]=1; var oth=$('dv-oth').value.split(',').map(function(x){return x.trim()}).filter(function(x){ var k=x.toLowerCase(); if(!x||seen[k]) return false; seen[k]=1; return true; }).slice(0,10); S.drivers=[me].concat(oth); S.db.collection('settings').doc('drivers').set({names:S.drivers}).then(function(){ toast('Drivers saved'); }).catch(fail); });
     var bz=$('bz-save'); if(bz) bz.addEventListener('click',function(){ var d={trade:$('bz-trade').value.trim(),name:$('bz-name').value.trim(),phone:$('bz-phone').value.trim(),licence:$('bz-lic').value.trim(),email:$('bz-email').value.trim()}; S.db.collection('settings').doc('business').set(d).then(function(){ toast('Receipt details saved'); }).catch(fail); });
+  }
+  /* ---------- practice mode and clearing practice entries ---------- */
+  function typedIn(e){ return !e.bill && (e.kind==='fare'||e.kind==='expense'||e.kind==='tip') && e.src!=='import' && e.src!=='hist'; }
+  function renderPracticeCard(){
+    var list=S.entriesAll.filter(typedIn).sort(function(a,b){ return a.date<b.date?-1:a.date>b.date?1:0; });
+    var pb=Object.keys(S.bills).filter(function(k){return S.bills[k].demo}).sort();
+    var sel=S.pr.sel, nSel=Object.keys(sel).filter(function(k){return sel[k]}).length;
+    var h='<div class="card" id="pr-card"><h2>Practice and clearing up</h2>'
+      +'<div class="kv"><span class="k"><b>Practice mode</b><br><span class="note">Jobs and expenses you type while this is on are marked practice. They show on Today and in the Log, but never count towards VAT, tax or reports.</span></span><span class="v"><button class="btn ghost small" type="button" id="pr-mode" aria-pressed="'+S.practice+'">'+(S.practice?'On':'Off')+'</button></span></div>';
+    h+='<p class="help" style="margin-top:14px">Below is everything typed in by hand (not from a statement or bank import). Tick what was practice, then mark it as practice (kept, but not counted) or delete it.</p>';
+    if(!list.length&&!pb.length){ h+='<p class="note">Nothing typed in by hand.</p></div>'; return h; }
+    h+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px"><button class="btn ghost small" type="button" id="pr-all">Tick all</button><button class="btn ghost small" type="button" id="pr-pr">Tick practice only</button><button class="btn ghost small" type="button" id="pr-none">Untick all</button></div>';
+    h+='<div style="max-height:320px;overflow:auto;border:1px solid var(--line);border-radius:12px;padding:4px 10px">';
+    list.forEach(function(e){ var lab=e.kind==='fare'?(e.provider||'Job')+(e.pay?' · '+e.pay:''):e.kind==='tip'?'Tip':(e.category||'Expense')+' (expense)';
+      h+='<label class="kv" style="cursor:pointer"><span class="k"><input type="checkbox" data-pr="'+esc(e.id)+'"'+(sel[e.id]?' checked':'')+' style="margin-right:8px">'+esc(fmtD(e.date))+' · '+esc(lab)+(e.demo?' <span class="badge ind">practice</span>':'')+(e.note?'<div class="note" style="margin-left:26px">'+esc(e.note)+'</div>':'')+'</span><span class="v num">'+gbp2.format(e.kind==='fare'?eAmt(e):+e.amount||0)+'</span></label>'; });
+    pb.forEach(function(no){ var b=S.bills[no], c=billCalc(b), k='bill:'+no;
+      h+='<label class="kv" style="cursor:pointer"><span class="k"><input type="checkbox" data-pr="'+esc(k)+'"'+(sel[k]?' checked':'')+' style="margin-right:8px">'+esc(fmtD(b.date||''))+' · Receipt '+esc(no)+' '+esc(b.customer||'')+' <span class="badge ind">practice</span></span><span class="v num">'+gbp2.format(c.total||0)+'</span></label>'; });
+    h+='</div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="btn ghost" type="button" id="pr-mark"'+(nSel?'':' disabled')+'>Mark '+nSel+' as practice</button>'
+      +'<button class="btn ghost'+(S.pr.arm?' arm':'')+'" type="button" id="pr-del"'+(nSel?'':' disabled')+' style="'+(S.pr.arm?'color:var(--bad);border-color:var(--bad)':'')+'">'+(S.pr.arm?'Tap again to delete '+nSel+' for good':'Delete '+nSel)+'</button></div>'
+      +'<p class="note">Tip: before deleting, save a backup (Settings → Your account) in case you need anything back.</p></div>';
+    return h;
+  }
+  function prRefresh(){ var y=window.scrollY; var c=$('pr-card'); if(!c) return; var t=document.createElement('div'); t.innerHTML=renderPracticeCard(); c.parentNode.replaceChild(t.firstChild,c); bindPractice(); window.scrollTo(0,y); }
+  function prRun(ids,fn,done){
+    var i=0, n=0;
+    function next(){ var chunk=ids.slice(i,i+20); i+=20; if(!chunk.length){ done(n); return; }
+      Promise.all(chunk.map(function(id){ return fn(id).then(function(){n++}); })).then(next).catch(function(e){ fail(e); done(n); }); }
+    next();
+  }
+  function bindPractice(){
+    var c=$('pr-card'); if(!c) return;
+    var md=$('pr-mode'); if(md) md.addEventListener('click',function(){ var on=!S.practice; S.db.collection('settings').doc('practice').set({on:on,ts:Date.now()}).then(function(){ S.practice=on; toast(on?'Practice mode on: new entries won\'t count':'Practice mode off: new entries count as real'); prRefresh(); }).catch(fail); });
+    Array.prototype.forEach.call(c.querySelectorAll('[data-pr]'),function(x){ x.addEventListener('change',function(){ S.pr.sel[x.getAttribute('data-pr')]=x.checked; S.pr.arm=false; prRefresh(); }); });
+    function tick(f){ S.pr.sel={}; S.entriesAll.filter(typedIn).forEach(function(e){ if(f(e)) S.pr.sel[e.id]=true; }); Object.keys(S.bills).forEach(function(no){ if(S.bills[no].demo) S.pr.sel['bill:'+no]=true; }); S.pr.arm=false; prRefresh(); }
+    var a=$('pr-all'); if(a) a.addEventListener('click',function(){ tick(function(){return true}); });
+    var pp=$('pr-pr'); if(pp) pp.addEventListener('click',function(){ tick(function(e){return !!e.demo}); });
+    var no=$('pr-none'); if(no) no.addEventListener('click',function(){ S.pr.sel={}; S.pr.arm=false; prRefresh(); });
+    var ids=function(){ return Object.keys(S.pr.sel).filter(function(k){return S.pr.sel[k]}); };
+    var mk=$('pr-mark'); if(mk) mk.addEventListener('click',function(){ var L=ids(); mk.disabled=true;
+      prRun(L,function(id){ if(id.indexOf('bill:')===0) return Promise.resolve(); var e=S.entriesRaw.filter(function(x){return x.id===id})[0]; if(!e) return Promise.resolve(); var d=Object.assign({},e); delete d.id; d.demo=true; return S.db.collection('entries').doc(id).set(d); },
+        function(n){ toast('Marked as practice'); S.pr.sel={}; prRefresh(); }); });
+    var dl=$('pr-del'); if(dl) dl.addEventListener('click',function(){ if(!S.pr.arm){ S.pr.arm=true; prRefresh(); return; } var L=ids(); dl.disabled=true;
+      prRun(L,function(id){ return id.indexOf('bill:')===0 ? S.db.collection('bills').doc(id.slice(5)).delete() : S.db.collection('entries').doc(id).delete(); },
+        function(n){ toast(n+' deleted'); S.pr={sel:{},arm:false}; prRefresh(); }); });
   }
   S.sugg={};
   function renderSuggest(){
@@ -1334,10 +1378,10 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     var R=[], CL=compute(S.entries), EIL=expImpMap();
     if(S.lg.kind==='fare'){
       Object.keys(S.hist).forEach(function(id){ var d=S.hist[id]; (d.jobs||[]).forEach(function(j,i){ var nt=String(j.n||'').replace(/(\s*-\s*)+$/,'').replace(/^\s*£?[\d.,]+\s*$/,'').trim(); R.push({src:'hist',id:id+':'+i,date:j.d,tm:j.tm||'',prov:provName(j.p),pay:j.pay||'',fare:+j.f||0,tip:+j.t||0,fee:+j.x||0,ref:j.r||'',note:nt,st:j.s||j.st||j.status||'',jobs:j.jobs||1}); }); });
-      S.entries.forEach(function(e){ if(e.kind!=='fare') return; var sv=CL.stat[e.id];
+      S.entriesAll.forEach(function(e){ if(e.kind!=='fare') return; var sv=CL.stat[e.id];
         R.push({src:'app',e:e,id:e.id,date:e.date,tm:e.time||'',prov:provName(e.provider||'Job'),pay:e.pay||'',fare:eAmt(e),tip:+e.tips||0,fee:lineFee(e),ref:e.bill?('Receipt '+e.bill):(e.ref||''),note:e.note||'',status:sv,jobs:1}); });
     } else {
-      S.entries.forEach(function(e){ if(e.kind!=='expense') return; R.push({src:'app',e:e,id:e.id,date:e.date,tm:'',prov:e.category||'Expense',pay:e.cash?'Cash':'',fare:+e.amount||0,tip:0,fee:0,ref:'',note:e.note||'',exp:true,est:e.src!=='import'&&!e.cash&&!expSuperseded(e,EIL,false),jobs:1}); });
+      S.entriesAll.forEach(function(e){ if(e.kind!=='expense') return; R.push({src:'app',e:e,id:e.id,date:e.date,tm:'',prov:e.category||'Expense',pay:e.cash?'Cash':'',fare:+e.amount||0,tip:0,fee:0,ref:'',note:e.note||'',exp:true,est:e.src!=='import'&&!e.cash&&!expSuperseded(e,EIL,false),jobs:1}); });
     }
     return R;
   }
@@ -1415,7 +1459,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
       var badge='';
       if(r.src==='hist') badge='<span class="badge rec">statement</span>';
       else if(r.exp) badge=r.e.src==='import'?'<span class="badge rec">bank</span>':r.e.cash?'<span class="badge">cash</span>':r.est?'<span class="badge ind">estimate</span>':'<span class="badge rec">replaced</span>';
-      else badge=r.e.demo?'<span class="badge ind">demo</span>':r.status==='indicative'?'<span class="badge ind">indication</span>':r.status==='covered'?'<span class="badge rec">in statements</span>':'<span class="badge">entered</span>';
+      else badge=r.e.demo?'<span class="badge ind">practice</span>':r.status==='indicative'?'<span class="badge ind">indication</span>':r.status==='covered'?'<span class="badge rec">in statements</span>':'<span class="badge">entered</span>';
       var ap=!r.exp&&airportOf(r);
       h+='<div class="lgr"><div class="lgl">'+(r.exp?'<b>'+esc(r.prov)+'</b>':ptag(r.prov))+'<span class="ppay">'+esc(r.pay)+(r.tm?' · '+esc(r.tm):'')+'</span>'+badge+(ap?'<span class="badge">✈ '+esc(ap)+'</span>':'')
         +((r.ref||r.note)?'<div class="d">'+esc([r.note,r.ref].filter(Boolean).join(' · '))+'</div>':'')
@@ -1945,7 +1989,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   function dayLabel(iso){var p=iso.split('-'),d=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][dowOf(iso)],ML=['January','February','March','April','May','June','July','August','September','October','November','December'];return d+' '+(+p[2])+' '+ML[+p[1]-1]+(p[0]!==String(new Date().getFullYear())?' '+p[0]:'')}
   function dayData(iso){
     var C=compute(S.entries), EI=expImpMap(), D={rows:[],gross:0,fees:0,tips:0,pay:{},exp:[],expTotal:0,expEst:0};
-    S.entries.forEach(function(e){
+    S.entriesAll.forEach(function(e){
       if(e.date!==iso) return;
       if(e.kind==='fare'){ if(C.byImp[e.id]) return; var g=eAmt(e), f=lineFee(e); D.rows.push({e:e,g:g,f:f,n:g-f}); D.gross+=g; D.fees+=f; D.tips+=+e.tips||0; var k=e.pay||'Other'; D.pay[k]=(D.pay[k]||0)+g; }
       else if(e.kind==='tip'){ D.tips+=+e.amount||0; }
@@ -1981,12 +2025,12 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     sm.innerHTML=h;
     var jh='<div class="cardhead"><h2>Jobs ('+D.rows.length+')</h2><button class="iconbtn" id="d-chart" type="button" aria-label="Jobs summary">&#9638;</button></div>';
     if(!D.rows.length) jh+='<div class="empty" style="padding:14px 0">No jobs for this day. Add one above.</div>'; else jh+='<div class="jhead"><span>Fare type</span><span>Gross</span><span>Net</span></div>';
-    D.rows.forEach(function(r){ jh+='<div class="jwrap"><button class="jrow" type="button" data-job="'+esc(r.e.id)+'"><span>'+ptag(r.e.provider||'Job')+'<span class="ppay">'+esc(r.e.pay||'')+'</span>'+(r.e.src==='import'?'<span class="badge">imported</span>':'')+(r.e.note?'<div class="d" style="font-size:12px;color:var(--muted)">'+esc(r.e.note)+'</div>':'')+'</span><span class="b">'+r.g.toFixed(2)+'</span><span class="b">'+r.n.toFixed(2)+'</span></button><div class="jfoot"><button class="rc" type="button" data-rcj="'+esc(r.e.id)+'">Receipt</button><button class="jedit" type="button" data-jedit="'+esc(r.e.id)+'" aria-label="Edit this job">\u270E Edit</button></div></div>'; });
+    D.rows.forEach(function(r){ jh+='<div class="jwrap"><button class="jrow" type="button" data-job="'+esc(r.e.id)+'"><span>'+ptag(r.e.provider||'Job')+'<span class="ppay">'+esc(r.e.pay||'')+'</span>'+(r.e.src==='import'?'<span class="badge">imported</span>':'')+(r.e.demo?'<span class="badge ind">practice</span>':'')+(r.e.note?'<div class="d" style="font-size:12px;color:var(--muted)">'+esc(r.e.note)+'</div>':'')+'</span><span class="b">'+r.g.toFixed(2)+'</span><span class="b">'+r.n.toFixed(2)+'</span></button><div class="jfoot"><button class="rc" type="button" data-rcj="'+esc(r.e.id)+'">Receipt</button><button class="jedit" type="button" data-jedit="'+esc(r.e.id)+'" aria-label="Edit this job">\u270E Edit</button></div></div>'; });
     jb.innerHTML=jh;
     var eh='';
     if(!D.exp.length) eh='<p class="note" style="margin:0">No expenses for this day.</p>';
     else {
-      var row=function(e){ var o=''; o+='<div class="logitem"><div>'+esc(e.category||'Expense')+(e.virtual?'<span class="badge ind">rule \u00b7 estimate</span>':e.src==='import'?'<span class="badge rec">actual</span>':(e.cash?'<span class="badge">cash</span>':'<span class="badge ind">estimate</span>'))+(e.note?'<div class="d">'+esc(e.note)+'</div>':'')+(e.virtual?'':'<button class="del'+(armed===e.id?' arm':'')+'" data-xdel="'+esc(e.id)+'" type="button">'+(armed===e.id?'Tap again to delete':'Delete')+'</button>')+'</div><div class="amt">'+gbp2.format(+e.amount||0)+'</div></div>'; return o; };
+      var row=function(e){ var o=''; o+='<div class="logitem"><div>'+esc(e.category||'Expense')+(e.demo?'<span class="badge ind">practice</span>':'')+(e.virtual?'<span class="badge ind">rule \u00b7 estimate</span>':e.src==='import'?'<span class="badge rec">actual</span>':(e.cash?'<span class="badge">cash</span>':'<span class="badge ind">estimate</span>'))+(e.note?'<div class="d">'+esc(e.note)+'</div>':'')+(e.virtual?'':'<button class="del'+(armed===e.id?' arm':'')+'" data-xdel="'+esc(e.id)+'" type="button">'+(armed===e.id?'Tap again to delete':'Delete')+'</button>')+'</div><div class="amt">'+gbp2.format(+e.amount||0)+'</div></div>'; return o; };
       var real=D.exp.filter(function(e){return !e.virtual}), vir=D.exp.filter(function(e){return e.virtual});
       real.forEach(function(e){ eh+=row(e); });
       if(vir.length){ var vt=vir.reduce(function(x,e){return x+(+e.amount||0)},0);
@@ -2080,7 +2124,8 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     var others=S.entries.filter(function(x){return x.id!==S.editId});
     var hh=Object.assign({id:'__hyp'},h), C0=compute(others), C1=compute(others.concat([hh]));
     var ci=curIdx(C0); if(C0.rolling[ci]==null) ci=C0.lastIdx;
-    if(ci>=0){
+    if(S.practice&&!S.editId) txt+='<br>Practice mode is on: this won\'t count towards VAT.';
+    else if(ci>=0){
       if(C1.stat['__hyp']==='covered') txt+='<br>Your statements already cover this date for '+esc(h.provider)+', so it will not be counted in VAT turnover again.';
       else { var r1=C1.rolling[ci], hd=S.settings.threshold-r1; txt+='<br>Rolling 12-month total to '+esc(mlabel(C0.keys[ci]))+': <span class="num">'+gbp2.format(r1)+'</span>, '+(hd>=0?gbp2.format(hd)+' left.':gbp2.format(-hd)+' over.'); }
     }
@@ -2093,7 +2138,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   }
   function editJob(id){
     if(String(id).indexOf('bill:')===0){ openBill(String(id).split(':')[1]); return; }
-    var e=S.entries.filter(function(x){return x.id===id})[0]; if(!e) return;
+    var e=S.entriesAll.filter(function(x){return x.id===id})[0]; if(!e) return;
     setEditing(id); S.prov=e.provider||S.prov; S.pay=e.pay||S.pay; buildChips();
     S.keepExtras=+e.extras||0; setMoney('j-amt',e.amount); setMoney('j-tips',e.tips);  $('j-note').value=e.note||''; $('j-notebox').open=!!e.note;
     var d=feeDefault(S.prov,S.pay); S.feeManual=!d||(+e.commission||0)!==(d[0]||0)||(+e.feeFixed||0)!==(d[1]||0); setMoney('j-fix',S.feeManual?lineFee(e):0); renderFee();
@@ -2104,7 +2149,8 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     var f=formEntry();
     if(!(f.amount>0)){ toast('Enter the fare.'); return; }
     var data={kind:'fare',date:S.day,m:monthOf(S.day),provider:S.prov,pay:S.pay,amount:Math.round(f.amount*100)/100,extras:Math.round(f.extras*100)/100,tips:Math.round(f.tips*100)/100,commission:f.commission,feeFixed:f.feeFixed,note:$('j-note').value.trim(),src:'manual',ts:Date.now()};
-    var ref, old=S.editId?S.entries.filter(function(x){return x.id===S.editId})[0]:null;
+    var ref, old=S.editId?S.entriesAll.filter(function(x){return x.id===S.editId})[0]:null;
+    if(old?old.demo:S.practice) data.demo=true;
     if(old){ data.src=old.src||'manual'; data.ts=old.ts||data.ts; ref=S.db.collection('entries').doc(S.editId); } else ref=S.db.collection('entries').doc();
     $('j-save').disabled=true;
     ref.set(data).then(function(){
@@ -2116,7 +2162,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     if(!S.db){ toast('Sign in to save.'); return; }
     var a=mv('e-amt'); if(!(a>0)){ toast('Enter an amount.'); return; }
     $('e-add').disabled=true;
-    S.db.collection('entries').doc().set({kind:'expense',date:S.day,m:monthOf(S.day),category:$('e-cat').value,amount:Math.round(a*100)/100,cash:$('e-cash').checked,note:'',src:'manual',ts:Date.now()})
+    S.db.collection('entries').doc().set({kind:'expense',date:S.day,m:monthOf(S.day),category:$('e-cat').value,amount:Math.round(a*100)/100,cash:$('e-cash').checked,note:'',src:'manual',ts:Date.now(),demo:!!S.practice})
       .then(function(){ toast('Expense saved: '+gbp2.format(a)); $('e-amt').value=''; $('e-cash').checked=true; }).catch(fail).then(function(){$('e-add').disabled=false});
   }
 
@@ -3592,7 +3638,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     });
     return out;
   }
-  function mergeEntries(){ S.entries=S.entriesRaw.concat(billEntries()); }
+  function mergeEntries(){ S.entriesAll=S.entriesRaw.concat(billEntries()); S.entries=S.entriesAll.filter(function(e){return !e.demo}); }
   function nextBillNo(){ var mx=0; Object.keys(S.receipts||{}).concat(Object.keys(S.bills).filter(function(k){return !S.bills[k].demo})).forEach(function(k){var n=+String(k).replace(/\D/g,''); if(n>mx) mx=n}); return 'R-'+('0000'+(mx+1)).slice(-4); }
   function blankJob(){ return {date:todayISO(),route:'',fare:'',parking:'',driver:S.drivers[0]}; }
   function newBill(jobs){ S.bv={mode:'edit',no:null,draft:{date:todayISO(),customer:'',jobs:jobs&&jobs.length?jobs:[blankJob()],discountPct:10,tipMode:'amount',tipValue:0,note:''},armDel:false,filter:S.bv.filter}; showTab('receipts'); renderBills(); }
@@ -3617,7 +3663,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     h+='<div class="card" style="padding:4px 16px">';
     ids.forEach(function(no){ var b=S.bills[no], c=billCalc(b), n=(b.jobs||[]).length;
       var age=b.paid?0:daysSince(b.date), ageCls=age>=30?'bad':age>=14?'warn':'', oth=Object.keys(c.other);
-      h+='<div class="brow'+(b.paid?' paid':'')+(ageCls?' '+ageCls:'')+'"><div class="bmain"><div class="bcust">'+esc(b.customer||'No name')+(b.demo?'<span class="badge ind" style="margin-left:8px">demo</span>':'')+'</div><div class="bmeta">'+esc(dlabel(b.date||todayISO()))+' · '+esc(no)+' · '+n+' job'+(n===1?'':'s')+'</div>'
+      h+='<div class="brow'+(b.paid?' paid':'')+(ageCls?' '+ageCls:'')+'"><div class="bmain"><div class="bcust">'+esc(b.customer||'No name')+(b.demo?'<span class="badge ind" style="margin-left:8px">practice</span>':'')+'</div><div class="bmeta">'+esc(dlabel(b.date||todayISO()))+' · '+esc(no)+' · '+n+' job'+(n===1?'':'s')+'</div>'
         +(b.paid?'':'<div class="bage '+ageCls+'">Unpaid · '+age+' day'+(age===1?'':'s')+'</div>')
         +oth.map(function(d){ return '<div class="bdrv">'+esc(d)+' '+gbp2.format(c.other[d])+' · '+(b.otherPaid&&b.otherPaid[d]?'<span class="okc">paid</span>':'<span class="due">to pay</span>')+'</div>'; }).join('')
         +'<div class="bact"><button class="btn ghost small" type="button" data-bview="'+esc(no)+'">View</button>'+(b.paid?'':'<button class="btn ghost small" type="button" data-bedit="'+esc(no)+'">Edit</button>')+'</div></div>'
@@ -4140,7 +4186,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   function subscribe(db){
     function onErr(name){return function(e){ $('sync').textContent='Could not load '+name; }}
     unsubs.push(db.collection('settings').onSnapshot(function(snap){
-      snap.docs.forEach(function(d){ if(d.id==='stopts'&&d.exists){ S.stopts=d.data()||{}; stSyncVia(); } if(d.id==='tipstats'&&d.exists){ S.tipstats=d.data(); } if(d.id==='business'&&d.exists){ S.biz=d.data()||{}; } if(d.id==='drivers'&&d.exists){ var nm=d.data().names; if(Array.isArray(nm)&&nm.length) S.drivers=nm; } if(d.id==='providers'&&d.exists){ var sv=d.data().shown; S.shown=Array.isArray(sv)&&sv.length?sv:null; if(S.shown&&S.shown.indexOf(S.prov)<0&&!S.editId){ S.prov=S.shown[0]; if(typeof applyFeeDefaults==='function') applyFeeDefaults(); } if(typeof buildChips==='function') buildChips(); } if(d.id==='bank'&&d.exists){ S.bankCov=d.data().covered||''; } if(d.id==='main'&&d.exists){ var v=d.data(); S.settings=Object.assign({},DEF,{threshold:+v.threshold||DEF.threshold,amberPct:+v.amberPct||DEF.amberPct,redPct:+v.redPct||DEF.redPct,start:v.start||DEF.start,fees:v.fees||{}}); } });
+      snap.docs.forEach(function(d){ if(d.id==='stopts'&&d.exists){ S.stopts=d.data()||{}; stSyncVia(); } if(d.id==='tipstats'&&d.exists){ S.tipstats=d.data(); } if(d.id==='business'&&d.exists){ S.biz=d.data()||{}; } if(d.id==='practice'){ S.practice=!!(d.exists&&d.data().on); } if(d.id==='drivers'&&d.exists){ var nm=d.data().names; if(Array.isArray(nm)&&nm.length) S.drivers=nm; } if(d.id==='providers'&&d.exists){ var sv=d.data().shown; S.shown=Array.isArray(sv)&&sv.length?sv:null; if(S.shown&&S.shown.indexOf(S.prov)<0&&!S.editId){ S.prov=S.shown[0]; if(typeof applyFeeDefaults==='function') applyFeeDefaults(); } if(typeof buildChips==='function') buildChips(); } if(d.id==='bank'&&d.exists){ S.bankCov=d.data().covered||''; } if(d.id==='main'&&d.exists){ var v=d.data(); S.settings=Object.assign({},DEF,{threshold:+v.threshold||DEF.threshold,amberPct:+v.amberPct||DEF.amberPct,redPct:+v.redPct||DEF.redPct,start:v.start||DEF.start,fees:v.fees||{}}); } });
       var md=null; snap.docs.forEach(function(d){ if(d.id==='look'&&d.exists){ var lk=(d.data()||{}).theme; if(lk&&lk!==S.look) applyLook(lk); } if(d.id==='opening'&&d.exists) S.opening=d.data()||{}; if(d.id==='tax'&&d.exists) S.tax=d.data()||{}; if(d.id==='mode'&&d.exists){ var mv=(d.data()||{}).mode; if(mv==='full'||mv==='track') md=mv; } }); S.mode=md||null; S.loaded.settings=true; applyMode(); renderAll();
     },onErr('settings')));
     unsubs.push(db.collection('months').onSnapshot(function(snap){
