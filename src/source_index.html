@@ -3326,13 +3326,15 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   function fxKey(){ var k=String((FX_CFG&&FX_CFG.geoapifyApiKey)||'').trim(); return (k&&k.indexOf('PASTE')<0&&k!=='__GEOAPIFY_API_KEY__')?k:''; }
   var FX_ROUTES={};
   function fxCandidate(wps,type){
-    var url='https://api.geoapify.com/v1/routing?waypoints='+encodeURIComponent(wps.join('|'))+'&mode=drive&type='+type+'&traffic=free_flow&format=geojson&units=metric&details=route_details&apiKey='+encodeURIComponent(fxKey());
+    /* 'server' = the key is kept on Netlify (GEOAPIFY_API_KEY) and routes come through /.netlify/functions/route. */
+    var url=fxKey()==='server'?'/.netlify/functions/route?w='+encodeURIComponent(wps.join('|'))+'&type='+type
+      :'https://api.geoapify.com/v1/routing?waypoints='+encodeURIComponent(wps.join('|'))+'&mode=drive&type='+type+'&traffic=free_flow&format=geojson&units=metric&details=route_details&apiKey='+encodeURIComponent(fxKey());
     if(FX_ROUTES[url]) return FX_ROUTES[url];
     var ctl=typeof AbortController==='function'?new AbortController():null, tm=ctl?setTimeout(function(){ ctl.abort(); },25000):null;
     var p=fetch(url,{method:'GET',headers:{Accept:'application/geo+json, application/json'},cache:'no-store',signal:ctl&&ctl.signal})
       .catch(function(e){ throw new Error(e&&e.name==='AbortError'?'The route took too long. Try again.':'Could not reach the route service. Check your signal.'); })
       .then(function(r){ if(tm) clearTimeout(tm); return r.json().catch(function(){return null}).then(function(j){
-        if(!r.ok){ throw new Error(r.status===401||r.status===403?'The route service key is not accepted. Check cab-config.js.':r.status===429?'Today’s route allowance is used up. It resets at midnight.':'The route service could not work out that route.'); }
+        if(!r.ok){ throw new Error(r.status===401||r.status===403||(r.status===502&&j&&j.error==='key')?'The route service key is not accepted.':r.status===503?'Routes are not switched on yet. Type the miles and minutes for now.':r.status===429?'Today’s route allowance is used up. It resets at midnight.':'The route service could not work out that route.'); }
         var f=j&&j.features&&j.features[0], d=Number(f&&f.properties&&f.properties.distance), t=Number(f&&f.properties&&f.properties.time);
         if(!(d>0)||!(t>0)||!f.geometry) throw new Error('The route came back incomplete. Try again.');
         var steps=[]; ((f.properties.legs)||[]).forEach(function(l){ (l.steps||[]).forEach(function(s){ var sd=Number(s.distance), st=Number(s.time);

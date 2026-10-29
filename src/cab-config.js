@@ -1,4 +1,5 @@
-/* Cab Books website settings (not secret: the browser uses these directly).
-   geoapifyApiKey: the Geoapify key for the fare calculator's routes. Use TaxiTracker's key
-   or a new free one from myprojects.geoapify.com, and cap its daily quota in Geoapify. */
-window.CB_CONFIG={geoapifyApiKey:'PASTE_GEOAPIFY_KEY_HERE'};
+/* Cab Books settings for the website.
+   geoapifyApiKey: 'server' means the Geoapify key is kept on Netlify (environment variable
+   GEOAPIFY_API_KEY) and the fare calculator's routes go through /.netlify/functions/route,
+   so the key is never in this public code. */
+window.CB_CONFIG={geoapifyApiKey:'server'};
