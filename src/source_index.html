@@ -836,7 +836,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     </div>
     <div class="card" id="bk-card">
       <h2>Bank statement</h2>
-      <p class="help" id="bk-help">Brings in what the taxi apps paid you and the money going out. Payments from FreeNow, Gett, Uber, Curb and ComCab are recognised, with the commission added back to estimate your fares. Payees are sorted into categories, and anything unknown is left out as personal until you say otherwise. Bank figures replace the expenses you typed, up to the statement's last date.</p>
+      <p class="help" id="bk-help">Brings in what the taxi apps paid you and the money going out. Payments from FreeNow, Gett, Uber, Curb, ComCab, Taxiworld, Helix Pay and HIPS are recognised, with the commission added back to estimate your fares. Payees are sorted into categories, and anything unknown is left out as personal until you say otherwise. Bank figures replace the expenses you typed, up to the statement's last date.</p>
       <div class="field"><label for="bk-file">CSV file</label><input type="file" id="bk-file" accept=".csv,.txt,text/csv,text/plain"></div>
       <div class="field"><label for="bk-text">…or paste the rows (with the header line)</label><textarea id="bk-text" spellcheck="false" placeholder="Date,Description,Paid out,Paid in"></textarea></div>
       <button class="btn ghost" id="bk-read" type="button">Read it</button>
@@ -947,7 +947,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   function lsSet(k,v){try{localStorage.setItem(k,v)}catch(e){}}
 
   /* ---------- calculation ---------- */
-  var PK={taxiworld:1,helix:1,uber:1,comcab:1,curb:1,freenow:1,gett:1};
+  var PK={taxiworld:1,helix:1,hips:1,uber:1,comcab:1,curb:1,freenow:1,gett:1};
   function pkey(name){var k=String(name||'').toLowerCase().replace(/\s+/g,'');return PK[k]?k:null}
   function eAmt(e){return (+e.amount||0)+(+e.extras||0)}
   /* A month's figure = loaded statement total + imported rows + manual entries not yet covered by records.
@@ -2013,7 +2013,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   var PAYRULE={freenow:['Account','Card','Cash'],gett:['Account','Card','Cash'],jump:['Card','Cash'],blackcab:['Card','Cash'],comcab:['Account','Card','Cash'],curb:['Card'],taxiworld:['Card'],helix:['Card'],hips:['Card'],curbflow:['Account','Card','Cash'],uber:['Account'],hand:['Card','Cash'],private:['Card','Bank transfer']};
   function paysFor(p){ return PAYRULE[bkey(p)]||PAYS; }
   function fixPay(){ var ok=paysFor(S.prov); if(ok.indexOf(S.pay)<0) S.pay=ok[0]; }
-  var DEFFEES={taxiworld:[4,0],helix:[1.75,0],uber:[0,0],comcab:[20,0],curb:[2.75,0.25],freenow:[20,0],gett:[20,0]};
+  var DEFFEES={taxiworld:[4,0],helix:[1.75,0],hips:[2.75,0.20],uber:[0,0],comcab:[20,0],curb:[2.75,0.25],freenow:[20,0],gett:[20,0]};
   /* Rate changes with a 'from' date: settings/main fees[k].hist = [{from:'YYYY-MM-DD',pct,add}] (rate from that date on).
      fees[k].pct/add = the rate before the first change (or the only rate). Built-in: FreeNow 18% to 14 Sep 2026, 20% from 15 Sep. */
   var DEFHIST={freenow:{base:[18,0],hist:[{from:'2026-09-15',pct:20,add:0}]}};
@@ -2669,7 +2669,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     return null;
   }
   /* Money in: which taxi app paid, and the fare it stands for (commission added back). */
-  var BK_INCOME=[['Freenow',/TRANSOPCO|FREE ?NOW|MYTAXI/],['Gett',/GETTAXI|\bGETT\b/],['Uber',/\bUBER\b/],['Curb',/CURB MOBILITY|\bCURB\b/],['ComCab',/COMCAB|COMPUTER CAB/]];
+  var BK_INCOME=[['Freenow',/TRANSOPCO|FREE ?NOW|MYTAXI/],['Gett',/GETTAXI|\bGETT\b/],['Uber',/\bUBER\b/],['Curb',/CURB MOBILITY|\bCURB\b/],['ComCab',/COMCAB|COMPUTER CAB/],['Taxiworld',/TAXIWORLD|TAXI WORLD/],['Helix',/HELIX PAY|\bHELIX\b/],['HIPS',/\bHIPS\b/]];
   function bkIncomeProv(desc){ var u=String(desc||'').toUpperCase(); for(var i=0;i<BK_INCOME.length;i++) if(BK_INCOME[i][1].test(u)) return BK_INCOME[i][0]; return null; }
   function bkPct(prov,d){
     var k=String(prov).toLowerCase(), f=S.settings.fees&&S.settings.fees[k];
