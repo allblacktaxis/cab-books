@@ -8,7 +8,7 @@
 import crypto from 'node:crypto';
 import { serviceAccount, token, getDocs, collectionGroup } from '../lib/firestore.mjs';
 
-const DEFAULT_ADMINS = ['mpinnock@hotmail.co.uk', 'marcin@allblacktaxis.co.uk'];
+const DEFAULT_ADMINS = ['mpinnock@hotmail.co.uk', 'marcin.klich@yahoo.co.uk'];
 const admins = () => (process.env.ADMIN_EMAILS ? process.env.ADMIN_EMAILS.split(',') : DEFAULT_ADMINS).map(e => e.trim().toLowerCase()).filter(Boolean);
 const json = (b, s) => new Response(JSON.stringify(b), { status: s || 200, headers: { 'content-type': 'application/json', 'cache-control': 'no-store' } });
 const unb64u = s => Buffer.from(String(s).replace(/-/g, '+').replace(/_/g, '/'), 'base64');
