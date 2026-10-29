@@ -1985,7 +1985,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   var PROVS=['Freenow','Gett','CurbFlow','ComCab','Jump','Uber','Curb','Taxiworld','Helix','HIPS','Blackcab','Hand','Private'];
   var PROV_OFF=['Taxiworld','Helix','HIPS','CurbFlow']; /* hidden until a driver switches them on in 'Providers I use' */
   /* Card payments = the card machine/system in the cab (Curb, Taxiworld, Helix Pay, HIPS). Curb Flow = Curb's job app (like FreeNow). */
-  var PGROUPS=[['Job apps',['Freenow','Gett','CurbFlow','Uber','Jump','ComCab','Blackcab']],['Card payments',['Curb','Taxiworld','Helix','HIPS']],['Other fares',['Hand','Private']]];
+  var PGROUPS=[['Job apps',['Freenow','Gett','CurbFlow','Uber','Jump','ComCab','Blackcab']],['Card machine in my cab',['Curb','Taxiworld','Helix','HIPS']],['Other fares',['Hand','Private']]];
   var CARDSYS=['Curb','HIPS','Helix','Taxiworld'], CARDK={curb:1,hips:1,helix:1,taxiworld:1};
   function isCardK(k){ return !!CARDK[k]; }
   /* The driver's own card system: the first one switched on in 'Providers I use' (Curb if none). */
@@ -1995,10 +1995,10 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   function cardNote(){ var p=cardSys(), r=cardRate(p); return pname(p)+'’s '+(+r[0]||0)+'%'+((+r[1]||0)?' + '+Math.round(r[1]*100)+'p':'')+(r[0]||r[1]?'':' (set it in Fee defaults)'); }
   function provShown(p){ var sh=S.shown; return sh ? sh.indexOf(p)>=0 : PROV_OFF.indexOf(p)<0; }
   function renderProvPick(){
-    var h='<div class="card" id="prov-card"><h2>Providers I use</h2><p class="help">Only these appear as buttons when you add a job. Most drivers use one card payment system. Jobs you have already logged keep their provider.</p>';
+    var h='<div class="card" id="prov-card"><h2>Providers I use</h2><p class="help">Job apps and other fares appear as buttons when you add a job. Your card machine appears under “Paid by” (for example “Curb card”). Most drivers use one card machine. Jobs you have already logged keep their provider.</p>';
     PGROUPS.forEach(function(g){
       h+='<label style="margin-top:10px">'+esc(g[0])+'</label><div class="chips tight" role="group" aria-label="'+esc(g[0])+'">'
-        +g[1].map(function(p){ return '<button type="button" data-show="'+p+'" aria-pressed="'+provShown(p)+'">'+(provShown(p)?'\u2713 ':'')+(bkey(p)==='hand'?pdot(p):'')+esc(pname(p))+'</button>'; }).join('')+'</div>';
+        +g[1].map(function(p){ return '<button type="button"'+(provShown(p)?pchip(p):'')+' data-show="'+p+'" aria-pressed="'+provShown(p)+'">'+(provShown(p)?'\u2713 ':'')+(bkey(p)==='hand'?pdot(p):'')+esc(pname(p))+'</button>'; }).join('')+'</div>';
     });
     return h+'</div>';
   }
@@ -2012,6 +2012,14 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   /* Which payment types each provider allows (Matt, 27 Oct). Providers not listed allow all. */
   var PAYRULE={freenow:['Account','Card','Cash'],gett:['Account','Card','Cash'],jump:['Card','Cash'],blackcab:['Card','Cash'],comcab:['Account','Card','Cash'],curb:['Card'],taxiworld:['Card'],helix:['Card'],hips:['Card'],curbflow:['Account','Card','Cash'],uber:['Account'],hand:['Card','Cash'],private:['Card','Bank transfer']};
   function paysFor(p){ return PAYRULE[bkey(p)]||PAYS; }
+  /* The card machines this driver uses (Settings → Providers I use → Card machine in my cab); Curb if none. */
+  function cardSysAll(){ var c=CARDSYS.filter(provShown); return c.length?c:['Curb']; }
+  /* 'Paid by' buttons: Card becomes one button per card machine (Curb card, HIPS card…). Saved as pay:'Card' + card:<machine>. */
+  function payOpts(p){ var out=[]; paysFor(p).forEach(function(v){ if(v==='Card' && !isCardK(bkey(p))) cardSysAll().forEach(function(c){ out.push({v:'Card',c:c,l:pname(c)+' card'}); }); else out.push({v:v,l:v}); }); return out; }
+  /* Fee shown on the job form. Street/own jobs paid by card in the cab take the card machine's fee
+     (job apps keep their own commission; their card fee comes in with the card machine's statement). */
+  var CARDFEE_PROV={hand:1,jump:1,blackcab:1,private:1};
+  function formFee(prov,pay,date){ if(pay==='Card' && CARDFEE_PROV[bkey(prov)]){ var r=cardRate(S.card||cardSys()); return [+r[0]||0,+r[1]||0]; } return feeDefault(prov,pay,date); }
   function fixPay(){ var ok=paysFor(S.prov); if(ok.indexOf(S.pay)<0) S.pay=ok[0]; }
   var DEFFEES={taxiworld:[4,0],helix:[1.75,0],hips:[2.75,0.20],uber:[0,0],comcab:[20,0],curb:[2.75,0.25],freenow:[20,0],gett:[20,0]};
   /* Rate changes with a 'from' date: settings/main fees[k].hist = [{from:'YYYY-MM-DD',pct,add}] (rate from that date on).
@@ -2234,27 +2242,28 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     return parts.length?parts.join(' ')+' (set rule)':'No fee (set rule)';
   }
   function renderFee(){
-    var d=feeDefault(S.prov,S.pay,S.day), man=S.feeManual;
+    var d=formFee(S.prov,S.pay,S.day), man=S.feeManual;
     $('fm-rule').setAttribute('aria-pressed',!man); $('fm-man').setAttribute('aria-pressed',man); $('fm-rule').disabled=!d;
     $('j-feetxt').textContent = man ? '' : ruleText(d);
     $('j-feeedit').hidden=!man;
     $('j-hint').hidden=!!d;
   }
   function applyFeeDefaults(){
-    var d=feeDefault(S.prov,S.pay,S.day);
+    var d=formFee(S.prov,S.pay,S.day);
     $('j-fix').value=''; S.feeManual=!d; renderFee();
   }
   function feeValues(){
-    var d=feeDefault(S.prov,S.pay,S.day);
+    var d=formFee(S.prov,S.pay,S.day);
     if(!S.feeManual) return {pct:d?d[0]:0,fix:d?d[1]:0};
     return {pct:0,fix:mv('j-fix')};
   }
   function buildChips(){
-    $('c-prov').innerHTML=PROVS.filter(function(p){return provShown(p)||p===S.prov}).map(function(p){return '<button type="button"'+pchip(p)+' data-prov="'+p+'" aria-pressed="'+(p===S.prov)+'">'+(p===S.prov?'\u2713 ':'')+(bkey(p)==='hand'?pdot(p):'')+esc(pname(p))+'</button>'}).join('');
+    $('c-prov').innerHTML=PROVS.filter(function(p){return (provShown(p)&&!isCardK(bkey(p)))||p===S.prov}).map(function(p){return '<button type="button"'+pchip(p)+' data-prov="'+p+'" aria-pressed="'+(p===S.prov)+'">'+(p===S.prov?'\u2713 ':'')+(bkey(p)==='hand'?pdot(p):'')+esc(pname(p))+'</button>'}).join('');
     fixPay();
-    $('c-pay').innerHTML=paysFor(S.prov).map(function(p){return '<button type="button" data-pay="'+p+'" aria-pressed="'+(p===S.pay)+'">'+p+'</button>'}).join('');
+    if(S.pay==='Card' && CARDSYS.indexOf(S.card)<0) S.card=cardSys();
+    $('c-pay').innerHTML=payOpts(S.prov).map(function(o){ var on=o.v===S.pay&&(!o.c||o.c===S.card); return '<button type="button" data-pay="'+o.v+'"'+(o.c?' data-card="'+o.c+'"':'')+' aria-pressed="'+on+'">'+(on?'\u2713 ':'')+esc(o.l)+'</button>'}).join('');
     Array.prototype.forEach.call($('c-prov').querySelectorAll('button'),function(b){ b.addEventListener('click',function(){ S.prov=b.getAttribute('data-prov'); applyFeeDefaults(); buildChips(); updatePreview(); }); });
-    Array.prototype.forEach.call($('c-pay').querySelectorAll('button'),function(b){ b.addEventListener('click',function(){ S.pay=b.getAttribute('data-pay'); applyFeeDefaults(); buildChips(); updatePreview(); }); });
+    Array.prototype.forEach.call($('c-pay').querySelectorAll('button'),function(b){ b.addEventListener('click',function(){ S.pay=b.getAttribute('data-pay'); if(b.getAttribute('data-card')) S.card=b.getAttribute('data-card'); applyFeeDefaults(); buildChips(); updatePreview(); }); });
   }
   /* Extras buttons on the job form: standard ones plus the driver's own (settings/extras {list:[{n,a}]}). */
   var EX_STD=[{n:'Heathrow drop-off',a:6},{n:'City Airport drop-off',a:6},{n:'Parking',a:0}]; /* a:0 = type the amount */
@@ -2321,9 +2330,9 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   function editJob(id){
     if(String(id).indexOf('bill:')===0){ openBill(String(id).split(':')[1]); return; }
     var e=S.entriesAll.filter(function(x){return x.id===id})[0]; if(!e) return;
-    setEditing(id); S.prov=e.provider||S.prov; S.pay=e.pay||S.pay; buildChips();
+    setEditing(id); S.prov=e.provider||S.prov; S.pay=e.pay||S.pay; S.card=e.card||cardSys(); buildChips();
     S.exPick={}; setMoney('j-ex',e.extras); exRender(); setMoney('j-amt',e.amount); setMoney('j-tips',e.tips);  $('j-note').value=e.note||''; $('j-notebox').open=!!e.note;
-    var d=feeDefault(S.prov,S.pay,e.date||S.day); S.feeManual=!d||(+e.commission||0)!==(d[0]||0)||(+e.feeFixed||0)!==(d[1]||0); setMoney('j-fix',S.feeManual?lineFee(e):0); renderFee();
+    var d=formFee(S.prov,S.pay,e.date||S.day); S.feeManual=!d||(+e.commission||0)!==(d[0]||0)||(+e.feeFixed||0)!==(d[1]||0); setMoney('j-fix',S.feeManual?lineFee(e):0); renderFee();
     S.addOpen=true; renderDay(); updatePreview(); $('d-form').scrollIntoView({behavior:'smooth',block:'start'});
   }
   function saveJob(){
@@ -2331,6 +2340,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     var f=formEntry();
     if(!(f.amount>0)){ toast('Enter the fare.'); return; }
     var data={kind:'fare',date:S.day,m:monthOf(S.day),provider:S.prov,pay:S.pay,amount:Math.round(f.amount*100)/100,extras:Math.round(f.extras*100)/100,tips:Math.round(f.tips*100)/100,commission:f.commission,feeFixed:f.feeFixed,note:$('j-note').value.trim(),src:'manual',ts:Date.now()};
+    if(S.pay==='Card' && !isCardK(bkey(S.prov))) data.card=S.card||cardSys();
     var ref, old=S.editId?S.entriesAll.filter(function(x){return x.id===S.editId})[0]:null;
     if(old?old.demo:S.practice) data.demo=true;
     if(old){ data.src=old.src||'manual'; data.ts=old.ts||data.ts; ref=S.db.collection('entries').doc(S.editId); } else ref=S.db.collection('entries').doc();
@@ -4360,7 +4370,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   Array.prototype.forEach.call(document.querySelectorAll('input.money'),moneyInput);
   ['j-amt','j-tips','j-ex','j-fix'].forEach(function(id){ $(id).addEventListener('input',updatePreview); });
   exRender();
-  $('fm-rule').addEventListener('click',function(){ if(feeDefault(S.prov,S.pay)){ S.feeManual=false; renderFee(); updatePreview(); } });
+  $('fm-rule').addEventListener('click',function(){ if(formFee(S.prov,S.pay)){ S.feeManual=false; renderFee(); updatePreview(); } });
   $('fm-man').addEventListener('click',function(){ if(!S.feeManual){ S.feeManual=true; $('j-fix').value=''; renderFee(); updatePreview(); } });
   buildChips(); applyFeeDefaults();
   $('e-cat').innerHTML=EXPCATS.map(function(x){return '<option>'+x+'</option>'}).join('');
