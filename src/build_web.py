@@ -112,7 +112,7 @@ rep("var needWelcome=!S.isOwner&&S.loaded.settings&&!S.mode;", "var needWelcome=
 rep("+(S.isOwner?'':'<p class=\"privnote\" style=\"margin-top:10px\">Your figures are private to you. Nobody else using Cab Books can see them.</p>')+'</div>';",
     "+'<p class=\"privnote\" style=\"margin-top:10px\">Your figures are private to you. Nobody else using Cab Books can see them.</p></div>';")
 rep("h=renderModeCard()+renderLookCard()", "h=renderAccountCard()+renderModeCard()+renderLookCard()")
-rep('<button type="button" class="gear" id="gear"', '<button type="button" class="gear" id="acctbtn" aria-label="Your account" hidden>\U0001F464\uFE0E<span>Account</span></button><button type="button" class="gear" id="gear"')
+rep('<button type="button" class="gear" id="gear"', '<style>@media (max-width:500px){#acctbtn span{display:none}}</style><button type="button" class="gear" id="acctbtn" aria-label="Your account" hidden>\U0001F464\uFE0E<span>Account</span></button><button type="button" class="gear" id="gear"')
 
 # ---------------------------------------------------------------- boot: Firebase instead of Claude
 b0 = s.index("  /* ---------- who is using the app: private books per person ----------")
