@@ -111,6 +111,11 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .help{font-size:13px;color:var(--muted);margin:0 0 12px}
 .warnbox{border-left:3px solid var(--warn);padding:2px 0 2px 10px;font-size:13px;color:var(--muted);margin:0 0 12px}
 .chips.tight button{padding:6px 10px;min-height:40px;font-size:13px}
+.xchips{margin-top:8px}
+.xchips button .xa{opacity:.75;font-weight:400;margin-left:4px}
+.xedit{margin-top:10px;padding:10px;border:1px dashed var(--line);border-radius:10px}
+.xrow{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid var(--line)}
+.xrow:last-of-type{border-bottom:0}
 .nav{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .nav button{background:var(--bg);border:1px solid var(--line);border-radius:8px;min-width:44px;min-height:44px;cursor:pointer;font-size:18px}
 .nav .ttl{font-weight:600;text-align:center;flex:1}
@@ -691,6 +696,10 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
           <div class="field"><label for="j-tips">Tip (£)</label><input type="text" class="money" id="j-tips" inputmode="numeric" autocomplete="off" placeholder="0.00"></div>
         </div>
         <p class="help" style="margin-top:-4px">Tips are not part of VAT turnover.</p>
+        <div class="field"><label for="j-ex">Extras (£)</label><input type="text" class="money" id="j-ex" inputmode="numeric" autocomplete="off" placeholder="0.00">
+          <div class="chips tight xchips" id="c-ex" role="group" aria-label="Tap to add an extra"></div>
+          <div class="xedit" id="x-edit" hidden></div>
+          <p class="help" style="margin:6px 0 0">Tap a button to add it; tap again to take it off. Extras count towards VAT turnover.</p></div>
         <div class="field"><label id="l-fee">Commission</label>
           <div class="seg" role="group" aria-labelledby="l-fee" style="margin-bottom:8px"><button type="button" id="fm-rule" aria-pressed="true">Set rule</button><button type="button" id="fm-man" aria-pressed="false">Manual</button></div>
           <div class="note" id="j-feetxt" style="margin:0"></div>
@@ -2133,8 +2142,38 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     Array.prototype.forEach.call($('c-prov').querySelectorAll('button'),function(b){ b.addEventListener('click',function(){ S.prov=b.getAttribute('data-prov'); applyFeeDefaults(); buildChips(); updatePreview(); }); });
     Array.prototype.forEach.call($('c-pay').querySelectorAll('button'),function(b){ b.addEventListener('click',function(){ S.pay=b.getAttribute('data-pay'); applyFeeDefaults(); buildChips(); updatePreview(); }); });
   }
+  /* Extras buttons on the job form: standard ones plus the driver's own (settings/extras {list:[{n,a}]}). */
+  var EX_STD=[{n:'Booking fee',a:2},{n:'Heathrow rank',a:1.6},{n:'Airport drop-off',a:6},{n:'Christmas / New Year',a:4}];
+  function exList(){ return Array.isArray(S.exList)?S.exList:EX_STD; }
+  function exRender(){
+    var box=$('c-ex'); if(!box) return; S.exPick=S.exPick||{};
+    box.innerHTML=exList().map(function(x,i){ var on=!!S.exPick[i]; return '<button type="button" data-ex="'+i+'" aria-pressed="'+on+'">'+(on?'✓ ':'')+esc(x.n)+'<span class="xa">'+gbp2.format(+x.a||0)+'</span></button>'; }).join('')
+      +'<button type="button" data-exedit="1" aria-pressed="false">'+($('x-edit').hidden?'+ My extras':'Done')+'</button>';
+    Array.prototype.forEach.call(box.querySelectorAll('button[data-ex]'),function(b){ b.addEventListener('click',function(){
+      var i=+b.getAttribute('data-ex'), x=exList()[i]; if(!x) return; var cur=mv('j-ex'), a=+x.a||0;
+      if(S.exPick[i]){ delete S.exPick[i]; cur=Math.max(0,cur-a); } else { S.exPick[i]=1; cur+=a; }
+      setMoney('j-ex',Math.round(cur*100)/100); exRender(); updatePreview(); }); });
+    box.querySelector('[data-exedit]').addEventListener('click',function(){ var ed=$('x-edit'); ed.hidden=!ed.hidden; exEditRender(); exRender(); });
+  }
+  function exEditRender(){
+    var ed=$('x-edit'); if(!ed||ed.hidden) return;
+    ed.innerHTML='<p class="help" style="margin:0 0 6px">Your extras buttons. Add the ones you use, remove the ones you don\'t.</p>'
+      +exList().map(function(x,i){ return '<div class="xrow"><span>'+esc(x.n)+' <span class="num">'+gbp2.format(+x.a||0)+'</span></span><button class="btn ghost small" type="button" data-exdel="'+i+'">Remove</button></div>'; }).join('')
+      +'<div class="two" style="margin-top:8px"><div class="field" style="margin:0"><label for="x-n">Name</label><input type="text" id="x-n" maxlength="30" placeholder="e.g. Parking"></div>'
+      +'<div class="field" style="margin:0"><label for="x-a">Amount (£)</label><input type="text" class="money" id="x-a" inputmode="numeric" autocomplete="off" placeholder="0.00"></div></div>'
+      +'<button class="btn small" type="button" id="x-add" style="margin-top:8px">Add button</button>'
+      +(Array.isArray(S.exList)?' <button class="btn ghost small" type="button" id="x-std" style="margin-top:8px">Back to the standard buttons</button>':'');
+    Array.prototype.forEach.call(ed.querySelectorAll('input.money'),moneyInput);
+    Array.prototype.forEach.call(ed.querySelectorAll('[data-exdel]'),function(b){ b.addEventListener('click',function(){ var L=exList().slice(); L.splice(+b.getAttribute('data-exdel'),1); exSave(L,'Button removed'); }); });
+    $('x-add').addEventListener('click',function(){ var n=$('x-n').value.trim(), a=mv('x-a'); if(!n){ toast('Give the extra a name.'); return; } if(!(a>0)){ toast('Enter the amount.'); return; } var L=exList().slice(); if(L.length>=12){ toast('12 buttons at most.'); return; } L.push({n:n,a:Math.round(a*100)/100}); exSave(L,n+' added'); });
+    var sd=$('x-std'); if(sd) sd.addEventListener('click',function(){ exSave(null,'Standard buttons back'); });
+  }
+  function exSave(L,msg){
+    S.exList=L; S.exPick={}; exEditRender(); exRender();
+    if(S.db) S.db.collection('settings').doc('extras').set({list:L||null,ts:Date.now()}).then(function(){ toast(msg); }).catch(fail); else toast(msg);
+  }
   function formEntry(){
-    return {kind:'fare',src:'manual',provider:S.prov,pay:S.pay,amount:mv('j-amt'),extras:S.keepExtras||0,tips:mv('j-tips'),commission:feeValues().pct,feeFixed:feeValues().fix,date:S.day,m:monthOf(S.day)};
+    return {kind:'fare',src:'manual',provider:S.prov,pay:S.pay,amount:mv('j-amt'),extras:mv('j-ex'),tips:mv('j-tips'),commission:feeValues().pct,feeFixed:feeValues().fix,date:S.day,m:monthOf(S.day)};
   }
   function updatePreview(){
     var box=$('j-preview'); if(!box) return;
@@ -2151,16 +2190,16 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     }
     box.innerHTML=txt; box.hidden=false;
   }
-  function clearForm(){ ['j-amt','j-tips','j-note'].forEach(function(id){$(id).value=''}); $('j-notebox').open=false; applyFeeDefaults(); updatePreview(); }
+  function clearForm(){ S.exPick={}; exRender(); ['j-amt','j-tips','j-ex','j-note'].forEach(function(id){$(id).value=''}); $('j-notebox').open=false; applyFeeDefaults(); updatePreview(); }
   function setEditing(id){
-    S.editId=id; if(!id) S.keepExtras=0; $('j-save').textContent=id?'Update job':'Save job'; $('j-title').textContent=id?'Edit job':'Add job';
+    S.editId=id; $('j-save').textContent=id?'Update job':'Save job'; $('j-title').textContent=id?'Edit job':'Add job';
     $('j-edit').hidden=!id; $('j-del').hidden=!id; $('j-del').textContent='Delete this job'; $('j-del').classList.remove('arm');
   }
   function editJob(id){
     if(String(id).indexOf('bill:')===0){ openBill(String(id).split(':')[1]); return; }
     var e=S.entriesAll.filter(function(x){return x.id===id})[0]; if(!e) return;
     setEditing(id); S.prov=e.provider||S.prov; S.pay=e.pay||S.pay; buildChips();
-    S.keepExtras=+e.extras||0; setMoney('j-amt',e.amount); setMoney('j-tips',e.tips);  $('j-note').value=e.note||''; $('j-notebox').open=!!e.note;
+    S.exPick={}; setMoney('j-ex',e.extras); exRender(); setMoney('j-amt',e.amount); setMoney('j-tips',e.tips);  $('j-note').value=e.note||''; $('j-notebox').open=!!e.note;
     var d=feeDefault(S.prov,S.pay); S.feeManual=!d||(+e.commission||0)!==(d[0]||0)||(+e.feeFixed||0)!==(d[1]||0); setMoney('j-fix',S.feeManual?lineFee(e):0); renderFee();
     S.addOpen=true; renderDay(); updatePreview(); $('d-form').scrollIntoView({behavior:'smooth',block:'start'});
   }
@@ -4194,7 +4233,8 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     showTab(b.getAttribute('data-tab'));
   }); });
   Array.prototype.forEach.call(document.querySelectorAll('input.money'),moneyInput);
-  ['j-amt','j-tips','j-fix'].forEach(function(id){ $(id).addEventListener('input',updatePreview); });
+  ['j-amt','j-tips','j-ex','j-fix'].forEach(function(id){ $(id).addEventListener('input',updatePreview); });
+  exRender();
   $('fm-rule').addEventListener('click',function(){ if(feeDefault(S.prov,S.pay)){ S.feeManual=false; renderFee(); updatePreview(); } });
   $('fm-man').addEventListener('click',function(){ if(!S.feeManual){ S.feeManual=true; $('j-fix').value=''; renderFee(); updatePreview(); } });
   buildChips(); applyFeeDefaults();
@@ -4810,7 +4850,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     function onErr(name){return function(e){ $('sync').textContent='Could not load '+name; }}
     db.collection('settings').onSnapshot(function(snap){
       snap.docs.forEach(function(d){ if(d.id==='stopts'&&d.exists){ S.stopts=d.data()||{}; stSyncVia(); } if(d.id==='tipstats'&&d.exists){ S.tipstats=d.data(); } if(d.id==='business'&&d.exists){ S.biz=d.data()||{}; } if(d.id==='practice'){ S.practice=!!(d.exists&&d.data().on); } if(d.id==='drivers'&&d.exists){ var nm=d.data().names; if(Array.isArray(nm)&&nm.length) S.drivers=nm; } if(d.id==='providers'&&d.exists){ var sv=d.data().shown; S.shown=Array.isArray(sv)&&sv.length?sv:null; if(S.shown&&S.shown.indexOf(S.prov)<0&&!S.editId){ S.prov=S.shown[0]; if(typeof applyFeeDefaults==='function') applyFeeDefaults(); } if(typeof buildChips==='function') buildChips(); } if(d.id==='bank'&&d.exists){ S.bankCov=d.data().covered||''; } if(d.id==='main'&&d.exists){ var v=d.data(); S.settings=Object.assign({},DEF,{threshold:+v.threshold||DEF.threshold,amberPct:+v.amberPct||DEF.amberPct,redPct:+v.redPct||DEF.redPct,start:v.start||DEF.start,fees:v.fees||{}}); } });
-      var md=null; snap.docs.forEach(function(d){ if(d.id==='look'&&d.exists){ var lk=(d.data()||{}).theme; if(lk&&lk!==S.look) applyLook(lk); } if(d.id==='opening'&&d.exists) S.opening=d.data()||{}; if(d.id==='tax'&&d.exists) S.tax=d.data()||{}; if(d.id==='mode'&&d.exists){ var mv=(d.data()||{}).mode; if(mv==='full'||mv==='track') md=mv; } if(d.id==='tabs'&&d.exists){ var tv=(d.data()||{}).shown; S.bar=Array.isArray(tv)&&tv.length?tv:null; } if(d.id==='alerts'&&d.exists){ var av=d.data()||{}; S.al={on:av.on!==false,min:+av.min||4,express:av.express!==false,off:Array.isArray(av.off)?av.off:[]}; if(typeof alRender==='function') alRender(); } }); S.mode=md||(S.isOwner?'full':null); S.loaded.settings=true; applyMode(); renderAll();
+      var md=null; snap.docs.forEach(function(d){ if(d.id==='look'&&d.exists){ var lk=(d.data()||{}).theme; if(lk&&lk!==S.look) applyLook(lk); } if(d.id==='opening'&&d.exists) S.opening=d.data()||{}; if(d.id==='tax'&&d.exists) S.tax=d.data()||{}; if(d.id==='mode'&&d.exists){ var mv=(d.data()||{}).mode; if(mv==='full'||mv==='track') md=mv; } if(d.id==='extras'&&d.exists){ var xl=(d.data()||{}).list; S.exList=Array.isArray(xl)?xl:null; if(typeof exRender==='function') exRender(); } if(d.id==='tabs'&&d.exists){ var tv=(d.data()||{}).shown; S.bar=Array.isArray(tv)&&tv.length?tv:null; } if(d.id==='alerts'&&d.exists){ var av=d.data()||{}; S.al={on:av.on!==false,min:+av.min||4,express:av.express!==false,off:Array.isArray(av.off)?av.off:[]}; if(typeof alRender==='function') alRender(); } }); S.mode=md||(S.isOwner?'full':null); S.loaded.settings=true; applyMode(); renderAll();
     },onErr('settings'));
     db.collection('months').onSnapshot(function(snap){
       var o={}; snap.docs.forEach(function(d){ if(d.exists) o[d.id]=d.data(); }); S.months=o; S.loaded.months=true; renderAll(); $('sync').textContent=S.syncLabel||'Saved to your account';
