@@ -2318,18 +2318,32 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     Array.prototype.forEach.call($('c-pay').querySelectorAll('button'),function(b){ b.addEventListener('click',function(){ S.pay=b.getAttribute('data-pay'); if(b.getAttribute('data-card')) S.card=b.getAttribute('data-card'); applyFeeDefaults(); buildChips(); updatePreview(); }); });
   }
   /* Extras buttons on the job form: standard ones plus the driver's own (settings/extras {list:[{n,a}]}). */
-  var EX_STD=[{n:'Heathrow drop-off',a:6},{n:'City Airport drop-off',a:6},{n:'Parking',a:0}]; /* a:0 = type the amount */
+  var EX_STD=[{n:'Airport drop-off',air:1},{n:'Parking',a:0}]; /* a:0 = type the amount; air = pick the airport */
+  /* Drop-off charges by airport (Matt 30 Oct: they differ). Heathrow and City as Matt charges them; others as published Aug 2026 — check and change if wrong. */
+  var AIRFEES=[['Heathrow',6],['City Airport',6],['Gatwick',10],['Stansted',10],['Luton',7]];
   function exList(){ return Array.isArray(S.exList)?S.exList:EX_STD; }
   function exRender(){
     var box=$('c-ex'); if(!box) return; S.exPick=S.exPick||{};
-    box.innerHTML=exList().map(function(x,i){ var on=!!S.exPick[i]; return '<button type="button" data-ex="'+i+'" aria-pressed="'+on+'">'+(on?'✓ ':'')+esc(x.n)+'<span class="xa">'+((+x.a||0)?gbp2.format(+x.a):(on?gbp2.format(S.exPick[i]):'£…'))+'</span></button>'; }).join('')
+    S.exName=S.exName||{};
+    box.innerHTML=exList().map(function(x,i){ var on=!!S.exPick[i], nm=(on&&S.exName[i])||x.n; return '<button type="button" data-ex="'+i+'" aria-pressed="'+on+'">'+(on?'✓ ':'')+esc(nm)+'<span class="xa">'+((+x.a||0)?gbp2.format(+x.a):(on?gbp2.format(S.exPick[i]):(x.air?'▾':'£…')))+'</span></button>'; }).join('')
       +'<button type="button" data-exedit="1" aria-pressed="false">'+($('x-edit').hidden?'+ My extras':'Done')+'</button>';
     Array.prototype.forEach.call(box.querySelectorAll('button[data-ex]'),function(b){ b.addEventListener('click',function(){
       var i=+b.getAttribute('data-ex'), x=exList()[i]; if(!x) return; var cur=mv('j-ex'), a=+x.a||0;
-      if(S.exPick[i]){ cur=Math.max(0,cur-(+S.exPick[i]||0)); delete S.exPick[i]; setMoney('j-ex',Math.round(cur*100)/100); exRender(); updatePreview(); return; }
+      if(S.exPick[i]){ cur=Math.max(0,cur-(+S.exPick[i]||0)); delete S.exPick[i]; delete S.exName[i]; setMoney('j-ex',Math.round(cur*100)/100); exRender(); updatePreview(); return; }
+      if(x.air){ exAir(i); return; }
       if(!a){ exAsk(i,x); return; }
       S.exPick[i]=a; cur+=a; setMoney('j-ex',Math.round(cur*100)/100); exRender(); updatePreview(); }); });
     box.querySelector('[data-exedit]').addEventListener('click',function(){ var ed=$('x-edit'); ed.hidden=!ed.hidden; exEditRender(); exRender(); });
+  }
+  function exAir(i){
+    var ed=$('x-edit'); ed.hidden=false;
+    ed.innerHTML='<p class="help" style="margin:0 0 6px">Which airport?</p><div class="chips tight xchips">'
+      +AIRFEES.map(function(a,k){ return '<button type="button" data-air="'+k+'">'+esc(a[0])+'<span class="xa">'+gbp2.format(a[1])+'</span></button>'; }).join('')+'</div>'
+      +'<div class="two" style="align-items:end;margin-top:8px"><div class="field" style="margin:0"><label for="x-amt">Other amount (£)</label><input type="text" class="money" id="x-amt" inputmode="numeric" autocomplete="off" placeholder="0.00"></div><button class="btn small" type="button" id="x-ok">Add</button></div>';
+    moneyInput($('x-amt'));
+    function put(nm,a){ S.exPick[i]=Math.round(a*100)/100; S.exName[i]=nm; setMoney('j-ex',Math.round((mv('j-ex')+a)*100)/100); ed.hidden=true; ed.innerHTML=''; exRender(); updatePreview(); }
+    Array.prototype.forEach.call(ed.querySelectorAll('[data-air]'),function(b){ b.addEventListener('click',function(){ var a=AIRFEES[+b.getAttribute('data-air')]; put(a[0]+' drop-off',a[1]); }); });
+    $('x-ok').addEventListener('click',function(){ var a=mv('x-amt'); if(!(a>0)){ toast('Enter the amount.'); return; } put('Airport drop-off',a); });
   }
   function exAsk(i,x){
     var ed=$('x-edit'); ed.hidden=false;
@@ -2342,7 +2356,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   function exEditRender(){
     var ed=$('x-edit'); if(!ed||ed.hidden) return;
     ed.innerHTML='<p class="help" style="margin:0 0 6px">Your extras buttons. Add the ones you use, remove the ones you don\'t.</p>'
-      +exList().map(function(x,i){ return '<div class="xrow"><span>'+esc(x.n)+' <span class="num">'+((+x.a||0)?gbp2.format(+x.a):'you type it each time')+'</span></span><button class="btn ghost small" type="button" data-exdel="'+i+'">Remove</button></div>'; }).join('')
+      +exList().map(function(x,i){ return '<div class="xrow"><span>'+esc(x.n)+' <span class="num">'+(x.air?'pick the airport':(+x.a||0)?gbp2.format(+x.a):'you type it each time')+'</span></span><button class="btn ghost small" type="button" data-exdel="'+i+'">Remove</button></div>'; }).join('')
       +'<div class="two" style="margin-top:8px"><div class="field" style="margin:0"><label for="x-n">Name</label><input type="text" id="x-n" maxlength="30" placeholder="e.g. Parking"></div>'
       +'<div class="field" style="margin:0"><label for="x-a">Amount (£, blank = type each time)</label><input type="text" class="money" id="x-a" inputmode="numeric" autocomplete="off" placeholder="0.00"></div></div>'
       +'<button class="btn small" type="button" id="x-add" style="margin-top:8px">Add button</button>'
@@ -2353,7 +2367,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     var sd=$('x-std'); if(sd) sd.addEventListener('click',function(){ exSave(null,'Standard buttons back'); });
   }
   function exSave(L,msg){
-    S.exList=L; S.exPick={}; exEditRender(); exRender();
+    S.exList=L; S.exPick={}; S.exName={}; exEditRender(); exRender();
     if(S.db) S.db.collection('settings').doc('extras').set({list:L||null,ts:Date.now()}).then(function(){ toast(msg); }).catch(fail); else toast(msg);
   }
   function formEntry(){
@@ -2374,7 +2388,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     }
     box.innerHTML=txt; box.hidden=false;
   }
-  function clearForm(){ S.feeOpen=false; S.exPick={}; exRender(); ['j-amt','j-tips','j-ex','j-note'].forEach(function(id){$(id).value=''}); $('j-notebox').open=false; applyFeeDefaults(); updatePreview(); }
+  function clearForm(){ S.feeOpen=false; S.exPick={}; S.exName={}; exRender(); ['j-amt','j-tips','j-ex','j-note'].forEach(function(id){$(id).value=''}); $('j-notebox').open=false; applyFeeDefaults(); updatePreview(); }
   function setEditing(id){
     S.editId=id; $('j-save').textContent=id?'Update job':'Save job'; $('j-title').textContent=id?'Edit job':'Add job';
     $('j-edit').hidden=!id; $('j-del').hidden=!id; $('j-del').textContent='Delete this job'; $('j-del').classList.remove('arm');
@@ -2399,7 +2413,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     $('j-save').disabled=true;
     /* Extras tapped on a new job (drop-off, parking) are also costs you paid: add each as an expense.
        Saved as not-cash, so once your bank import covers the day the bank's own line replaces it. */
-    var exAuto=[]; if(!old){ var XL=exList(); Object.keys(S.exPick||{}).forEach(function(i){ var a=Math.round((+S.exPick[i]||0)*100)/100, x=XL[i]; if(a>0&&x) exAuto.push({n:x.n,a:a}); }); }
+    var exAuto=[]; if(!old){ var XL=exList(); Object.keys(S.exPick||{}).forEach(function(i){ var a=Math.round((+S.exPick[i]||0)*100)/100, x=XL[i]; if(a>0&&x) exAuto.push({n:(S.exName&&S.exName[i])||x.n,a:a}); }); }
     ref.set(data).then(function(){
       if(!exAuto.length) return;
       var b=S.db.batch();
