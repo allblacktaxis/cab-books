@@ -3553,8 +3553,60 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     FX_ROUTES[url]=p; p.catch(function(){ delete FX_ROUTES[url]; });
     return p;
   }
-  function fxRoute(points,pref){
+  /* Knowledge routing (30 Oct): 'Shortest' uses the Knowledge app's exact router on Marcin's server
+     (routing.allblacktaxis.co.uk/exact-route) with Knowledge's saved taxi exemptions, road
+     restrictions and banned turns. The rules come from /.netlify/functions/routing-rules, which
+     checks the driver's sign-in and keeps the feed key on Netlify. Edits in Knowledge show on the
+     next calculation within 60 seconds. The router only answers the live Cab Books address.
+     If it fails, the driver is told and offered the ordinary route – never swapped silently.
+     Coordinates sent to the router are [longitude, latitude]. */
+  var KR_URL=String((FX_CFG&&FX_CFG.routingUrl)||'https://routing.allblacktaxis.co.uk').replace(/\/$/,'');
+  function krOn(){ return !!(FX_CFG&&FX_CFG.knowledgeRouting!==false&&S.auth&&S.auth.currentUser&&typeof AbortController==='function'); }
+  function krErr(msg,code){ var e=new Error(msg); e.code=code; e.kr=true; return e; }
+  function krRules(signal){
+    return S.auth.currentUser.getIdToken().then(function(tk){
+      return fetch('/.netlify/functions/routing-rules',{headers:{Authorization:'Bearer '+tk,Accept:'application/json'},cache:'no-store',credentials:'same-origin',signal:signal}); })
+      .then(function(r){ return r.json().catch(function(){return null}).then(function(j){
+        if(!r.ok) throw krErr(r.status===503&&j&&j.error==='not_set_up'?'Knowledge rules are not switched on yet.':r.status===401?'Please sign out and in again to use Knowledge routes.':'Knowledge’s rules could not be loaded, so no Knowledge route was worked out.','rules');
+        if(!j||j.schema_version!==1||!['taxi_exemptions','restrictions','turn_restrictions'].every(function(n){ return Array.isArray(j[n]); })) throw krErr('Knowledge’s rules came back incomplete.','rules');
+        return j; }); });
+  }
+  function krExact(points,signal){
+    return krRules(signal).then(function(rules){
+      var ctl=new AbortController(), late=false, ab=function(){ ctl.abort(); };
+      if(signal){ if(signal.aborted) ab(); else signal.addEventListener('abort',ab,{once:true}); }
+      var tm=setTimeout(function(){ late=true; ctl.abort(); },40000);
+      var body={stops:points.map(function(p){ return {point:[+p.lon,+p.lat]}; }),restrictions:rules.restrictions,turn_restrictions:rules.turn_restrictions,taxi_exemptions:rules.taxi_exemptions};
+      return fetch(KR_URL+'/exact-route',{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify(body),credentials:'omit',cache:'no-store',signal:ctl.signal})
+        .then(function(r){ return r.json().catch(function(e){ if(ctl.signal.aborted) throw e; return null; }).then(function(j){
+          if(!r.ok) throw krErr(r.status===429?'Too many route requests just now. Wait a few seconds and try again.':r.status===403?'The Knowledge route service doesn’t accept this web address.':'The Knowledge route service had a problem (error '+r.status+').','http');
+          if(!j||typeof j!=='object') throw krErr('The Knowledge route came back empty.','bad');
+          if(j.status==='no_route') throw krErr('No route obeys Knowledge’s rules between those points.','no_route');
+          if(j.status!=='optimal') throw krErr('The shortest route couldn’t be proved. Try fewer stops or a shorter journey.','incomplete');
+          var c=Array.isArray(j.coordinates)?j.coordinates:[];
+          var okc=c.length>1&&c.every(function(x){ return Array.isArray(x)&&x.length===2&&isFinite(x[0])&&isFinite(x[1])&&Math.abs(x[0])<=180&&Math.abs(x[1])<=90; });
+          if(!okc||!isFinite(j.distance_m)||j.distance_m<=0) throw krErr('The Knowledge route came back incomplete.','bad');
+          var names={}; rules.taxi_exemptions.forEach(function(x){ names[x.id]=x.road||''; });
+          var used=(Array.isArray(j.used_exemption_ids)?j.used_exemption_ids:[]).map(function(id){ return names[id]||''; });
+          return {distanceMeters:+j.distance_m,durationSeconds:isFinite(j.time_ms)&&j.time_ms>0?j.time_ms/1000:null,geometry:{type:'LineString',coordinates:c.map(function(x){ return [+x[0],+x[1]]; })},
+            source:'knowledge',rulesVersion:rules.version,exemptions:used}; }); })
+        .catch(function(e){ if(e&&e.name==='AbortError'){ if(late) throw krErr('The Knowledge route took too long. Try fewer stops.','timeout'); throw e; }
+          if(e&&e.kr) throw e; throw krErr('Could not reach the Knowledge route service. Check your signal.','net'); })
+        .finally(function(){ clearTimeout(tm); if(signal) signal.removeEventListener('abort',ab); });
+    });
+  }
+  /* Knowledge's route gives the line, miles and time; the ordinary shortest route (fetched alongside)
+     supplies the mix of road types the fare engine uses for stop-start, scaled to Knowledge's miles. */
+  function krShortest(points,wps,signal){
+    return Promise.all([krExact(points,signal),fxCandidate(wps,'short').catch(function(){ return null; })]).then(function(r){
+      var k=r[0], g=r[1];
+      if(!(k.durationSeconds>0)) k.durationSeconds=g&&g.distanceMeters>0?g.durationSeconds*k.distanceMeters/g.distanceMeters:k.distanceMeters/1609.344/12*3600;
+      k.steps=g&&g.steps?g.steps:[{distanceMeters:k.distanceMeters,durationSeconds:k.durationSeconds}];
+      return k; });
+  }
+  function fxRoute(points,pref,signal,plain){
     var wps=points.map(function(p){ return p.lat+','+p.lon; });
+    if(pref==='shortest'&&!plain&&krOn()) return krShortest(points,wps,signal);
     if(pref==='shortest') return fxCandidate(wps,'short');
     return Promise.all([fxCandidate(wps,'short'),fxCandidate(wps,'balanced')]).then(function(r){ return r[1].durationSeconds<r[0].durationSeconds?r[1]:r[0]; });
   }
@@ -3722,12 +3774,15 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     if(fit!==false){ var c=fxCoords(F.route.geometry); if(c.length>1){ var b=new window.maplibregl.LngLatBounds(); c.forEach(function(x){ b.extend(x); }); m.fitBounds(b,{padding:40,maxZoom:16,duration:500}); } }
   }
   function fxClearLine(){ var m=S.fx.map; if(m&&m.getSource&&m.getSource('fx-route')) m.getSource('fx-route').setData({type:'FeatureCollection',features:[]}); }
-  function fxGo(){
-    var F=S.fx; F.route=null; F.err='';
-    if(!F.pts.every(Boolean)){ fxClearLine(); fxResult(); return; }
+  function fxGo(plain){
+    var F=S.fx; F.route=null; F.err=''; F.errAlt=false;
+    if(F.ctl){ F.ctl.abort(); F.ctl=null; }
+    fxClearLine();
+    if(!F.pts.every(Boolean)){ fxResult(); return; }
     var id=++F.req; F.busy=true; fxResult();
-    fxRoute(F.pts,F.pref).then(function(r){ if(id!==F.req) return; F.route=r; F.busy=false; fxDraw(true); fxResult(); })
-      .catch(function(e){ if(id!==F.req) return; F.busy=false; F.err=e.message||'Could not work out the route.'; fxResult(); });
+    var ctl=typeof AbortController==='function'?new AbortController():null; F.ctl=ctl;
+    fxRoute(F.pts,F.pref,ctl&&ctl.signal,plain===true).then(function(r){ if(id!==F.req) return; F.ctl=null; F.route=r; F.busy=false; fxDraw(true); fxResult(); })
+      .catch(function(e){ if(id!==F.req||(e&&e.name==='AbortError')) return; F.ctl=null; F.busy=false; F.err=e.message||'Could not work out the route.'; F.errAlt=!!(e&&e.kr); fxResult(); });
   }
   function fxEstimate(){
     var F=S.fx, mm=parseFloat(String(F.mmiles).replace(',','.')), mt=parseFloat(F.mmins), manual=mm>0||mt>0;
@@ -3744,13 +3799,16 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   function fxResult(){
     var out=$('fx-out'); if(!out) return; var F=S.fx;
     if(F.busy){ out.innerHTML='<div class="card empty">Working out the route…</div>'; return; }
-    if(F.err){ out.innerHTML='<div class="card empty"><b>No route</b>'+esc(F.err)+'</div>'; return; }
+    if(F.err){ out.innerHTML='<div class="card empty"><b>No route</b>'+esc(F.err)
+      +(F.errAlt?'<p class="note" style="margin:8px 0">You can use the ordinary map route instead. It doesn’t follow Knowledge’s taxi rules, so it may be longer or use roads a cab can’t.</p><button class="btn ghost small" type="button" id="fx-plain">Use the ordinary route</button>':'')+'</div>';
+      var pb=$('fx-plain'); if(pb) pb.onclick=function(){ fxGo(true); }; return; }
     var E=fxEstimate();
     if(!E){ out.innerHTML=fxOnline()?'':'<div class="card empty"><b>Type the miles</b>Add the journey time too for a closer figure.</div>'; return; }
     var tot=E.central, TN={1:'weekday daytime',2:'evening or weekend',3:'night or holiday'};
     var h='<div class="card hero"><div class="row"><div class="label">Estimated meter fare</div><span class="pill plan">Tariff '+E.tariff+(E.usesTariff4?' → 4':'')+'</span></div>'
       +'<div class="big">'+gbp2.format(E.low)+'–'+gbp2.format(E.high)+'</div>'
       +'<div class="label">'+E.distanceMiles.toFixed(1)+' miles · '+(E.guessTime?'time assumed at 12 mph':E.lowMin+'–'+E.highMin+' min')+' · '+esc(TN[E.tariff])+'</div>'
+      +(F.route&&!(parseFloat(F.mmiles)>0)?'<div class="note" style="margin:6px 0 0">'+(F.route.source==='knowledge'?'Knowledge route: shortest legal taxi route'+(F.route.exemptions&&F.route.exemptions.length?' using '+F.route.exemptions.length+' taxi exemption'+(F.route.exemptions.length>1?'s':'')+(F.route.exemptions.filter(Boolean).length?' ('+esc(F.route.exemptions.filter(Boolean).slice(0,3).join(', '))+(F.route.exemptions.length>3?'…':'')+')':''):''):F.pref==='shortest'?'Ordinary map route (not Knowledge’s taxi rules)':'Quickest ordinary map route')+'</div>':'')
       +(E.extras>0?'<div class="kv" style="margin-top:10px"><span class="k">Extras included</span><span class="v">'+gbp2.format(E.extras)+'</span></div>':'')
       +'<p class="note" style="margin:8px 0 0">Low end is normal stop-start traffic; high end allows for the usual hold-ups at that day and time.</p>'
       +'<div class="two" style="margin-top:12px"><button class="btn ghost small" type="button" id="fx-copy">Copy a quote</button><button class="btn ghost small" type="button" id="fx-job">Add as a job</button></div></div>';
