@@ -4422,7 +4422,10 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     window.scrollTo(0,0);
   }
   Array.prototype.forEach.call(document.querySelectorAll('.tabs button'),function(b){ b.addEventListener('click',function(){
-    var sub=b.getAttribute('data-sub'); if(sub){ S.tool=sub; lsSet('cb-tool',sub); S.toolSolo=true; } else if(b.getAttribute('data-tab')==='tools') S.toolSolo=false;
+    var sub=b.getAttribute('data-sub'); if(sub){ S.tool=sub; lsSet('cb-tool',sub); S.toolSolo=true; }
+    else if(b.getAttribute('data-tab')==='tools'){ S.toolSolo=false;
+      /* Tools opens a tool that has no button of its own (Fares first), not the last bar page again (Matt, 30 Oct). */
+      if(barVisible(S.tool)){ var free=['fare','flights','ranks','toilets','tube','trains'].filter(function(k){ return !barVisible(k); }); S.tool=free[0]||'fare'; lsSet('cb-tool',S.tool); } }
     showTab(b.getAttribute('data-tab'));
   }); });
   Array.prototype.forEach.call(document.querySelectorAll('input.money'),moneyInput);
