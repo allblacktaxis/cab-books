@@ -725,14 +725,14 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
       <button class="btn ghost rp-snap" id="rp-snap" type="button" style="margin-top:8px"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1zM12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"/></svg>Snap a receipt</button>
       <input type="file" id="rp-file" accept="image/*" capture="environment" hidden>
       <div id="d-exp" style="margin-top:8px"></div>
-      <details class="rulex" id="e-addbox" style="margin-top:4px"><summary><span>Add a cash expense</span><span class="rview">Add</span></summary>
+      <details class="rulex" id="e-addbox" style="margin-top:4px" open><summary><span>Add an expense</span><span class="rview">Add</span></summary>
       <div style="padding-bottom:4px">
       <div class="fgrid" style="grid-template-columns:1.4fr 1fr auto;align-items:end">
         <div class="field" style="margin:0"><label for="e-cat">Category</label><select id="e-cat"></select></div>
         <div class="field" style="margin:0"><label for="e-amt">Amount</label><input type="text" class="money" id="e-amt" inputmode="numeric" autocomplete="off" placeholder="0.00"></div>
         <button class="btn small" id="e-add" type="button">Add</button>
       </div>
-      <div class="field" style="margin:10px 0 0"><label><input type="checkbox" id="e-cash" checked> Paid in cash (never goes through the bank)</label></div>
+      <div class="field" style="margin:10px 0 0"><label id="l-epay">Paid by</label><div class="seg" role="group" aria-labelledby="l-epay" style="margin:0"><button type="button" id="e-pcash" aria-pressed="true">Cash</button><button type="button" id="e-pcard" aria-pressed="false">Card / bank</button></div><input type="checkbox" id="e-cash" checked hidden><p class="help" style="margin:6px 0 0" id="e-payhelp">Cash never shows in the bank, so it is only counted from here.</p></div>
       <div class="rp-pick" style="margin-top:8px"><button class="btn ghost small" id="e-photo" type="button">Add receipt photo</button><span id="e-photo-st"></span></div>
       </div>
       </details>
@@ -2350,8 +2350,16 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     if(old?old.demo:S.practice) data.demo=true;
     if(old){ data.src=old.src||'manual'; data.ts=old.ts||data.ts; ref=S.db.collection('entries').doc(S.editId); } else ref=S.db.collection('entries').doc();
     $('j-save').disabled=true;
+    /* Extras tapped on a new job (drop-off, parking) are also costs you paid: add each as an expense.
+       Saved as not-cash, so once your bank import covers the day the bank's own line replaces it. */
+    var exAuto=[]; if(!old){ var XL=exList(); Object.keys(S.exPick||{}).forEach(function(i){ var a=Math.round((+S.exPick[i]||0)*100)/100, x=XL[i]; if(a>0&&x) exAuto.push({n:x.n,a:a}); }); }
     ref.set(data).then(function(){
-      toast((old?'Updated: ':'Saved: ')+gbp2.format(data.amount)+(S.prov==='Gett'&&S.pay==='Cash'&&!f.feeFixed&&!f.commission?' (no Gett fee entered)':''));
+      if(!exAuto.length) return;
+      var b=S.db.batch();
+      exAuto.forEach(function(x){ var er=S.db.collection('entries').doc(), d={kind:'expense',date:S.day,m:monthOf(S.day),category:'Parking / drop-off',amount:x.a,cash:false,note:x.n+' (from job)',fromJob:ref.id,src:'manual',ts:Date.now()}; if(data.demo) d.demo=true; b.set(er,d); });
+      return b.commit();
+    }).then(function(){
+      toast((old?'Updated: ':'Saved: ')+gbp2.format(data.amount)+(exAuto.length?' + '+exAuto.map(function(x){return x.n+' '+gbp2.format(x.a)}).join(', ')+' added to expenses':'')+(S.prov==='Gett'&&S.pay==='Cash'&&!f.feeFixed&&!f.commission?' (no Gett fee entered)':''));
       setEditing(null); clearForm();
     }).catch(fail).then(function(){$('j-save').disabled=false});
   }
@@ -2362,7 +2370,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     var ref=S.db.collection('entries').doc(), cat=$('e-cat').value, amt=Math.round(a*100)/100, ph=S.rpPending;
     ref.set({kind:'expense',date:S.day,m:monthOf(S.day),category:cat,amount:amt,cash:$('e-cash').checked,note:'',src:'manual',ts:Date.now(),demo:!!S.practice})
       .then(function(){ return ph?rpSave(ph,{date:S.day,eid:ref.id,category:cat,amount:amt}):null; })
-      .then(function(){ toast('Expense saved: '+gbp2.format(a)+(ph?' with receipt photo':'')); $('e-amt').value=''; $('e-cash').checked=true; S.rpPending=null; rpPendingShow(); }).catch(fail).then(function(){$('e-add').disabled=false});
+      .then(function(){ toast('Expense saved: '+gbp2.format(a)+(ph?' with receipt photo':'')); $('e-amt').value=''; ePay(true); S.rpPending=null; rpPendingShow(); }).catch(fail).then(function(){$('e-add').disabled=false});
   }
 
   /* ---------- receipt photos (Matt, 28 Oct) ----------
@@ -4436,6 +4444,8 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   Array.prototype.forEach.call(document.querySelectorAll('input.money'),moneyInput);
   ['j-amt','j-tips','j-ex','j-fix'].forEach(function(id){ $(id).addEventListener('input',updatePreview); });
   exRender();
+  function ePay(c){ $('e-cash').checked=c; $('e-pcash').setAttribute('aria-pressed',c); $('e-pcard').setAttribute('aria-pressed',!c); $('e-payhelp').textContent=c?'Cash never shows in the bank, so it is only counted from here.':'Counted now; replaced by the bank line once you import that statement.'; }
+  $('e-pcash').addEventListener('click',function(){ ePay(true); }); $('e-pcard').addEventListener('click',function(){ ePay(false); });
   $('j-feechg').addEventListener('click',function(){ if(S.feeManual&&formFee(S.prov,S.pay)){ S.feeManual=false; S.feeOpen=false; } else S.feeOpen=!S.feeOpen; renderFee(); updatePreview(); });
   $('fm-rule').addEventListener('click',function(){ if(formFee(S.prov,S.pay)){ S.feeManual=false; renderFee(); updatePreview(); } });
   $('fm-man').addEventListener('click',function(){ if(!S.feeManual){ S.feeManual=true; $('j-fix').value=''; renderFee(); updatePreview(); } });
