@@ -2291,7 +2291,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   function exAir(i){
     var ed=$('x-edit'); ed.hidden=false;
     ed.innerHTML='<p class="help" style="margin:0 0 6px">Which airport?</p><div class="chips tight xchips">'
-      +AIRFEES.map(function(a,k){ return '<button type="button" data-air="'+k+'">'+esc(a[0])+'<span class="xa">'+gbp2.format(a[1])+'</span></button>'; }).join('')+'</div>'
+      +AIRFEES.map(function(a,k){ return '<button type="button" data-air="'+k+'">'+esc(a[0])+' <span class="xa">'+gbp2.format(a[1])+'</span></button>'; }).join('')+'</div>'
       +'<div class="two" style="align-items:end;margin-top:8px"><div class="field" style="margin:0"><label for="x-amt">Other amount (£)</label><input type="text" class="money" id="x-amt" inputmode="numeric" autocomplete="off" placeholder="0.00"></div><button class="btn small" type="button" id="x-ok">Add</button></div>';
     moneyInput($('x-amt'));
     function put(nm,a){ S.exPick[i]=Math.round(a*100)/100; S.exName[i]=nm; setMoney('j-ex',Math.round((mv('j-ex')+a)*100)/100); ed.hidden=true; ed.innerHTML=''; exRender(); updatePreview(); }
