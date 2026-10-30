@@ -95,6 +95,11 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .btn.ghost{background:transparent;color:var(--accent);border:1px solid var(--accent)}
 .btn.small{width:auto;min-height:36px;padding:7px 12px;font-size:13px}
 .btn:disabled{opacity:.45;cursor:default}
+.lbl-sub{font-weight:400;font-size:12px;color:var(--muted)}
+.feeline{font-size:13px;color:var(--muted);margin:0 0 10px;display:flex;align-items:center;justify-content:flex-start!important;gap:6px;flex-wrap:wrap}
+.feeline #j-feetxt{color:var(--ink)}
+.linkbtn{background:none;border:0;color:var(--accent);font-weight:600;font-size:13px;padding:6px 4px;min-height:32px;cursor:pointer;text-decoration:underline}
+#j-feebox{margin-bottom:10px}
 .preview{background:var(--accent-soft);color:var(--ink);border-radius:8px;padding:10px 12px;font-size:13px;margin-bottom:12px}
 .preview .num{font-weight:600}
 .mrow{border-top:1px solid var(--line);padding:10px 0}
@@ -725,24 +730,22 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
       <div id="d-form">
         <div class="field"><label id="l-prov">Provider</label><div class="chips" id="c-prov" role="group" aria-labelledby="l-prov"></div></div>
         <div class="field"><label id="l-pay">Paid by</label><div class="chips" id="c-pay" role="group" aria-labelledby="l-pay"></div></div>
-        <div class="two">
-          <div class="field"><label for="j-amt">Fare (£)</label><input type="text" class="money" id="j-amt" inputmode="numeric" autocomplete="off" placeholder="0.00"></div>
-          <div class="field"><label for="j-tips">Tip (£)</label><input type="text" class="money" id="j-tips" inputmode="numeric" autocomplete="off" placeholder="0.00"></div>
-        </div>
-        <p class="help" style="margin-top:-4px">Tips are not part of VAT turnover.</p>
+        <details class="jnote" id="j-notebox"><summary>+ Add journey</summary><div class="field" style="margin-top:8px"><label for="j-note">Journey (optional)</label><input type="text" id="j-note" maxlength="120" placeholder="e.g. Norrice Lea – T4 Heathrow"><p class="help" style="margin:6px 0 0">Useful for cash, hand and private jobs. It fills in the receipt for you.</p></div></details>
         <div class="field"><label for="j-ex">Extras (£)</label><input type="text" class="money" id="j-ex" inputmode="numeric" autocomplete="off" placeholder="0.00">
           <div class="chips tight xchips" id="c-ex" role="group" aria-label="Tap to add an extra"></div>
           <div class="xedit" id="x-edit" hidden></div>
-          <p class="help" style="margin:6px 0 0">Drop-off fees and parking, as on your meter. Tap to add; tap again to take off. FreeNow and Gett take no commission on extras. Extras count towards VAT turnover.</p></div>
-        <div class="field"><label id="l-fee">Commission</label>
+          <p class="help" style="margin:4px 0 0">Drop-off fees and parking. Tap to add, tap again to remove.</p></div>
+        <div class="two">
+          <div class="field"><label for="j-amt">Fare (£) <span class="lbl-sub">no tip</span></label><input type="text" class="money" id="j-amt" inputmode="numeric" autocomplete="off" placeholder="0.00"></div>
+          <div class="field"><label for="j-tips">Tip (£) <span class="lbl-sub">on top</span></label><input type="text" class="money" id="j-tips" inputmode="numeric" autocomplete="off" placeholder="0.00"></div>
+        </div>
+        <p class="help" style="margin-top:-6px">Enter them separately: £20 fare + £2 tip, not £22.</p>
+        <div class="feeline"><span id="l-fee">Commission:</span> <span id="j-feetxt"></span> <button type="button" class="linkbtn" id="j-feechg">Change</button></div>
+        <div id="j-feebox" hidden>
           <div class="seg" role="group" aria-labelledby="l-fee" style="margin-bottom:8px"><button type="button" id="fm-rule" aria-pressed="true">Set rule</button><button type="button" id="fm-man" aria-pressed="false">Manual</button></div>
-          <div class="note" id="j-feetxt" style="margin:0"></div>
-          <div id="j-feeedit" hidden style="margin-top:8px">
-            <label for="j-fix" style="margin-bottom:4px">Fee for this job (£)</label><input type="text" class="money" id="j-fix" inputmode="numeric" autocomplete="off" placeholder="0.00">
-          </div>
+          <div id="j-feeedit" hidden><label for="j-fix" style="margin-bottom:4px">Fee for this job (£)</label><input type="text" class="money" id="j-fix" inputmode="numeric" autocomplete="off" placeholder="0.00"></div>
         </div>
         <p class="warnbox" id="j-hint" hidden>Gett cash fees vary, so enter this job's fee as a fixed amount.</p>
-        <details class="jnote" id="j-notebox"><summary>+ Add journey</summary><div class="field" style="margin-top:8px"><label for="j-note">Journey (optional)</label><input type="text" id="j-note" maxlength="120" placeholder="e.g. Norrice Lea – T4 Heathrow"><p class="help" style="margin:6px 0 0">Useful for cash, hand and private jobs. It fills in the receipt for you.</p></div></details>
         <div class="preview" id="j-preview" hidden></div>
         <button class="btn" id="j-save" type="button">Save job</button>
         <div class="two" id="j-edit" hidden style="margin-top:10px"><button class="btn ghost small" id="j-rcpt" type="button">Receipt</button><button class="btn ghost small" id="j-cancel" type="button">Cancel</button></div>
@@ -1360,7 +1363,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     var ae=document.activeElement; if(ae && el.contains(ae) && /INPUT|TEXTAREA|SELECT/.test(ae.tagName)) return;
     var st=S.settings, z=S.biz||{}, h=renderAccountCard()+renderModeCard()+renderLookCard()+(S.isOwner?renderBackupCard():'')+renderPracticeCard()+renderSuggest()+renderProvPick()+renderBarPick()+renderAlertPick()+renderAdminCard()
       +'<div class="card"><h2>Your details on receipts</h2><p class="help">Printed at the bottom of every receipt and PDF.</p>'
-      +'<div class="field"><label for="bz-trade">Name on your receipts</label><input type="text" id="bz-trade" maxlength="60" value="'+esc(z.trade!=null?z.trade:BRAND)+'"><p class="note" style="margin-top:4px">Shown at the top of every receipt. Leave as '+BRAND+' if you drive under our brand, or use your own trading name.</p></div>'
+      +'<div class="field"><label for="bz-trade">Name on your receipts</label><input type="text" id="bz-trade" maxlength="60" value="'+esc(z.trade!=null?z.trade:BIZNAME)+'"><p class="note" style="margin-top:4px">Shown at the top of every receipt. Leave as '+BIZNAME+' if you drive under our brand, or use your own trading name.</p></div>'
       +'<div class="field"><label for="bz-name">Your name</label><input type="text" id="bz-name" maxlength="60" value="'+esc(z.name||'')+'" placeholder="e.g. your full name"></div>'
       +'<div class="two"><div class="field"><label for="bz-phone">Phone</label><input type="text" id="bz-phone" inputmode="tel" maxlength="30" value="'+esc(z.phone||'')+'"></div><div class="field"><label for="bz-lic">Taxi licence no.</label><input type="text" id="bz-lic" maxlength="20" value="'+esc(z.licence||'')+'"></div></div>'
       +'<div class="field"><label for="bz-email">Email</label><input type="text" id="bz-email" inputmode="email" maxlength="80" value="'+esc(z.email||'')+'"></div>'
@@ -2291,8 +2294,10 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   function renderFee(){
     var d=formFee(S.prov,S.pay,S.day), man=S.feeManual;
     $('fm-rule').setAttribute('aria-pressed',!man); $('fm-man').setAttribute('aria-pressed',man); $('fm-rule').disabled=!d;
-    $('j-feetxt').textContent = man ? '' : ruleText(d);
+    $('j-feetxt').textContent = man ? 'Manual' : ruleText(d).replace(' (set rule)','');
     $('j-feeedit').hidden=!man;
+    $('j-feebox').hidden=!(S.feeOpen||man);
+    $('j-feechg').textContent=(S.feeOpen||man)?'Hide':'Change';
     $('j-hint').hidden=!!d;
   }
   function applyFeeDefaults(){
@@ -2358,7 +2363,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     var box=$('j-preview'); if(!box) return;
     var h=formEntry();
     if(!(h.amount>0)||!S.db||!S.loaded.months){ box.hidden=true; return; }
-    var fee=lineFee(h), gross=eAmt(h), txt='Fee <span class="num">'+gbp2.format(fee)+'</span> · you keep <span class="num">'+gbp2.format(gross-fee)+'</span>.';
+    var fee=lineFee(h), gross=eAmt(h), tip=+h.tips||0, txt=(tip>0?'Total taken <span class="num">'+gbp2.format(gross+tip)+'</span> (tip <span class="num">'+gbp2.format(tip)+'</span>). ':'')+'Fee <span class="num">'+gbp2.format(fee)+'</span> · you keep <span class="num">'+gbp2.format(gross+tip-fee)+'</span>.';
     var others=S.entries.filter(function(x){return x.id!==S.editId});
     var hh=Object.assign({id:'__hyp'},h), C0=compute(others), C1=compute(others.concat([hh]));
     var ci=curIdx(C0); if(C0.rolling[ci]==null) ci=C0.lastIdx;
@@ -2369,7 +2374,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     }
     box.innerHTML=txt; box.hidden=false;
   }
-  function clearForm(){ S.exPick={}; exRender(); ['j-amt','j-tips','j-ex','j-note'].forEach(function(id){$(id).value=''}); $('j-notebox').open=false; applyFeeDefaults(); updatePreview(); }
+  function clearForm(){ S.feeOpen=false; S.exPick={}; exRender(); ['j-amt','j-tips','j-ex','j-note'].forEach(function(id){$(id).value=''}); $('j-notebox').open=false; applyFeeDefaults(); updatePreview(); }
   function setEditing(id){
     S.editId=id; $('j-save').textContent=id?'Update job':'Save job'; $('j-title').textContent=id?'Edit job':'Add job';
     $('j-edit').hidden=!id; $('j-del').hidden=!id; $('j-del').textContent='Delete this job'; $('j-del').classList.remove('arm');
@@ -3087,8 +3092,8 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
 
   /* ---------- wiring ---------- */
   /* ---------- name on receipts ---------- */
-  var BRAND='All Black Taxis';
-  function brandName(){ var t=S.biz&&S.biz.trade; return (t!=null&&String(t).trim())?String(t).trim():BRAND; }
+  var BIZNAME='All Black Taxis';
+  function brandName(){ var t=S.biz&&S.biz.trade; return (t!=null&&String(t).trim())?String(t).trim():BIZNAME; }
   function monthsDiff(a,b){ var p=a.split('-'),q=b.split('-'); return (+q[0]-+p[0])*12+(+q[1]-+p[1]); }
 
   /* ---------- takings before Cab Books (for the 12-month VAT check only) ---------- */
@@ -4478,6 +4483,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   Array.prototype.forEach.call(document.querySelectorAll('input.money'),moneyInput);
   ['j-amt','j-tips','j-ex','j-fix'].forEach(function(id){ $(id).addEventListener('input',updatePreview); });
   exRender();
+  $('j-feechg').addEventListener('click',function(){ if(S.feeManual&&formFee(S.prov,S.pay)){ S.feeManual=false; S.feeOpen=false; } else S.feeOpen=!S.feeOpen; renderFee(); updatePreview(); });
   $('fm-rule').addEventListener('click',function(){ if(formFee(S.prov,S.pay)){ S.feeManual=false; renderFee(); updatePreview(); } });
   $('fm-man').addEventListener('click',function(){ if(!S.feeManual){ S.feeManual=true; $('j-fix').value=''; renderFee(); updatePreview(); } });
   buildChips(); applyFeeDefaults();
