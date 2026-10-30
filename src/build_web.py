@@ -110,17 +110,9 @@ rep("Receipts are saved to your Claude account.</div>", "Sign in to Cab Books to
 rep("S.mode=md||(S.isOwner?'full':null);", "S.mode=md||null;")
 rep("var needWelcome=!S.isOwner&&S.loaded.settings&&!S.mode;", "var needWelcome=S.loaded.settings&&!S.mode;")
 rep("+(S.isOwner?'':'<p class=\"privnote\" style=\"margin-top:10px\">Your figures are private to you. Nobody else using Cab Books can see them.</p>')+'</div>';",
-    "+'<p class=\"privnote\" style=\"margin-top:10px\">Your figures are private to you. Nobody else using Cab Books can see them.</p></div>';\n  }\n"
-    "  function renderAccountCard(){\n"
-    "    var u=S.authUser; if(!u) return '';\n"
-    "    return '<div class=\"card\"><h2>Your account</h2><div class=\"acct\"><span class=\"em\">'+esc(u.email||'')+'</span>'\n"
-    "      +'<button class=\"btn ghost small\" type=\"button\" id=\"acct-out\">Sign out</button></div>'\n"
-    "      +'<div style=\"margin-top:12px\"><label for=\"acct-imp\">Bring in data from the old Cab Books</label>'\n"
-    "      +'<p class=\"help\" style=\"margin:0 0 8px\">Choose the backup file (.json) saved from the old app. Records already here with the same number are replaced, nothing else is touched.</p>'\n"
-    "      +'<label style=\"display:flex;gap:8px;align-items:center;margin:0 0 8px;font-weight:400\"><input type=\"checkbox\" id=\"acct-rep\"> Start fresh: clear what is already here first (use this on switch-over day)</label>'\n"
-    "      +'<input type=\"file\" id=\"acct-imp\" accept=\".json,application/json\"></div>'\n"
-    "      +'<p class=\"help\" style=\"margin:12px 0 0\"><a href=\"/help.html\" style=\"color:var(--accent)\">Getting-started guide</a> &middot; <a href=\"/privacy.html\" style=\"color:var(--accent)\">Privacy notice</a></p></div>';")
+    "+'<p class=\"privnote\" style=\"margin-top:10px\">Your figures are private to you. Nobody else using Cab Books can see them.</p></div>';")
 rep("h=renderModeCard()+renderLookCard()", "h=renderAccountCard()+renderModeCard()+renderLookCard()")
+rep('<button type="button" class="gear" id="gear"', '<style>@media (max-width:500px){#acctbtn span{display:none}}</style><button type="button" class="gear" id="acctbtn" aria-label="Your account" hidden>\U0001F464\uFE0E<span>Account</span></button><button type="button" class="gear" id="gear"')
 
 # ---------------------------------------------------------------- boot: Firebase instead of Claude
 b0 = s.index("  /* ---------- who is using the app: private books per person ----------")
@@ -222,6 +214,114 @@ BOOT = r"""  /* ---------- website plumbing: Firebase sign-in + each driver's pr
     rd.readAsText(file);
   }
   document.addEventListener('click',function(ev){ if(ev.target&&ev.target.id==='acct-out'&&S.auth){ S.auth.signOut(); $('setovl').hidden=true; } });
+  /* ---------- Your account: email, password, sign out, copy of my data, delete ---------- */
+  var ACCT_ALL=['settings','months','plans','events','bankrules','rules','closes','history','bills','receipts','entries','rphotos','rphotoimg','stmts','push','meta'];
+  var ACCT_COPY=['settings','months','plans','events','bankrules','rules','closes','history','bills','receipts','entries','rphotos','rphotoimg','stmts'];
+  S.acctOpen=S.acctOpen||{};
+  function acctSec(id,title,body){ return '<details class="rulex" data-acct="'+id+'"'+(S.acctOpen[id]?' open':'')+'><summary>'+title+'</summary><div style="padding:0 0 12px">'+body+'</div></details>'; }
+  function acctField(id,label,type,ac){ return '<div class="field" style="margin:0 0 8px"><label for="'+id+'">'+label+'</label><input type="'+type+'" id="'+id+'" autocomplete="'+ac+'"'+(type==='email'?' inputmode="email" autocapitalize="off"':'')+'></div>'; }
+  function renderAccountCard(){
+    var u=S.authUser; if(!u) return '';
+    var ver=!!u.emailVerified;
+    return '<div class="card" id="acct-card"><h2>Your account</h2>'
+      +'<div class="acct"><span class="em">'+esc(u.email||'')+' '+(ver?'<span class="badge rec">confirmed</span>':'<span class="badge ind">not confirmed yet</span>')+'</span>'
+      +'<button class="btn ghost small" type="button" id="acct-out">Sign out</button></div>'
+      +(ver?'':'<p class="help" style="margin:8px 0 0">We emailed you a link when you signed up. Tap it to confirm your email (check junk too). <button class="btn ghost small" type="button" id="acct-ver">Send the link again</button></p>')
+      +'<p class="help" style="margin:10px 0 4px"><b>Plan:</b> free while Cab Books launches.</p>'
+      +acctSec('pw','Change password',
+          acctField('acct-pw-cur','Current password','password','current-password')
+         +acctField('acct-pw-new','New password (at least 8 characters)','password','new-password')
+         +acctField('acct-pw-new2','New password again','password','new-password')
+         +'<button class="btn" type="button" id="acct-pw-go">Change password</button>')
+      +acctSec('em','Change email',
+          '<p class="help" style="margin:0 0 8px">We send a link to the new address. Your sign-in email changes when you tap it.</p>'
+         +acctField('acct-em-new','New email','email','email')
+         +acctField('acct-em-cur','Current password','password','current-password')
+         +'<button class="btn" type="button" id="acct-em-go">Send the link</button>')
+      +acctSec('dl','Download a copy of my data',
+          '<p class="help" style="margin:0 0 8px">Everything in your books (jobs, expenses, months, receipts, photos, settings) as one file. Keep it as a backup; it can be brought back in below.</p>'
+         +'<button class="btn ghost" type="button" id="acct-dl">Download my data</button>')
+      +acctSec('imp','Bring in data from a backup',
+          '<p class="help" style="margin:0 0 8px">Choose a backup file (.json) from the old Cab Books or from Download my data. Records already here with the same number are replaced, nothing else is touched.</p>'
+         +'<label style="display:flex;gap:8px;align-items:center;margin:0 0 8px;font-weight:400"><input type="checkbox" id="acct-rep"> Start fresh: clear what is already here first (use this on switch-over day)</label>'
+         +'<input type="file" id="acct-imp" accept=".json,application/json">')
+      +acctSec('del','Delete my account',
+          '<p class="help" style="margin:0 0 8px">This permanently deletes your account and all your books: jobs, expenses, receipts, photos and settings. It cannot be undone. Download a copy of your data first if you might need it (HMRC expects records to be kept for 5 years after the tax return deadline).</p>'
+         +acctField('acct-del-word','Type DELETE to confirm','text','off')
+         +acctField('acct-del-pw','Your password','password','current-password')
+         +'<button class="btn ghost" type="button" id="acct-del-go" style="color:var(--bad,#E5484D);border-color:var(--bad,#E5484D)!important">Delete my account and data</button>')
+      +'<p class="help" style="margin:12px 0 0"><a href="/help.html" style="color:var(--accent)">Getting-started guide</a> &middot; <a href="/privacy.html" style="color:var(--accent)">Privacy notice</a></p></div>';
+  }
+  function acctMsg(e){
+    var c=(e&&e.code)||'';
+    if(c==='auth/wrong-password'||c==='auth/invalid-credential'||c==='auth/invalid-login-credentials') return 'That password isn’t right.';
+    if(c==='auth/email-already-in-use') return 'There is already a Cab Books account with that email.';
+    if(c==='auth/requires-recent-login') return 'For safety, sign out and back in, then try again.';
+    return siMsg(e);
+  }
+  function acctReauth(pw){
+    var u=S.auth&&S.auth.currentUser; if(!u) return Promise.reject({code:'none'});
+    return u.reauthenticateWithCredential(firebase.auth.EmailAuthProvider.credential(u.email,pw)).then(function(){ return u; });
+  }
+  function acctBusy(id,on,txt){ var b=$(id); if(!b) return; if(on){ b.dataset.t=b.textContent; b.textContent=txt||'Working…'; b.disabled=true; } else { b.textContent=b.dataset.t||b.textContent; b.disabled=false; } }
+  function acctPassword(){
+    var cur=$('acct-pw-cur').value, nw=$('acct-pw-new').value, nw2=$('acct-pw-new2').value;
+    if(!cur){ toast('Type your current password.'); return; }
+    if(nw.length<8){ toast('Use a new password of at least 8 characters.'); return; }
+    if(nw!==nw2){ toast('The two new passwords don’t match.'); return; }
+    acctBusy('acct-pw-go',true);
+    acctReauth(cur).then(function(u){ return u.updatePassword(nw); })
+      .then(function(){ ['acct-pw-cur','acct-pw-new','acct-pw-new2'].forEach(function(i){ if($(i)) $(i).value=''; }); S.acctOpen.pw=false; toast('Password changed.'); renderSettings(); })
+      .catch(function(e){ toast(acctMsg(e)); }).then(function(){ acctBusy('acct-pw-go',false); });
+  }
+  function acctEmail(){
+    var nem=$('acct-em-new').value.trim(), cur=$('acct-em-cur').value;
+    if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(nem)){ toast('That email address doesn’t look right.'); return; }
+    if(!cur){ toast('Type your current password.'); return; }
+    acctBusy('acct-em-go',true);
+    acctReauth(cur).then(function(u){ return u.verifyBeforeUpdateEmail(nem); })
+      .then(function(){ $('acct-em-new').value=''; $('acct-em-cur').value=''; toast('Link sent to '+nem+'. Tap it to change your sign-in email.'); })
+      .catch(function(e){ toast(acctMsg(e)); }).then(function(){ acctBusy('acct-em-go',false); });
+  }
+  function acctDownload(){
+    if(!S.db) return;
+    acctBusy('acct-dl',true,'Collecting…');
+    var out={app:'Cab Books',version:1,saved:new Date().toISOString(),email:(S.authUser&&S.authUser.email)||'',collections:{}}, n=0;
+    Promise.all(ACCT_COPY.map(function(c){ return S.db.collection(c).get().then(function(sn){ var o={}; sn.docs.forEach(function(d){ o[d.id]=d.data(); n++; }); out.collections[c]=o; }); }))
+      .then(function(){ return WEBDL.save({filename:'Cab Books my data '+todayISO()+'.json',data:JSON.stringify(out),type:'application/json'}); })
+      .then(function(){ toast('Downloaded: '+n+' records.'); })
+      .catch(function(){ toast('Could not collect your data. Check your connection and try again.'); })
+      .then(function(){ acctBusy('acct-dl',false); });
+  }
+  function acctDelete(){
+    if(($('acct-del-word').value||'').trim().toUpperCase()!=='DELETE'){ toast('Type DELETE in the box to confirm.'); return; }
+    var pw=$('acct-del-pw').value; if(!pw){ toast('Type your password.'); return; }
+    if(!confirm('Delete your Cab Books account and all your books for good? This cannot be undone.')) return;
+    acctBusy('acct-del-go',true,'Deleting…');
+    var uid=S.uid, fs=S.fs, home=fs.collection('users').doc(uid), user;
+    acctReauth(pw).then(function(u){
+      user=u; stopAll();
+      return Promise.all(ACCT_ALL.map(function(c){ return home.collection(c).get(); }));
+    }).then(function(snaps){
+      var refs=[]; snaps.forEach(function(sn){ sn.docs.forEach(function(d){ refs.push(d.ref); }); }); refs.push(home);
+      var k=0;
+      return (function del(){ if(k>=refs.length) return Promise.resolve(); var b=fs.batch(), n=0; while(k<refs.length&&n<400){ b.delete(refs[k++]); n++; } return b.commit().then(del); })();
+    }).then(function(){ return user.delete(); })
+      .then(function(){ $('setovl').hidden=true; toast('Your account and books have been deleted.'); })
+      .catch(function(e){ acctBusy('acct-del-go',false); if(user&&S.uid===uid) subscribe(S.db); toast(e&&e.code?acctMsg(e):'Could not finish deleting. Try again, or email marcin@allblacktaxis.co.uk.'); });
+  }
+  function openAccount(){ S.acctOpen={}; openSettings(); setTimeout(function(){ var c=$('acct-card'); if(c) c.scrollIntoView({block:'start'}); },30); }
+  document.addEventListener('toggle',function(ev){ var d=ev.target; if(d&&d.getAttribute&&d.getAttribute('data-acct')) S.acctOpen[d.getAttribute('data-acct')]=d.open; },true);
+  document.addEventListener('click',function(ev){
+    var t=ev.target&&ev.target.closest?ev.target.closest('button'):null, id=t&&t.id; if(!id) return;
+    if(id==='acctbtn') openAccount();
+    else if(id==='acct-ver'&&S.auth&&S.auth.currentUser) S.auth.currentUser.sendEmailVerification().then(function(){ toast('Link sent to '+S.auth.currentUser.email+'.'); },function(e){ toast(acctMsg(e)); });
+    else if(id==='acct-pw-go') acctPassword();
+    else if(id==='acct-em-go') acctEmail();
+    else if(id==='acct-dl') acctDownload();
+    else if(id==='acct-del-go') acctDelete();
+  });
+
   document.addEventListener('change',function(ev){ if(ev.target&&ev.target.id==='acct-imp'){ importBackup(ev.target.files&&ev.target.files[0]); ev.target.value=''; } });
 
   if(typeof firebase!=='undefined' && window.CB_FIREBASE && window.CB_FIREBASE.apiKey && window.CB_FIREBASE.apiKey.indexOf('PASTE')<0){
@@ -231,6 +331,7 @@ BOOT = r"""  /* ---------- website plumbing: Firebase sign-in + each driver's pr
     S.auth=auth; S.fs=fs; wireSignin(auth);
     auth.onAuthStateChanged(function(u){
       resetState();
+      if($('acctbtn')) $('acctbtn').hidden=!u;
       if(!u){ S.authUser=null; $('signin').hidden=false; siMode('in'); $('sync').textContent='Signed out'; renderAll(); return; }
       S.authUser=u; S.uid=u.uid; $('signin').hidden=true;
       S.syncLabel='Private to you'; $('sync').textContent='Loading…';
