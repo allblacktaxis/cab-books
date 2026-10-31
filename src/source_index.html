@@ -815,7 +815,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
 
   <section id="tab-import" hidden>
     <div class="card" id="st-card">
-      <h2>Statements from FreeNow, Gett and Curb</h2>
+      <h2>Statements from FreeNow, Gett, Curb, ComCab and Uber</h2>
       <p class="help">Choose one or more statements: FreeNow's weekly PDFs, Gett's daily or weekly PDFs, or Curb's reports (PDF, Excel or CSV). You can pick several at once. Cab Books works out which is which, checks the totals add up, and adds each job once. Reading the same statement again is safe.</p>
       <div class="field"><label for="st-file">Statement files</label><input type="file" id="st-file" multiple accept=".pdf,.xlsx,.xls,.csv,application/pdf,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"></div>
       <div class="field" style="margin-bottom:0"><label>When FreeNow or Gett say “cash”, the customer paid</label>
@@ -840,6 +840,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     <div class="card" id="bk-card">
       <h2>Bank statement</h2>
       <p class="help" id="bk-help">Brings in what the taxi apps paid you and the money going out. Payments from FreeNow, Gett, Uber, Curb, ComCab, Taxiworld, Helix Pay and HIPS are recognised, with the commission added back to estimate your fares. Payees are sorted into categories, and anything unknown is left out as personal until you say otherwise. Bank figures replace the expenses you typed, up to the statement's last date.</p>
+      <div id="bk-status" class="help" style="margin:-4px 0 10px"></div>
       <div class="field"><label for="bk-file">CSV file</label><input type="file" id="bk-file" accept=".csv,.txt,text/csv,text/plain"></div>
       <div class="field"><label for="bk-text">…or paste the rows (with the header line)</label><textarea id="bk-text" spellcheck="false" placeholder="Date,Description,Paid out,Paid in"></textarea></div>
       <button class="btn ghost" id="bk-read" type="button">Read it</button>
@@ -2849,7 +2850,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
       if(early){ var rs0=recStart(); jobs.push(S.db.collection('settings').doc('opening').set({done:true,recStart:early<rs0?early:rs0,ts:Date.now()})); }
       learn.forEach(function(k){ jobs.push(S.db.collection('bankrules').doc('p'+hash(k)).set({pattern:k,category:B.choice[k],ts:Date.now()})); });
       if(B.maxDate&&B.maxDate>S.bankCov) jobs.push(S.db.collection('settings').doc('bank').set({covered:B.maxDate}));
-      Promise.all(jobs).then(function(){ toast((incDone?'Brought in '+incDone+' payments from taxi apps and ':'Imported ')+done+' expenses. Bank figures now count up to '+dlabel(B.maxDate>S.bankCov?B.maxDate:S.bankCov)+'.'); S.bk=null; $('bk-map').hidden=true; $('bk-text').value=''; $('bk-file').value='';
+      Promise.all(jobs).then(function(){ toast((incDone?'Brought in '+incDone+' payments from taxi apps and ':'Imported ')+done+' expenses. Bank figures now count up to '+dlabel(B.maxDate>S.bankCov?B.maxDate:S.bankCov)+'.'); S.bk=null; $('bk-map').hidden=true; $('bk-text').value=''; $('bk-file').value=''; setTimeout(bkStatus,300);
         if(S.forceImport){ S.forceImport=false; showTab('position'); } }).catch(fail);
     }
     function nextIn(){
@@ -4450,7 +4451,11 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
       .catch(function(e){ g.disabled=false; g.textContent='Start'; fail(e); });
   });
 
+  function bkStatus(){ var el=$('bk-status'); if(!el) return;
+    var inc=0,exp=0,last=''; (S.entries||[]).forEach(function(e){ if(e.src!=='import') return; if(e.kind==='expense'){ exp++; } else if(e.est==='bank'&&!e.superseded){ inc++; } else return; if(e.date>last) last=e.date; });
+    el.innerHTML=S.bankCov?'<b style="color:var(--ok)">✓ Bank statement received.</b> Your books include bank lines up to <b>'+esc(dlabel(S.bankCov))+'</b>: '+inc+' payment'+(inc===1?'':'s')+' from taxi apps and '+exp+' expense'+(exp===1?'':'s')+'. To add more, choose a newer statement below.':'<b>No bank statement brought in yet.</b> Choose your CSV, check the columns, then tap <b>Import</b> at the bottom. Nothing is saved until you tap Import.'; }
   function showTab(t){
+    if(t==='import') setTimeout(bkStatus,0);
     if(t!=='import') S.forceImport=false;
     if(S.mode==='track'&&FULLTABS.indexOf(t)>=0&&!(t==='import'&&S.forceImport)) t='today';
     S.tab=t; lsSet('cb-tab',t); if(t==='log') setTimeout(renderLog,0); if(t==='tools') setTimeout(renderTools,0);
@@ -4537,7 +4542,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     });
     return out;
   }
-  function mergeEntries(){ S.entriesAll=S.entriesRaw.concat(billEntries()); S.entries=S.entriesAll.filter(function(e){return !e.demo}); }
+  function mergeEntries(){ S.entriesAll=S.entriesRaw.concat(billEntries()); S.entries=S.entriesAll.filter(function(e){return !e.demo}); if(S.tab==='import'&&typeof bkStatus==='function') bkStatus(); }
   function nextBillNo(){ var mx=0; Object.keys(S.receipts||{}).concat(Object.keys(S.bills).filter(function(k){return !S.bills[k].demo})).forEach(function(k){var n=+String(k).replace(/\D/g,''); if(n>mx) mx=n}); return 'R-'+('0000'+(mx+1)).slice(-4); }
   function blankJob(){ return {date:todayISO(),route:'',fare:'',parking:'',driver:S.drivers[0]}; }
   function newBill(jobs){ S.bv={mode:'edit',no:null,draft:{date:todayISO(),customer:'',jobs:jobs&&jobs.length?jobs:[blankJob()],discountPct:10,tipMode:'amount',tipValue:0,note:''},armDel:false,filter:S.bv.filter}; showTab('receipts'); renderBills(); }
@@ -4987,14 +4992,14 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   }
   /* ---- Uber weekly statement PDF: each Black Cab trip, tips matched to their trip, payouts to the bank. Uber takes no commission on black cab trips. ---- */
   function uberStmt(L,name){
-    var txt=L.join('\n'), per=/(\d{1,2}\s+[A-Za-z]{3}\s+\d{4})\s+\d{1,2}\s*[ap]m\s*-\s*(\d{1,2}\s+[A-Za-z]{3}\s+\d{4})/.exec(txt);
+    var txt=L.join('\n'), per=/(\d{1,2}\s+[A-Za-z]{3,4}\s+\d{4})\s+\d{1,2}\s*[ap]m\s*-\s*(\d{1,2}\s+[A-Za-z]{3,4}\s+\d{4})/.exec(txt);
     var from=per?stLong(per[1]):'', to=per?addDays(stLong(per[2]),-1):'', yr=+(to||todayISO()).slice(0,4), endM=+(to||todayISO()).slice(5,7);
     var S0={prov:'Uber',kind:'payment',label:'Uber weekly statement',ref:'uber-'+from+'-'+to,from:from,to:to,jobs:[],extras:[],costs:[],checks:[],file:name,payouts:[]};
     function dOf(dd,mon){ var m=MON3[String(mon).slice(0,3).toLowerCase()]; if(!m) return ''; var y=yr-(m>endM+1?1:0); return y+'-'+pad(m)+'-'+pad(+dd); }
     var ev=[], sum=0;
     for(var i=0;i<L.length;i++){
-      var m=/^(Mon|Tue|Wed|Thu|Fri|Sat|Sun),\s+(\d{1,2})\s+([A-Za-z]{3})\s{2,}(.+?)\s{2,}(-?£-?[\d,.]+)/.exec(L[i].trim()); if(!m) continue;
-      var nx=L[i+1]?L[i+1].trim():'', tr=/^\d\d:\d\d\s+(\d{1,2})\s+([A-Za-z]{3})\s+(\d\d:\d\d)/.exec(nx);
+      var m=/^(Mon|Tue|Wed|Thu|Fri|Sat|Sun),\s+(\d{1,2})\s+([A-Za-z]{3,4})\s{2,}(.+?)\s{2,}(-?£-?[\d,.]+)/.exec(L[i].trim()); if(!m) continue;
+      var nx=L[i+1]?L[i+1].trim():'', tr=/^\d\d:\d\d\s+(\d{1,2})\s+([A-Za-z]{3,4})\s+(\d\d:\d\d)/.exec(nx);
       ev.push({proc:dOf(m[2],m[3]),what:m[4].trim(),amt:stMoney(m[5]),tdate:tr?dOf(tr[1],tr[2]):dOf(m[2],m[3]),ttime:tr?tr[3]:''});
     }
     var trips={};
@@ -5002,6 +5007,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
       if(/Transferred To Bank/i.test(e.what)){ S0.payouts.push({d:e.proc,amt:r2(Math.abs(e.amt))}); return; }
       sum+=e.amt;
       if(/^Tip/i.test(e.what)) return;
+      if(/quest|promotion|referral|incentive|bonus/i.test(e.what)){ S0.extras.push({id:'ubx-'+e.tdate.replace(/-/g,'')+'-'+e.ttime.replace(':','')+'-'+Math.round(e.amt*100),date:e.tdate,label:'Uber '+(/quest/i.test(e.what)?'Quest bonus':/referral/i.test(e.what)?'referral reward':e.what),amount:r2(e.amt)}); return; }
       var id='ub-'+e.tdate.replace(/-/g,'')+'-'+e.ttime.replace(':','')+'-'+Math.round(e.amt*100);
       var j={id:id,ref:e.what+' '+e.ttime,date:e.tdate,time:e.ttime,type:/cancel/i.test(e.what)?'Cancellation charge':'Ride',method:e.what,pay:'Account',cash:false,fare:r2(e.amt),tip:0,fee:0};
       S0.jobs.push(j); trips[e.tdate+' '+e.ttime]=j;
@@ -5010,7 +5016,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
       if(j){ j.tip=r2(j.tip+e.amt); } else S0.jobs.push({id:'ubt-'+e.tdate.replace(/-/g,'')+'-'+e.ttime.replace(':','')+'-'+Math.round(e.amt*100),ref:'Tip for trip on '+dlabel(e.tdate)+' '+e.ttime,date:e.proc,time:'',type:'Tip',method:'Tip (trip in an earlier week)',pay:'Account',cash:false,fare:0,tip:r2(e.amt),fee:0}); });
     var earn=stMoney((/Your earnings and entitlements\s+(-?£-?[\d,.]+)/.exec(txt)||[])[1]), prev=stMoney((/Events from previous weeks\s+(-?£-?[\d,.]+)/.exec(txt)||[])[1]);
     S0.total=r2(earn+prev);
-    S0.checks.push(chk(near(sum,S0.total),S0.jobs.length+' trips and tips add up to '+gbp2.format(S0.total)+(prev?' (incl. '+gbp2.format(prev)+' from earlier weeks)':'')));
+    S0.checks.push(chk(near(sum,S0.total),S0.jobs.length+' trips and tips'+(S0.extras.length?' plus '+S0.extras.length+' bonus'+(S0.extras.length>1?'es':''):'')+' add up to '+gbp2.format(S0.total)+(prev?' (incl. '+gbp2.format(prev)+' from earlier weeks)':'')));
     var st=stMoney((/Starting balance at[^£]*(-?£-?[\d,.]+)/.exec(txt)||[])[1]), en=stMoney((/Ending balance at[^£]*(-?£-?[\d,.]+)/.exec(txt)||[])[1]), po=S0.payouts.reduce(function(a,p){return a+p.amt},0);
     S0.checks.push(chk(near(st+S0.total-po,en),'Balance '+gbp2.format(st)+' + earnings '+gbp2.format(S0.total)+' − paid to bank '+gbp2.format(po)+' = '+gbp2.format(en)));
     if(S0.payouts.length){ S0.payout=r2(po); S0.payDate=S0.payouts[S0.payouts.length-1].d; }
@@ -5204,7 +5210,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   function subscribe(db){
     function onErr(name){return function(e){ $('sync').textContent='Could not load '+name; }}
     db.collection('settings').onSnapshot(function(snap){
-      snap.docs.forEach(function(d){ if(d.id==='stopts'&&d.exists){ S.stopts=d.data()||{}; stSyncVia(); } if(d.id==='tipstats'&&d.exists){ S.tipstats=d.data(); } if(d.id==='business'&&d.exists){ S.biz=d.data()||{}; } if(d.id==='practice'){ S.practice=!!(d.exists&&d.data().on); } if(d.id==='drivers'&&d.exists){ var nm=d.data().names; if(Array.isArray(nm)&&nm.length) S.drivers=nm; } if(d.id==='providers'&&d.exists){ var sv=d.data().shown; S.shown=Array.isArray(sv)&&sv.length?sv:null; if(S.shown&&S.shown.indexOf(S.prov)<0&&!S.editId){ S.prov=S.shown[0]; if(typeof applyFeeDefaults==='function') applyFeeDefaults(); } if(typeof buildChips==='function') buildChips(); } if(d.id==='bank'&&d.exists){ S.bankCov=d.data().covered||''; } if(d.id==='main'&&d.exists){ var v=d.data(); S.settings=Object.assign({},DEF,{threshold:+v.threshold||DEF.threshold,amberPct:+v.amberPct||DEF.amberPct,redPct:+v.redPct||DEF.redPct,start:v.start||DEF.start,fees:v.fees||{}}); } });
+      snap.docs.forEach(function(d){ if(d.id==='stopts'&&d.exists){ S.stopts=d.data()||{}; stSyncVia(); } if(d.id==='tipstats'&&d.exists){ S.tipstats=d.data(); } if(d.id==='business'&&d.exists){ S.biz=d.data()||{}; } if(d.id==='practice'){ S.practice=!!(d.exists&&d.data().on); } if(d.id==='drivers'&&d.exists){ var nm=d.data().names; if(Array.isArray(nm)&&nm.length) S.drivers=nm; } if(d.id==='providers'&&d.exists){ var sv=d.data().shown; S.shown=Array.isArray(sv)&&sv.length?sv:null; if(S.shown&&S.shown.indexOf(S.prov)<0&&!S.editId){ S.prov=S.shown[0]; if(typeof applyFeeDefaults==='function') applyFeeDefaults(); } if(typeof buildChips==='function') buildChips(); } if(d.id==='bank'&&d.exists){ S.bankCov=d.data().covered||''; if(typeof bkStatus==='function') bkStatus(); } if(d.id==='main'&&d.exists){ var v=d.data(); S.settings=Object.assign({},DEF,{threshold:+v.threshold||DEF.threshold,amberPct:+v.amberPct||DEF.amberPct,redPct:+v.redPct||DEF.redPct,start:v.start||DEF.start,fees:v.fees||{}}); } });
       var md=null; snap.docs.forEach(function(d){ if(d.id==='look'&&d.exists){ var lk=(d.data()||{}).theme; if(lk&&lk!==S.look) applyLook(lk); } if(d.id==='opening'&&d.exists) S.opening=d.data()||{}; if(d.id==='tax'&&d.exists) S.tax=d.data()||{}; if(d.id==='mode'&&d.exists){ var mv=(d.data()||{}).mode; if(mv==='full'||mv==='track') md=mv; } if(d.id==='extras'&&d.exists){ var xl=(d.data()||{}).list; S.exList=Array.isArray(xl)?xl:null; if(typeof exRender==='function') exRender(); } if(d.id==='tabs'&&d.exists){ var tv=(d.data()||{}).shown; S.bar=Array.isArray(tv)&&tv.length?tv:null; } if(d.id==='alerts'&&d.exists){ var av=d.data()||{}; S.al={on:av.on!==false,min:+av.min||4,express:av.express!==false,off:Array.isArray(av.off)?av.off:[]}; if(typeof alRender==='function') alRender(); } }); S.mode=md||(S.isOwner?'full':null); S.loaded.settings=true; applyMode(); renderAll();
     },onErr('settings'));
     db.collection('months').onSnapshot(function(snap){
