@@ -2272,8 +2272,8 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   }
   /* Extras buttons on the job form: standard ones plus the driver's own (settings/extras {list:[{n,a}]}). */
   var EX_STD=[{n:'Airport drop-off',air:1},{n:'Parking',a:0}]; /* a:0 = type the amount; air = pick the airport */
-  /* Drop-off charges by airport (Matt 30 Oct: they differ). Heathrow and City as Matt charges them; others as published Aug 2026 — check and change if wrong. */
-  var AIRFEES=[['Heathrow',6],['City Airport',6],['Gatwick',10],['Stansted',10],['Luton',7]];
+  /* Drop-off charges by airport (Matt 31 Oct). Heathrow £6 = £7 barrier charge less £1 London taxi discount; Luton raised to £9. Heathrow, City and Gatwick are on auto-pay (number plate), so they show in the bank. */
+  var AIRFEES=[['Heathrow',6],['City Airport',6],['Gatwick',10],['Stansted',10],['Luton',9]];
   function exList(){ return Array.isArray(S.exList)?S.exList:EX_STD; }
   function exRender(){
     var box=$('c-ex'); if(!box) return; S.exPick=S.exPick||{};
