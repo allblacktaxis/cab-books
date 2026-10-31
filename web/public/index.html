@@ -2066,12 +2066,22 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   function cardSysAll(){ var c=CARDSYS.filter(provShown); return c.length?c:['Curb']; }
   /* 'Paid by' buttons: Card becomes one button per card machine (Curb card, HIPS card…). Saved as pay:'Card' + card:<machine>. */
   function payOpts(p){ var out=[]; paysFor(p).forEach(function(v){ if(v==='Card' && !isCardK(bkey(p))) cardSysAll().forEach(function(c){ out.push({v:'Card',c:c,l:pname(c)+' card'}); }); else out.push({v:v,l:v}); }); return out; }
-  /* Fee shown on the job form. Street/own jobs paid by card in the cab take the card machine's fee
-     (job apps keep their own commission; their card fee comes in with the card machine's statement). */
-  var CARDFEE_PROV={hand:1,jump:1,blackcab:1,private:1};
-  function formFee(prov,pay,date){ if(pay==='Card' && CARDFEE_PROV[bkey(prov)]){ var r=cardRate(S.card||cardSys()); return [+r[0]||0,+r[1]||0]; } return feeDefault(prov,pay,date); }
+  /* Fee shown on the job form. Street/own jobs paid by card in the cab take the card machine's fee only.
+     ComCab street hails paid by card are the same (ComCab takes only its card fee, e.g. HIPS 3% + 20p).
+     App jobs (Gett, FreeNow…) paid by card in the cab take the app's commission PLUS the card machine's fee (Matt and Marcin, 31 Oct). */
+  var CARDFEE_PROV={hand:1,jump:1,blackcab:1,private:1,comcab:1};
+  function formFee(prov,pay,date){
+    if(pay!=='Card' || isCardK(bkey(prov))) return feeDefault(prov,pay,date);
+    var cs=S.card||cardSys(), r=cardRate(cs), cp=+r[0]||0, cf=+r[1]||0;
+    if(CARDFEE_PROV[bkey(prov)]){ var o=[cp,cf]; o.lbl=pname(cs)+' card '+feeTxt(cp,cf); return o; }
+    var a=feeDefault(prov,pay,date); if(!a) return a;
+    var out=[Math.round(((+a[0]||0)+cp)*1000)/1000, Math.round(((+a[1]||0)+cf)*100)/100];
+    out.lbl=pname(prov)+' '+feeTxt(+a[0]||0,+a[1]||0)+' + '+pname(cs)+' card '+feeTxt(cp,cf);
+    return out;
+  }
+  function feeTxt(p,f){ var parts=[]; if(p) parts.push(p+'%'); if(f) parts.push((p?'+ ':'')+(f<1?Math.round(f*100)+'p':gbp2.format(f))); return parts.join(' ')||'no fee'; }
   function fixPay(){ var ok=paysFor(S.prov); if(ok.indexOf(S.pay)<0) S.pay=ok[0]; }
-  var DEFFEES={taxiworld:[4,0],helix:[1.75,0],hips:[2.75,0.20],uber:[0,0],comcab:[20,0],curb:[2.75,0.25],freenow:[20,0],gett:[20,0]};
+  var DEFFEES={taxiworld:[4,0],helix:[1.75,0],hips:[3,0.20],uber:[0,0],comcab:[20,0],curb:[2.75,0.25],freenow:[20,0],gett:[20,0]};
   /* Rate changes with a 'from' date: settings/main fees[k].hist = [{from:'YYYY-MM-DD',pct,add}] (rate from that date on).
      fees[k].pct/add = the rate before the first change (or the only rate). Built-in: FreeNow 18% to 14 Sep 2026, 20% from 15 Sep. */
   var DEFHIST={freenow:{base:[18,0],hist:[{from:'2026-09-15',pct:20,add:0}]}};
@@ -2294,7 +2304,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   function renderFee(){
     var d=formFee(S.prov,S.pay,S.day), man=S.feeManual;
     $('fm-rule').setAttribute('aria-pressed',!man); $('fm-man').setAttribute('aria-pressed',man); $('fm-rule').disabled=!d;
-    $('j-feetxt').textContent = man ? 'Manual' : ruleText(d).replace(' (set rule)','');
+    $('j-feetxt').textContent = man ? 'Manual' : (d&&d.lbl?d.lbl:ruleText(d).replace(' (set rule)',''));
     $('j-feeedit').hidden=!man;
     $('j-feebox').hidden=!(S.feeOpen||man);
     $('j-feechg').textContent=(S.feeOpen||man)?'Hide':'Change';
@@ -4805,7 +4815,11 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   function stSheetRows(buf){
     return stNeed('xlsx').then(function(){
       var wb=window.XLSX.read(new Uint8Array(buf),{type:'array',cellDates:true});
-      var rows=[]; wb.SheetNames.forEach(function(n){ rows=rows.concat(window.XLSX.utils.sheet_to_json(wb.Sheets[n],{header:1,raw:true,defval:''})); });
+      var rows=[]; wb.SheetNames.forEach(function(n){ var ws=wb.Sheets[n];
+        /* some files (ComCab's pay sheet) state a too-small range; work it out from the cells actually there */
+        var R=null; Object.keys(ws).forEach(function(k){ if(k.charAt(0)==='!') return; var c=window.XLSX.utils.decode_cell(k); if(!R) R={s:{r:c.r,c:c.c},e:{r:c.r,c:c.c}}; else { R.s.r=Math.min(R.s.r,c.r); R.s.c=Math.min(R.s.c,c.c); R.e.r=Math.max(R.e.r,c.r); R.e.c=Math.max(R.e.c,c.c); } });
+        if(R) ws['!ref']=window.XLSX.utils.encode_range({s:{r:0,c:0},e:R.e});
+        rows=rows.concat(window.XLSX.utils.sheet_to_json(ws,{header:1,raw:true,defval:''})); });
       return rows;
     });
   }
@@ -4947,6 +4961,109 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     S1.checks.push(chk(true,S1.jobs.length+' card payments, '+gbp2.format(S1.total)+' in total.'));
     return S1;
   }
+  /* ---- ComCab (Marcin, 31 Oct): weekly Driver Statement PDF (the payment, with charges and cab rent)
+     and the Pay Sheet spreadsheet (job by job). Street hails paid by card carry only the card fee
+     (2.5% + VAT on the fare, not tips, plus 20p a job incl. VAT); cab rent is a cost taken off the payout. */
+  function ccNum(s){ return stMoney(String(s).replace(/[^\d.,()-]/g,'')); }
+  function ccStmt(L,name){
+    var txt=L.join('\n'), no=(/Statement Number:\s*(\S+)/.exec(txt)||[])[1]||('cc-'+hash(txt));
+    var per=/_(\d{4}-\d{2}-\d{2})_(\d{4}-\d{2}-\d{2})/.exec(no), upto=stDMY((/Cleared trips (?:up )?to:?\s*(\d\d\/\d\d\/\d{4})/.exec(txt)||[])[1]);
+    var S0={prov:'ComCab',kind:'payment',label:'ComCab driver statement',ref:'comcab-'+no,stno:no,from:per?per[1]:'',to:upto||(per?addDays(per[2],-1):''),jobs:[],extras:[],costs:[],checks:[],file:name};
+    var sec='', fares=0, fees=0, rent=0, other=0, chgTot=null, fareTot=null;
+    L.forEach(function(l){
+      var t=l.trim();
+      if(/^(FARES|CHARGES|BALANCE|SAVINGS SCHEME|OTHER DEDUCTIONS|PAYMENT|TRIP DETAILS)\b/.test(t)&&!/\d+\.\d\d\s*$/.test(t)){ sec=t.split(/\s/)[0]; if(t.indexOf('SAVINGS')===0) sec='SAVINGS'; if(t.indexOf('OTHER')===0) sec='OTHER'; if(t.indexOf('TRIP')===0) sec='TRIP'; return; }
+      var m=/^(.+?)\s{2,}(-?[\d,]+\.\d\d)\s{2,}(-?[\d,]+\.\d\d)\s{2,}(-?[\d,]+\.\d\d)$/.exec(t);
+      if(sec==='FARES'&&m){ if(/^Total Fares/i.test(m[1])) fareTot=ccNum(m[4]); else fares+=ccNum(m[4]); return; }
+      if(sec==='CHARGES'&&m){ var lab=m[1].trim(), v=-ccNum(m[4]);
+        if(/^Total Charges/i.test(lab)){ chgTot=v; return; }
+        if(/rental|\brent\b|hire|subscription|lease/i.test(lab)){ rent+=v; S0.costs.push({id:S0.costs.some(function(x){return x.category==='Car rental'})?'ccr-'+hash(no+'|'+lab):'ccrent-'+no,date:S0.to||S0.from,category:'Car rental',amount:r2(v),note:lab+' ('+gbp2.format(-ccNum(m[2]))+' + VAT '+gbp2.format(-ccNum(m[3]))+'), taken off ComCab statement '+no}); }
+        else fees+=v; return; }
+      var o=/^(.+?)\s{2,}(-?[\d,]+\.\d\d)$/.exec(t);
+      if(sec==='OTHER'&&o&&!/^Total Other/i.test(o[1])&&ccNum(o[2])){ var ov=Math.abs(ccNum(o[2])); other+=ov; S0.costs.push({id:'cco-'+hash(no+'|'+o[1]),date:S0.to||S0.from,category:'Other',amount:r2(ov),note:o[1].trim()+', taken off ComCab statement '+no}); }
+      if(sec==='TRIP'){ var j=/^(\d{5,})\s+(\d\d\/\d\d\/\d{4})\s+(\d\d:\d\d)\s+.*?(-?[\d,]+\.\d\d)\s{2,}(-?[\d,]+\.\d\d)\s{2,}(-?[\d,]+\.\d\d)\s{2,}(-?[\d,]+\.\d\d)\s{2,}(-?[\d,]+\.\d\d)$/.exec(t);
+        if(j){ var tot=ccNum(j[7]), tip=ccNum(j[6]); S0.jobs.push({id:'cc-'+j[1],ref:j[1],date:stDMY(j[2]),time:j[3],type:'Trip',method:'',pay:'Card',cash:false,fare:r2(tot-tip),tip:tip,extras:ccNum(j[8]),fee:0,fromPdf:true}); } }
+    });
+    S0.bf=ccNum((/Balance brought forward from previous week:\s*(-?[\d,.]+)/.exec(txt)||[])[1]);
+    S0.saving=Math.abs(ccNum((/Savings Scheme Deduction\s+(-?[\d,.]+)/.exec(txt)||[])[1]));
+    var owe=/ComCab owes you:\s*(-?[\d,.]+)\s*$/m.exec(txt.replace(/This week ComCab owes you:.*\n/,'')), youOwe=/You owe ComCab:?\s*(-?[\d,.]+)/i.exec(txt);
+    var bal=owe?ccNum(owe[1]):(youOwe?-ccNum(youOwe[1]):null);
+    var pay=/paid into your bank account will be:\s*(-?[\d,.]+)/.exec(txt);
+    S0.payout=pay?Math.max(0,ccNum(pay[1])):(bal!=null?Math.max(0,bal):0);
+    var pd=/on or around\s+[A-Za-z]*\s*(\d\d)\.(\d\d)\.(\d{4})/.exec(txt); S0.payDate=pd?pd[3]+'-'+pd[2]+'-'+pd[1]:(S0.to?addDays(S0.to,5):'');
+    S0.total=r2(fareTot!=null?fareTot:fares); S0.fees=r2(fees); S0.rent=r2(rent);
+    /* card fees per job from the PDF alone: % share on the fare, the per-job charge split evenly (the Pay Sheet, if added, gives exact ones) */
+    var jf=S0.jobs.reduce(function(a,j){return a+j.fare},0);
+    if(S0.jobs.length&&jf){ var pct=0, per=0; L.forEach(function(l){ var m=/^(.+?)\s{2,}(-?[\d,]+\.\d\d)\s{2,}(-?[\d,]+\.\d\d)\s{2,}(-?[\d,]+\.\d\d)$/.exec(l.trim()); if(!m) return; if(/per job/i.test(m[1])) per+=-ccNum(m[4]); else if(/%|commission/i.test(m[1])) pct+=-ccNum(m[4]); });
+      S0.jobs.forEach(function(j){ j.fee=r2(j.fare/jf*pct+per/S0.jobs.length); });
+      var d=r2(fees-S0.jobs.reduce(function(a,j){return a+j.fee},0)); S0.jobs[S0.jobs.length-1].fee=r2(S0.jobs[S0.jobs.length-1].fee+d); }
+    var jt=r2(S0.jobs.reduce(function(a,j){return a+j.fare+j.tip+(j.extras||0)},0));
+    if(S0.jobs.length) S0.checks.push(chk(near(jt,S0.total),S0.jobs.length+' trips add up to the fares of '+gbp2.format(S0.total)));
+    if(chgTot!=null) S0.checks.push(chk(near(fees+rent,chgTot),'Charges: card fees '+gbp2.format(fees)+(rent?' + cab rent '+gbp2.format(rent):'')+' = '+gbp2.format(chgTot)));
+    if(bal!=null){ var calc=r2(S0.total-fees-rent-other-S0.saving+S0.bf);
+      S0.checks.push(chk(near(calc,bal),'Fares '+gbp2.format(S0.total)+' − card fees '+gbp2.format(fees)+(rent?' − rent '+gbp2.format(rent):'')+(other?' − other '+gbp2.format(other):'')+(S0.saving?' − savings '+gbp2.format(S0.saving):'')+(S0.bf?' '+(S0.bf<0?'−':'+')+' brought forward '+gbp2.format(Math.abs(S0.bf)):'')+' = '+(bal<0?'you owe ComCab ':'ComCab pays ')+gbp2.format(Math.abs(bal)))); }
+    if(S0.saving) S0.checks.push(chk(true,'Savings scheme '+gbp2.format(S0.saving)+' is your money put aside, not a cost.'));
+    return S0;
+  }
+  function ccSheet(rows,name){
+    var title=String((rows[0]||[])[0]||''); if(!/Driver Payment Details/i.test(title)) return null;
+    var no='', hi=-1; rows.forEach(function(r,i){ if(/Statement Number/i.test(r[0])) no=String(r[2]||r[1]||'').trim(); if(hi<0&&String(r[0]).trim()==='Job Number') hi=i; });
+    if(hi<0) return null;
+    var H=rows[hi].map(function(c){return String(c).toLowerCase().trim()}), c=function(n){ return H.indexOf(n); }, v=function(r,n){ var k=c(n); return k<0?0:stMoney(r[k]); };
+    var S1={prov:'ComCab',kind:'tours',label:'ComCab pay sheet (job by job)',ref:'comcab-jobs-'+(no||hash(title)),stno:no,jobs:[],extras:[],costs:[],checks:[],file:name};
+    var i=hi+1;
+    for(;i<rows.length;i++){ var r=rows[i], jn=String(r[0]).trim(); if(!jn) continue; if(/^Adjustments/i.test(jn)) break; if(!/^\d+$/.test(jn)) continue;
+      var jd=r[c('job date')], d='', tm='';
+      if(jd instanceof Date){ d=stCell(jd); tm=pad(jd.getHours())+':'+pad(jd.getMinutes()); } else { d=stDMY(String(jd)); tm=(/(\d\d:\d\d)/.exec(String(jd))||[])[1]||''; }
+      var type=String(r[c('job type')]||'').trim(), cashPaid=v(r,'passenger paid by cash'), ccPaid=v(r,'passenger paid by cc');
+      var pay=cashPaid>0?'Cash':(/credit card|card/i.test(type)||ccPaid>0?'Card':'Account');
+      var fare=r2(v(r,'fare amount')+v(r,'extras amount')+v(r,'waiting amount')+v(r,'premium amount')), tip=r2(v(r,'tips amount')+v(r,'account gratuity amount'));
+      var fee=r2((v(r,'credit card percentage')+v(r,'commission paid')+v(r,'cash booking fee'))*1.2+v(r,'credit card amount'));
+      S1.jobs.push({id:'cc-'+jn,ref:jn,date:d,time:tm,type:type,method:type,pay:pay,cash:pay==='Cash',fare:fare,tip:tip,extras:r2(v(r,'expenses amount')),fee:fee});
+    }
+    var hj=-1; for(;i<rows.length;i++){ if(String(rows[i][0]).trim()==='Job Number'){ hj=i; break; } }
+    if(hj>=0){ var AH=rows[hj].map(function(x){return String(x).toLowerCase().trim()}), ca=AH.indexOf('adjustment'), cd=AH.indexOf('job date'), cc=AH.indexOf('commission paid');
+      for(var k=hj+1;k<rows.length;k++){ var a=rows[k], an=String(a[0]).trim(); if(!an) continue; var amt=ca>=0?stMoney(a[ca]):0; if(!amt) continue;
+        var ad=a[cd] instanceof Date?stCell(a[cd]):stDMY(String(a[cd]||''));
+        S1.extras.push({id:'ccadj-'+an+'-'+Math.round(amt*100),date:ad||(S1.jobs.length?S1.jobs[S1.jobs.length-1].date:''),label:'ComCab adjustment '+an+(cc>=0&&stMoney(a[cc])?' (commission '+gbp2.format(stMoney(a[cc])*1.2)+')':''),amount:r2(amt-(cc>=0?stMoney(a[cc])*1.2:0))}); } }
+    if(!S1.jobs.length&&!S1.extras.length) return null;
+    var ds=S1.jobs.map(function(j){return j.date}).sort(); S1.from=ds[0]||''; S1.to=ds[ds.length-1]||'';
+    S1.total=r2(S1.jobs.reduce(function(a,j){return a+j.fare+j.tip+(j.extras||0)},0));
+    S1.checks.push(chk(true,S1.jobs.length+' jobs, '+gbp2.format(S1.total)+' with tips; card fees '+gbp2.format(S1.jobs.reduce(function(a,j){return a+j.fee},0))+' incl. VAT.'));
+    return S1;
+  }
+  /* ---- Uber weekly statement PDF: each Black Cab trip, tips matched to their trip, payouts to the bank. Uber takes no commission on black cab trips. ---- */
+  function uberStmt(L,name){
+    var txt=L.join('\n'), per=/(\d{1,2}\s+[A-Za-z]{3}\s+\d{4})\s+\d{1,2}\s*[ap]m\s*-\s*(\d{1,2}\s+[A-Za-z]{3}\s+\d{4})/.exec(txt);
+    var from=per?stLong(per[1]):'', to=per?addDays(stLong(per[2]),-1):'', yr=+(to||todayISO()).slice(0,4), endM=+(to||todayISO()).slice(5,7);
+    var S0={prov:'Uber',kind:'payment',label:'Uber weekly statement',ref:'uber-'+from+'-'+to,from:from,to:to,jobs:[],extras:[],costs:[],checks:[],file:name,payouts:[]};
+    function dOf(dd,mon){ var m=MON3[String(mon).slice(0,3).toLowerCase()]; if(!m) return ''; var y=yr-(m>endM+1?1:0); return y+'-'+pad(m)+'-'+pad(+dd); }
+    var ev=[], sum=0;
+    for(var i=0;i<L.length;i++){
+      var m=/^(Mon|Tue|Wed|Thu|Fri|Sat|Sun),\s+(\d{1,2})\s+([A-Za-z]{3})\s{2,}(.+?)\s{2,}(-?£-?[\d,.]+)/.exec(L[i].trim()); if(!m) continue;
+      var nx=L[i+1]?L[i+1].trim():'', tr=/^\d\d:\d\d\s+(\d{1,2})\s+([A-Za-z]{3})\s+(\d\d:\d\d)/.exec(nx);
+      ev.push({proc:dOf(m[2],m[3]),what:m[4].trim(),amt:stMoney(m[5]),tdate:tr?dOf(tr[1],tr[2]):dOf(m[2],m[3]),ttime:tr?tr[3]:''});
+    }
+    var trips={};
+    ev.forEach(function(e,ix){
+      if(/Transferred To Bank/i.test(e.what)){ S0.payouts.push({d:e.proc,amt:r2(Math.abs(e.amt))}); return; }
+      sum+=e.amt;
+      if(/^Tip/i.test(e.what)) return;
+      var id='ub-'+e.tdate.replace(/-/g,'')+'-'+e.ttime.replace(':','')+'-'+Math.round(e.amt*100);
+      var j={id:id,ref:e.what+' '+e.ttime,date:e.tdate,time:e.ttime,type:/cancel/i.test(e.what)?'Cancellation charge':'Ride',method:e.what,pay:'Account',cash:false,fare:r2(e.amt),tip:0,fee:0};
+      S0.jobs.push(j); trips[e.tdate+' '+e.ttime]=j;
+    });
+    ev.forEach(function(e){ if(!/^Tip/i.test(e.what)) return; var j=trips[e.tdate+' '+e.ttime];
+      if(j){ j.tip=r2(j.tip+e.amt); } else S0.jobs.push({id:'ubt-'+e.tdate.replace(/-/g,'')+'-'+e.ttime.replace(':','')+'-'+Math.round(e.amt*100),ref:'Tip for trip on '+dlabel(e.tdate)+' '+e.ttime,date:e.proc,time:'',type:'Tip',method:'Tip (trip in an earlier week)',pay:'Account',cash:false,fare:0,tip:r2(e.amt),fee:0}); });
+    var earn=stMoney((/Your earnings and entitlements\s+(-?£-?[\d,.]+)/.exec(txt)||[])[1]), prev=stMoney((/Events from previous weeks\s+(-?£-?[\d,.]+)/.exec(txt)||[])[1]);
+    S0.total=r2(earn+prev);
+    S0.checks.push(chk(near(sum,S0.total),S0.jobs.length+' trips and tips add up to '+gbp2.format(S0.total)+(prev?' (incl. '+gbp2.format(prev)+' from earlier weeks)':'')));
+    var st=stMoney((/Starting balance at[^£]*(-?£-?[\d,.]+)/.exec(txt)||[])[1]), en=stMoney((/Ending balance at[^£]*(-?£-?[\d,.]+)/.exec(txt)||[])[1]), po=S0.payouts.reduce(function(a,p){return a+p.amt},0);
+    S0.checks.push(chk(near(st+S0.total-po,en),'Balance '+gbp2.format(st)+' + earnings '+gbp2.format(S0.total)+' − paid to bank '+gbp2.format(po)+' = '+gbp2.format(en)));
+    if(S0.payouts.length){ S0.payout=r2(po); S0.payDate=S0.payouts[S0.payouts.length-1].d; }
+    S0.checks.push(chk(true,'Uber takes no commission on black cab trips; payouts to your bank are the earlier balance, matched to the bank by amount.'));
+    return S0;
+  }
   /* read one file → statement object (or {err}) */
   function stReadFile(f){
     var nm=f.name||'file', low=nm.toLowerCase();
@@ -4959,11 +5076,13 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
           if(/Freenow invoice|Tour commission charge/i.test(t)) return fnInvoice(L,nm);
           if(/GetTaxi|Gett, Inc/i.test(t)&&/Driver Statement/.test(t)) return gettStmt(L,nm);
           if(/Credit Card Transaction Report/i.test(t)) return curbPdf(L,nm);
-          return {err:'Not a FreeNow, Gett or Curb statement Cab Books knows yet.',file:nm};
+          if(/ComCab owes you|You owe ComCab/i.test(t)&&/Driver Statement/i.test(t)) return ccStmt(L,nm);
+          if(/Weekly Statement/.test(t)&&/Your earnings and entitlements/.test(t)) return uberStmt(L,nm);
+          return {err:'Not a statement Cab Books knows yet (it reads FreeNow, Gett, Curb, ComCab and Uber). Send us a copy and we’ll add it.',file:nm};
         });
       }
       if(/\.(xlsx|xls|csv|txt)$/.test(low)){
-        return stSheetRows(buf).then(function(rows){ return curbSheet(rows,nm)||{err:'This spreadsheet is not a Curb report Cab Books knows. For bank statements use the Bank statement box below.',file:nm}; });
+        return stSheetRows(buf).then(function(rows){ return ccSheet(rows,nm)||curbSheet(rows,nm)||{err:'This spreadsheet is not a Curb or ComCab report Cab Books knows. For bank statements use the Bank statement box below.',file:nm}; });
       }
       return {err:'Choose a PDF, Excel or CSV file.',file:nm};
     }).catch(function(e){ return {err:(e&&e.message)||'Could not read this file.',file:nm}; });
@@ -4992,7 +5111,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   function stViaCard(){ var o=stOpts(); return o.cashViaCard!==false; }
   function stPlan(){
     var R=ST.res||[], existing={}, have=S.entries.reduce(function(o,e){o[e.id]=e;return o},{});
-    var plan={add:[],dup:0,loaded:0,extras:[],stmts:[],bankRepl:[],cashFares:0,cashN:0,byProv:{}};
+    var plan={add:[],dup:0,loaded:0,extras:[],costs:[],stmts:[],bankRepl:[],cashFares:0,cashN:0,byProv:{}};
     var seenStmt={}, viaCard=stViaCard();
     var dailyGett=R.filter(function(s){return s.prov==='Gett'&&s.kind==='payment'}).concat(stList().filter(function(s){return s.prov==='Gett'&&s.kind==='payment'}));
     R.forEach(function(s){
@@ -5006,9 +5125,9 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
         if(existing[j.id]||have[j.id]){ plan.dup++; return; } existing[j.id]=1;
         var lt=stLoadedTo(s.prov,monthOf(j.date)); if(lt&&j.date<=lt){ plan.loaded++; return; }
         var e={kind:'fare',src:'import',stmt:rec.id,provider:s.prov,date:j.date,m:monthOf(j.date),time:j.time||'',ref:j.ref,
-          pay:s.prov==='Curb'?'Card':(j.cash?'Cash':'Account'),amount:j.fare,extras:0,tips:j.tip,commission:0,feeFixed:j.fee,
+          pay:j.pay||(s.prov==='Curb'?'Card':(j.cash?'Cash':'Account')),amount:j.fare,extras:j.extras||0,tips:j.tip,commission:0,feeFixed:j.fee,
           note:(j.type&&j.type!=='Tour'&&j.type!=='Ride'&&j.type!=='Card payment'?j.type+' · ':'')+(s.prov==='Curb'?'':j.method),ts:Date.now()};
-        if(j.cash&&s.prov!=='Curb'&&viaCard){ e.cashFare=j.fare; e.amount=0; e.viaCard=true; e.note='Paid by card in the cab: '+gbp2.format(j.fare)+' counted in Curb’s report'; plan.cashFares+=j.fare; plan.cashN++; }
+        if(j.cash&&(s.prov==='Freenow'||s.prov==='Gett')&&viaCard){ e.cashFare=j.fare; e.amount=0; e.viaCard=true; e.note='Paid by card in the cab: '+gbp2.format(j.fare)+' counted in Curb’s report'; plan.cashFares+=j.fare; plan.cashN++; }
         plan.add.push({id:j.id,data:e}); P.n++; P.fare+=e.amount; P.tip+=e.tips; P.fee+=j.fee;
       });
       s.extras.forEach(function(x){
@@ -5018,6 +5137,9 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
         plan.extras.push({id:x.id,data:{kind:'fare',src:'import',stmt:rec.id,provider:s.prov,date:x.date,m:monthOf(x.date),pay:'Account',amount:r2(x.amount),extras:0,tips:0,commission:0,feeFixed:0,note:x.label,ts:Date.now()}});
       });
     });
+    R.forEach(function(s){ if(s.err) return; (s.costs||[]).forEach(function(x){
+        if(existing[x.id]||have[x.id]){ plan.dup++; return; } existing[x.id]=1;
+        plan.costs.push({id:x.id,data:{kind:'expense',src:'import',stmt:'st-'+hash(s.ref),date:x.date,m:monthOf(x.date),category:x.category,amount:r2(x.amount),note:x.note,ts:Date.now()}}); }); });
     var all=stList().concat(plan.stmts);
     /* Curb's 25p per payout: one fee line per month, rebuilt from every settlement report read so far */
     var pf={}, seenD={};
@@ -5051,8 +5173,9 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
       Object.keys(plan.byProv).forEach(function(p){ var v=plan.byProv[p]; if(!v.n) return; h+='<div class="kv"><span class="k">'+esc(PROV[pkey(p)]||p)+' · '+v.n+' job'+(v.n>1?'s':'')+'<br><span style="font-size:12px">tips '+gbp2.format(v.tip)+' · fees '+gbp2.format(v.fee)+'</span></span><span class="v">'+gbp2.format(v.fare)+'</span></div>'; });
       var xs=plan.extras.filter(function(x){return x.id.indexOf('cbpf-')!==0}), pfs=plan.extras.filter(function(x){return x.id.indexOf('cbpf-')===0});
       if(xs.length){ var xt=xs.reduce(function(s,x){return s+x.data.amount},0); h+='<div class="kv"><span class="k">Credits and extra payments ('+xs.length+')<br><span style="font-size:12px">'+esc(xs.slice(0,4).map(function(x){return x.data.note}).join(', '))+'</span></span><span class="v">'+gbp2.format(xt)+'</span></div>'; }
+      if(plan.costs.length){ var ct=plan.costs.reduce(function(s,x){return s+x.data.amount},0); h+='<div class="kv"><span class="k">Costs taken off the statement ('+plan.costs.length+')<br><span style="font-size:12px">'+esc(plan.costs.slice(0,3).map(function(x){return x.data.category}).join(', '))+'</span></span><span class="v">'+gbp2.format(ct)+' cost</span></div>'; }
       if(pfs.length){ var pft=pfs.reduce(function(s,x){return s+x.data.feeFixed},0); h+='<div class="kv"><span class="k">Curb payout fees, 25p a payout ('+pfs.length+' month'+(pfs.length>1?'s':'')+')</span><span class="v">'+gbp2.format(pft)+' cost</span></div>'; }
-      if(!plan.add.length&&!plan.extras.length) h+='<p class="note" style="margin:0">Nothing new: '+(plan.dup?'these jobs are already in your books.':'no jobs in these files.')+'</p>';
+      if(!plan.add.length&&!plan.extras.length&&!plan.costs.length) h+='<p class="note" style="margin:0">Nothing new: '+(plan.dup?'these jobs are already in your books.':'no jobs in these files.')+'</p>';
       if(plan.cashN) h+='<p class="note">'+plan.cashN+' job'+(plan.cashN>1?'s':'')+' marked “cash” ('+gbp2.format(plan.cashFares)+') were paid by card in the cab, so the money is counted once, in Curb’s report. The app fees on them still count as a cost.</p>';
       if(plan.bankRepl.length){ var bt=plan.bankRepl.reduce(function(s,e){return s+eAmt(e)},0); h+='<p class="note">Replaces '+plan.bankRepl.length+' estimate'+(plan.bankRepl.length>1?'s':'')+' from your bank statement ('+gbp2.format(bt)+') with the exact figures.</p>'; }
       if(plan.dup) h+='<p class="note">'+plan.dup+' already in your books, skipped.</p>';
@@ -5060,7 +5183,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
       h+='</div>';
     }
     box.innerHTML=h;
-    var n=plan.add.length+plan.extras.length, sb=$('st-save');
+    var n=plan.add.length+plan.extras.length+plan.costs.length, sb=$('st-save');
     sb.hidden=!ok.length||(!n&&!plan.bankRepl.length); sb.disabled=false;
     sb.textContent=n?'Add '+n+' to my books':'Use the exact figures';
     ST.plan=plan;
@@ -5081,6 +5204,12 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
         var inv=R.filter(function(x){return x.prov==='Freenow'&&x.kind==='invoice'&&x.from===s.from&&x.to===s.to})[0];
         if(inv) inv.checks.push(chk(near(inv.fees,s.fees)&&near(inv.credits||0,s.credits||0),'Agrees with the payment overview'));
       });
+      /* ComCab: the pay sheet gives the exact job-by-job fees; the PDF gives the payout, charges and rent */
+      R.forEach(function(s){ if(s.prov!=='ComCab'||s.kind!=='payment') return; var t=R.filter(function(x){return x.prov==='ComCab'&&x.kind==='tours'&&x.stno===s.stno})[0]; if(!t) return;
+        s.jobs=[]; var ft=r2(t.jobs.reduce(function(a,j){return a+j.fee},0)), d=r2(s.fees-ft);
+        if(Math.abs(d)>0&&Math.abs(d)<=0.10&&t.jobs.length) t.jobs[t.jobs.length-1].fee=r2(t.jobs[t.jobs.length-1].fee+d);
+        s.checks.push(chk(near(t.total,s.total),'Matches the pay sheet: '+t.jobs.length+' jobs, '+gbp2.format(t.total)));
+        s.checks.push(chk(Math.abs(d)<=0.10,'Card fees per job add up to '+gbp2.format(s.fees)+' incl. VAT'+(Math.abs(d)>0.10?' (pay sheet says '+gbp2.format(ft)+')':''))); });
       R.forEach(function(s){ if(s.prov!=='Curb'||s.kind!=='settlement') return; var t=R.filter(function(x){return x.prov==='Curb'&&x.kind==='tours'})[0]; if(!t) return;
         var J=t.jobs.filter(function(j){ return j.date<s.to&&j.date>=addDays(s.from,-4); }), tot=r2(J.reduce(function(a,j){return a+j.fare+j.tip},0)), fee=r2(J.reduce(function(a,j){return a+j.fee},0));
         s.checks.push(chk(Math.abs(tot-s.sub)<1,'Card payments to '+dlabel(addDays(s.to,-1))+' ('+gbp2.format(tot)+') match what Curb paid out on ('+gbp2.format(s.sub)+')'));
@@ -5091,12 +5220,12 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   function stSave(){
     var plan=ST.plan; if(!plan||!S.db) return;
     var ops=[];
-    plan.add.concat(plan.extras).forEach(function(x){ ops.push(['entries',x.id,x.data]); });
+    plan.add.concat(plan.extras,plan.costs).forEach(function(x){ ops.push(['entries',x.id,x.data]); });
     plan.stmts.forEach(function(s){ var d=Object.assign({},s); delete d.id; ops.push(['stmts',s.id,d]); });
     plan.bankRepl.forEach(function(e){ var d=Object.assign({},e); delete d.id; d.superseded=true; d.ts=Date.now(); ops.push(['entries',e.id,d]); });
     var i=0, done=0, sb=$('st-save'); sb.disabled=true;
     function step(){
-      if(i>=ops.length){ toast('Added '+(plan.add.length+plan.extras.length)+' from '+plan.stmts.length+' statement'+(plan.stmts.length>1?'s':'')+'.'); ST.res=null; $('st-file').value=''; stRender(); return; }
+      if(i>=ops.length){ toast('Added '+(plan.add.length+plan.extras.length+plan.costs.length)+' from '+plan.stmts.length+' statement'+(plan.stmts.length>1?'s':'')+'.'); ST.res=null; $('st-file').value=''; stRender(); return; }
       var chunk=ops.slice(i,i+(S.fs&&S.fs.batch?400:20)); i+=chunk.length; sb.textContent='Saving '+Math.min(i,ops.length)+' of '+ops.length+'…';
       var w;
       if(S.fs&&S.uid&&S.fs.batch){ var bt=S.fs.batch(), home=S.fs.collection('users').doc(S.uid); chunk.forEach(function(o){ bt.set(home.collection(o[0]).doc(o[1]),o[2]); }); w=bt.commit(); }
