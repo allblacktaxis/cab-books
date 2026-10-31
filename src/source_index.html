@@ -77,6 +77,11 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .btn.ghost{background:transparent;color:var(--accent);border:1px solid var(--accent)}
 .btn.small{width:auto;min-height:36px;padding:7px 12px;font-size:13px}
 .btn:disabled{opacity:.45;cursor:default}
+.lbl-sub{font-weight:400;font-size:12px;color:var(--muted)}
+.feeline{font-size:13px;color:var(--muted);margin:0 0 10px;display:flex;align-items:center;justify-content:flex-start!important;gap:6px;flex-wrap:wrap}
+.feeline #j-feetxt{color:var(--ink)}
+.linkbtn{background:none;border:0;color:var(--accent);font-weight:600;font-size:13px;padding:6px 4px;min-height:32px;cursor:pointer;text-decoration:underline}
+#j-feebox{margin-bottom:10px}
 .preview{background:var(--accent-soft);color:var(--ink);border-radius:8px;padding:10px 12px;font-size:13px;margin-bottom:12px}
 .preview .num{font-weight:600}
 .mrow{border-top:1px solid var(--line);padding:10px 0}
@@ -691,24 +696,22 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
       <div id="d-form">
         <div class="field"><label id="l-prov">Provider</label><div class="chips" id="c-prov" role="group" aria-labelledby="l-prov"></div></div>
         <div class="field"><label id="l-pay">Paid by</label><div class="chips" id="c-pay" role="group" aria-labelledby="l-pay"></div></div>
-        <div class="two">
-          <div class="field"><label for="j-amt">Fare (£)</label><input type="text" class="money" id="j-amt" inputmode="numeric" autocomplete="off" placeholder="0.00"></div>
-          <div class="field"><label for="j-tips">Tip (£)</label><input type="text" class="money" id="j-tips" inputmode="numeric" autocomplete="off" placeholder="0.00"></div>
-        </div>
-        <p class="help" style="margin-top:-4px">Tips are not part of VAT turnover.</p>
+        <details class="jnote" id="j-notebox"><summary>+ Add journey</summary><div class="field" style="margin-top:8px"><label for="j-note">Journey (optional)</label><input type="text" id="j-note" maxlength="120" placeholder="e.g. Norrice Lea – T4 Heathrow"><p class="help" style="margin:6px 0 0">Useful for cash, hand and private jobs. It fills in the receipt for you.</p></div></details>
         <div class="field"><label for="j-ex">Extras (£)</label><input type="text" class="money" id="j-ex" inputmode="numeric" autocomplete="off" placeholder="0.00">
           <div class="chips tight xchips" id="c-ex" role="group" aria-label="Tap to add an extra"></div>
           <div class="xedit" id="x-edit" hidden></div>
-          <p class="help" style="margin:6px 0 0">Drop-off fees and parking, as on your meter. Tap to add; tap again to take off. FreeNow and Gett take no commission on extras. Extras count towards VAT turnover.</p></div>
-        <div class="field"><label id="l-fee">Commission</label>
+          <p class="help" style="margin:4px 0 0">Drop-off fees and parking. Tap to add, tap again to remove.</p></div>
+        <div class="two">
+          <div class="field"><label for="j-amt">Fare (£) <span class="lbl-sub">no tip</span></label><input type="text" class="money" id="j-amt" inputmode="numeric" autocomplete="off" placeholder="0.00"></div>
+          <div class="field"><label for="j-tips">Tip (£) <span class="lbl-sub">on top</span></label><input type="text" class="money" id="j-tips" inputmode="numeric" autocomplete="off" placeholder="0.00"></div>
+        </div>
+        <p class="help" style="margin-top:-6px">Enter them separately: £20 fare + £2 tip, not £22.</p>
+        <div class="feeline"><span id="l-fee">Commission:</span> <span id="j-feetxt"></span> <button type="button" class="linkbtn" id="j-feechg">Change</button></div>
+        <div id="j-feebox" hidden>
           <div class="seg" role="group" aria-labelledby="l-fee" style="margin-bottom:8px"><button type="button" id="fm-rule" aria-pressed="true">Set rule</button><button type="button" id="fm-man" aria-pressed="false">Manual</button></div>
-          <div class="note" id="j-feetxt" style="margin:0"></div>
-          <div id="j-feeedit" hidden style="margin-top:8px">
-            <label for="j-fix" style="margin-bottom:4px">Fee for this job (£)</label><input type="text" class="money" id="j-fix" inputmode="numeric" autocomplete="off" placeholder="0.00">
-          </div>
+          <div id="j-feeedit" hidden><label for="j-fix" style="margin-bottom:4px">Fee for this job (£)</label><input type="text" class="money" id="j-fix" inputmode="numeric" autocomplete="off" placeholder="0.00"></div>
         </div>
         <p class="warnbox" id="j-hint" hidden>Gett cash fees vary, so enter this job's fee as a fixed amount.</p>
-        <details class="jnote" id="j-notebox"><summary>+ Add journey</summary><div class="field" style="margin-top:8px"><label for="j-note">Journey (optional)</label><input type="text" id="j-note" maxlength="120" placeholder="e.g. Norrice Lea – T4 Heathrow"><p class="help" style="margin:6px 0 0">Useful for cash, hand and private jobs. It fills in the receipt for you.</p></div></details>
         <div class="preview" id="j-preview" hidden></div>
         <button class="btn" id="j-save" type="button">Save job</button>
         <div class="two" id="j-edit" hidden style="margin-top:10px"><button class="btn ghost small" id="j-rcpt" type="button">Receipt</button><button class="btn ghost small" id="j-cancel" type="button">Cancel</button></div>
@@ -722,14 +725,14 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
       <button class="btn ghost rp-snap" id="rp-snap" type="button" style="margin-top:8px"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1zM12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"/></svg>Snap a receipt</button>
       <input type="file" id="rp-file" accept="image/*" capture="environment" hidden>
       <div id="d-exp" style="margin-top:8px"></div>
-      <details class="rulex" id="e-addbox" style="margin-top:4px"><summary><span>Add a cash expense</span><span class="rview">Add</span></summary>
+      <details class="rulex" id="e-addbox" style="margin-top:4px" open><summary><span>Add an expense</span><span class="rview">Add</span></summary>
       <div style="padding-bottom:4px">
       <div class="fgrid" style="grid-template-columns:1.4fr 1fr auto;align-items:end">
         <div class="field" style="margin:0"><label for="e-cat">Category</label><select id="e-cat"></select></div>
         <div class="field" style="margin:0"><label for="e-amt">Amount</label><input type="text" class="money" id="e-amt" inputmode="numeric" autocomplete="off" placeholder="0.00"></div>
         <button class="btn small" id="e-add" type="button">Add</button>
       </div>
-      <div class="field" style="margin:10px 0 0"><label><input type="checkbox" id="e-cash" checked> Paid in cash (never goes through the bank)</label></div>
+      <div class="field" style="margin:10px 0 0"><label id="l-epay">Paid by</label><div class="seg" role="group" aria-labelledby="l-epay" style="margin:0"><button type="button" id="e-pcash" aria-pressed="true">Cash</button><button type="button" id="e-pcard" aria-pressed="false">Card / bank</button></div><input type="checkbox" id="e-cash" checked hidden><p class="help" style="margin:6px 0 0" id="e-payhelp">Cash never shows in the bank, so it is only counted from here.</p></div>
       <div class="rp-pick" style="margin-top:8px"><button class="btn ghost small" id="e-photo" type="button">Add receipt photo</button><span id="e-photo-st"></span></div>
       </div>
       </details>
@@ -1313,7 +1316,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     var ae=document.activeElement; if(ae && el.contains(ae) && /INPUT|TEXTAREA|SELECT/.test(ae.tagName)) return;
     var st=S.settings, z=S.biz||{}, h=renderModeCard()+renderLookCard()+(S.isOwner?renderBackupCard():'')+renderPracticeCard()+renderSuggest()+renderProvPick()+renderBarPick()+renderAlertPick()+renderAdminCard()
       +'<div class="card"><h2>Your details on receipts</h2><p class="help">Printed at the bottom of every receipt and PDF.</p>'
-      +'<div class="field"><label for="bz-trade">Name on your receipts</label><input type="text" id="bz-trade" maxlength="60" value="'+esc(z.trade!=null?z.trade:BRAND)+'"><p class="note" style="margin-top:4px">Shown at the top of every receipt. Leave as '+BRAND+' if you drive under our brand, or use your own trading name.</p></div>'
+      +'<div class="field"><label for="bz-trade">Name on your receipts</label><input type="text" id="bz-trade" maxlength="60" value="'+esc(z.trade!=null?z.trade:BIZNAME)+'"><p class="note" style="margin-top:4px">Shown at the top of every receipt. Leave as '+BIZNAME+' if you drive under our brand, or use your own trading name.</p></div>'
       +'<div class="field"><label for="bz-name">Your name</label><input type="text" id="bz-name" maxlength="60" value="'+esc(z.name||'')+'" placeholder="e.g. your full name"></div>'
       +'<div class="two"><div class="field"><label for="bz-phone">Phone</label><input type="text" id="bz-phone" inputmode="tel" maxlength="30" value="'+esc(z.phone||'')+'"></div><div class="field"><label for="bz-lic">Taxi licence no.</label><input type="text" id="bz-lic" maxlength="20" value="'+esc(z.licence||'')+'"></div></div>'
       +'<div class="field"><label for="bz-email">Email</label><input type="text" id="bz-email" inputmode="email" maxlength="80" value="'+esc(z.email||'')+'"></div>'
@@ -2244,8 +2247,10 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   function renderFee(){
     var d=formFee(S.prov,S.pay,S.day), man=S.feeManual;
     $('fm-rule').setAttribute('aria-pressed',!man); $('fm-man').setAttribute('aria-pressed',man); $('fm-rule').disabled=!d;
-    $('j-feetxt').textContent = man ? '' : ruleText(d);
+    $('j-feetxt').textContent = man ? 'Manual' : ruleText(d).replace(' (set rule)','');
     $('j-feeedit').hidden=!man;
+    $('j-feebox').hidden=!(S.feeOpen||man);
+    $('j-feechg').textContent=(S.feeOpen||man)?'Hide':'Change';
     $('j-hint').hidden=!!d;
   }
   function applyFeeDefaults(){
@@ -2266,18 +2271,32 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     Array.prototype.forEach.call($('c-pay').querySelectorAll('button'),function(b){ b.addEventListener('click',function(){ S.pay=b.getAttribute('data-pay'); if(b.getAttribute('data-card')) S.card=b.getAttribute('data-card'); applyFeeDefaults(); buildChips(); updatePreview(); }); });
   }
   /* Extras buttons on the job form: standard ones plus the driver's own (settings/extras {list:[{n,a}]}). */
-  var EX_STD=[{n:'Heathrow drop-off',a:6},{n:'City Airport drop-off',a:6},{n:'Parking',a:0}]; /* a:0 = type the amount */
+  var EX_STD=[{n:'Airport drop-off',air:1},{n:'Parking',a:0}]; /* a:0 = type the amount; air = pick the airport */
+  /* Drop-off charges by airport (Matt 31 Oct). Heathrow £6 = £7 barrier charge less £1 London taxi discount; Luton raised to £9. Heathrow, City and Gatwick are on auto-pay (number plate), so they show in the bank. */
+  var AIRFEES=[['Heathrow',6],['City Airport',6],['Gatwick',10],['Stansted',10],['Luton',9]];
   function exList(){ return Array.isArray(S.exList)?S.exList:EX_STD; }
   function exRender(){
     var box=$('c-ex'); if(!box) return; S.exPick=S.exPick||{};
-    box.innerHTML=exList().map(function(x,i){ var on=!!S.exPick[i]; return '<button type="button" data-ex="'+i+'" aria-pressed="'+on+'">'+(on?'✓ ':'')+esc(x.n)+'<span class="xa">'+((+x.a||0)?gbp2.format(+x.a):(on?gbp2.format(S.exPick[i]):'£…'))+'</span></button>'; }).join('')
+    S.exName=S.exName||{};
+    box.innerHTML=exList().map(function(x,i){ var on=!!S.exPick[i], nm=(on&&S.exName[i])||x.n; return '<button type="button" data-ex="'+i+'" aria-pressed="'+on+'">'+(on?'✓ ':'')+esc(nm)+'<span class="xa">'+((+x.a||0)?gbp2.format(+x.a):(on?gbp2.format(S.exPick[i]):(x.air?'▾':'£…')))+'</span></button>'; }).join('')
       +'<button type="button" data-exedit="1" aria-pressed="false">'+($('x-edit').hidden?'+ My extras':'Done')+'</button>';
     Array.prototype.forEach.call(box.querySelectorAll('button[data-ex]'),function(b){ b.addEventListener('click',function(){
       var i=+b.getAttribute('data-ex'), x=exList()[i]; if(!x) return; var cur=mv('j-ex'), a=+x.a||0;
-      if(S.exPick[i]){ cur=Math.max(0,cur-(+S.exPick[i]||0)); delete S.exPick[i]; setMoney('j-ex',Math.round(cur*100)/100); exRender(); updatePreview(); return; }
+      if(S.exPick[i]){ cur=Math.max(0,cur-(+S.exPick[i]||0)); delete S.exPick[i]; delete S.exName[i]; setMoney('j-ex',Math.round(cur*100)/100); exRender(); updatePreview(); return; }
+      if(x.air){ exAir(i); return; }
       if(!a){ exAsk(i,x); return; }
       S.exPick[i]=a; cur+=a; setMoney('j-ex',Math.round(cur*100)/100); exRender(); updatePreview(); }); });
     box.querySelector('[data-exedit]').addEventListener('click',function(){ var ed=$('x-edit'); ed.hidden=!ed.hidden; exEditRender(); exRender(); });
+  }
+  function exAir(i){
+    var ed=$('x-edit'); ed.hidden=false;
+    ed.innerHTML='<p class="help" style="margin:0 0 6px">Which airport?</p><div class="chips tight xchips">'
+      +AIRFEES.map(function(a,k){ return '<button type="button" data-air="'+k+'">'+esc(a[0])+' <span class="xa">'+gbp2.format(a[1])+'</span></button>'; }).join('')+'</div>'
+      +'<div class="two" style="align-items:end;margin-top:8px"><div class="field" style="margin:0"><label for="x-amt">Other amount (£)</label><input type="text" class="money" id="x-amt" inputmode="numeric" autocomplete="off" placeholder="0.00"></div><button class="btn small" type="button" id="x-ok">Add</button></div>';
+    moneyInput($('x-amt'));
+    function put(nm,a){ S.exPick[i]=Math.round(a*100)/100; S.exName[i]=nm; setMoney('j-ex',Math.round((mv('j-ex')+a)*100)/100); ed.hidden=true; ed.innerHTML=''; exRender(); updatePreview(); }
+    Array.prototype.forEach.call(ed.querySelectorAll('[data-air]'),function(b){ b.addEventListener('click',function(){ var a=AIRFEES[+b.getAttribute('data-air')]; put(a[0]+' drop-off',a[1]); }); });
+    $('x-ok').addEventListener('click',function(){ var a=mv('x-amt'); if(!(a>0)){ toast('Enter the amount.'); return; } put('Airport drop-off',a); });
   }
   function exAsk(i,x){
     var ed=$('x-edit'); ed.hidden=false;
@@ -2290,7 +2309,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   function exEditRender(){
     var ed=$('x-edit'); if(!ed||ed.hidden) return;
     ed.innerHTML='<p class="help" style="margin:0 0 6px">Your extras buttons. Add the ones you use, remove the ones you don\'t.</p>'
-      +exList().map(function(x,i){ return '<div class="xrow"><span>'+esc(x.n)+' <span class="num">'+((+x.a||0)?gbp2.format(+x.a):'you type it each time')+'</span></span><button class="btn ghost small" type="button" data-exdel="'+i+'">Remove</button></div>'; }).join('')
+      +exList().map(function(x,i){ return '<div class="xrow"><span>'+esc(x.n)+' <span class="num">'+(x.air?'pick the airport':(+x.a||0)?gbp2.format(+x.a):'you type it each time')+'</span></span><button class="btn ghost small" type="button" data-exdel="'+i+'">Remove</button></div>'; }).join('')
       +'<div class="two" style="margin-top:8px"><div class="field" style="margin:0"><label for="x-n">Name</label><input type="text" id="x-n" maxlength="30" placeholder="e.g. Parking"></div>'
       +'<div class="field" style="margin:0"><label for="x-a">Amount (£, blank = type each time)</label><input type="text" class="money" id="x-a" inputmode="numeric" autocomplete="off" placeholder="0.00"></div></div>'
       +'<button class="btn small" type="button" id="x-add" style="margin-top:8px">Add button</button>'
@@ -2301,7 +2320,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     var sd=$('x-std'); if(sd) sd.addEventListener('click',function(){ exSave(null,'Standard buttons back'); });
   }
   function exSave(L,msg){
-    S.exList=L; S.exPick={}; exEditRender(); exRender();
+    S.exList=L; S.exPick={}; S.exName={}; exEditRender(); exRender();
     if(S.db) S.db.collection('settings').doc('extras').set({list:L||null,ts:Date.now()}).then(function(){ toast(msg); }).catch(fail); else toast(msg);
   }
   function formEntry(){
@@ -2311,7 +2330,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     var box=$('j-preview'); if(!box) return;
     var h=formEntry();
     if(!(h.amount>0)||!S.db||!S.loaded.months){ box.hidden=true; return; }
-    var fee=lineFee(h), gross=eAmt(h), txt='Fee <span class="num">'+gbp2.format(fee)+'</span> · you keep <span class="num">'+gbp2.format(gross-fee)+'</span>.';
+    var fee=lineFee(h), gross=eAmt(h), tip=+h.tips||0, txt=(tip>0?'Total taken <span class="num">'+gbp2.format(gross+tip)+'</span> (tip <span class="num">'+gbp2.format(tip)+'</span>). ':'')+'Fee <span class="num">'+gbp2.format(fee)+'</span> · you keep <span class="num">'+gbp2.format(gross+tip-fee)+'</span>.';
     var others=S.entries.filter(function(x){return x.id!==S.editId});
     var hh=Object.assign({id:'__hyp'},h), C0=compute(others), C1=compute(others.concat([hh]));
     var ci=curIdx(C0); if(C0.rolling[ci]==null) ci=C0.lastIdx;
@@ -2322,7 +2341,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     }
     box.innerHTML=txt; box.hidden=false;
   }
-  function clearForm(){ S.exPick={}; exRender(); ['j-amt','j-tips','j-ex','j-note'].forEach(function(id){$(id).value=''}); $('j-notebox').open=false; applyFeeDefaults(); updatePreview(); }
+  function clearForm(){ S.feeOpen=false; S.exPick={}; S.exName={}; exRender(); ['j-amt','j-tips','j-ex','j-note'].forEach(function(id){$(id).value=''}); $('j-notebox').open=false; applyFeeDefaults(); updatePreview(); }
   function setEditing(id){
     S.editId=id; $('j-save').textContent=id?'Update job':'Save job'; $('j-title').textContent=id?'Edit job':'Add job';
     $('j-edit').hidden=!id; $('j-del').hidden=!id; $('j-del').textContent='Delete this job'; $('j-del').classList.remove('arm');
@@ -2345,8 +2364,16 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     if(old?old.demo:S.practice) data.demo=true;
     if(old){ data.src=old.src||'manual'; data.ts=old.ts||data.ts; ref=S.db.collection('entries').doc(S.editId); } else ref=S.db.collection('entries').doc();
     $('j-save').disabled=true;
+    /* Extras tapped on a new job (drop-off, parking) are also costs you paid: add each as an expense.
+       Saved as not-cash, so once your bank import covers the day the bank's own line replaces it. */
+    var exAuto=[]; if(!old){ var XL=exList(); Object.keys(S.exPick||{}).forEach(function(i){ var a=Math.round((+S.exPick[i]||0)*100)/100, x=XL[i]; if(a>0&&x) exAuto.push({n:(S.exName&&S.exName[i])||x.n,a:a}); }); }
     ref.set(data).then(function(){
-      toast((old?'Updated: ':'Saved: ')+gbp2.format(data.amount)+(S.prov==='Gett'&&S.pay==='Cash'&&!f.feeFixed&&!f.commission?' (no Gett fee entered)':''));
+      if(!exAuto.length) return;
+      var b=S.db.batch();
+      exAuto.forEach(function(x){ var er=S.db.collection('entries').doc(), d={kind:'expense',date:S.day,m:monthOf(S.day),category:'Parking / drop-off',amount:x.a,cash:false,note:x.n+' (from job)',fromJob:ref.id,src:'manual',ts:Date.now()}; if(data.demo) d.demo=true; b.set(er,d); });
+      return b.commit();
+    }).then(function(){
+      toast((old?'Updated: ':'Saved: ')+gbp2.format(data.amount)+(exAuto.length?' + '+exAuto.map(function(x){return x.n+' '+gbp2.format(x.a)}).join(', ')+' added to expenses':'')+(S.prov==='Gett'&&S.pay==='Cash'&&!f.feeFixed&&!f.commission?' (no Gett fee entered)':''));
       setEditing(null); clearForm();
     }).catch(fail).then(function(){$('j-save').disabled=false});
   }
@@ -2357,7 +2384,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     var ref=S.db.collection('entries').doc(), cat=$('e-cat').value, amt=Math.round(a*100)/100, ph=S.rpPending;
     ref.set({kind:'expense',date:S.day,m:monthOf(S.day),category:cat,amount:amt,cash:$('e-cash').checked,note:'',src:'manual',ts:Date.now(),demo:!!S.practice})
       .then(function(){ return ph?rpSave(ph,{date:S.day,eid:ref.id,category:cat,amount:amt}):null; })
-      .then(function(){ toast('Expense saved: '+gbp2.format(a)+(ph?' with receipt photo':'')); $('e-amt').value=''; $('e-cash').checked=true; S.rpPending=null; rpPendingShow(); }).catch(fail).then(function(){$('e-add').disabled=false});
+      .then(function(){ toast('Expense saved: '+gbp2.format(a)+(ph?' with receipt photo':'')); $('e-amt').value=''; ePay(true); S.rpPending=null; rpPendingShow(); }).catch(fail).then(function(){$('e-add').disabled=false});
   }
 
   /* ---------- receipt photos (Matt, 28 Oct) ----------
@@ -3040,8 +3067,8 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
 
   /* ---------- wiring ---------- */
   /* ---------- name on receipts ---------- */
-  var BRAND='All Black Taxis';
-  function brandName(){ var t=S.biz&&S.biz.trade; return (t!=null&&String(t).trim())?String(t).trim():BRAND; }
+  var BIZNAME='All Black Taxis';
+  function brandName(){ var t=S.biz&&S.biz.trade; return (t!=null&&String(t).trim())?String(t).trim():BIZNAME; }
   function monthsDiff(a,b){ var p=a.split('-'),q=b.split('-'); return (+q[0]-+p[0])*12+(+q[1]-+p[1]); }
 
   /* ---------- takings before Cab Books (for the 12-month VAT check only) ---------- */
@@ -4431,6 +4458,9 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   Array.prototype.forEach.call(document.querySelectorAll('input.money'),moneyInput);
   ['j-amt','j-tips','j-ex','j-fix'].forEach(function(id){ $(id).addEventListener('input',updatePreview); });
   exRender();
+  function ePay(c){ $('e-cash').checked=c; $('e-pcash').setAttribute('aria-pressed',c); $('e-pcard').setAttribute('aria-pressed',!c); $('e-payhelp').textContent=c?'Cash never shows in the bank, so it is only counted from here.':'Counted now; replaced by the bank line once you import that statement.'; }
+  $('e-pcash').addEventListener('click',function(){ ePay(true); }); $('e-pcard').addEventListener('click',function(){ ePay(false); });
+  $('j-feechg').addEventListener('click',function(){ if(S.feeManual&&formFee(S.prov,S.pay)){ S.feeManual=false; S.feeOpen=false; } else S.feeOpen=!S.feeOpen; renderFee(); updatePreview(); });
   $('fm-rule').addEventListener('click',function(){ if(formFee(S.prov,S.pay)){ S.feeManual=false; renderFee(); updatePreview(); } });
   $('fm-man').addEventListener('click',function(){ if(!S.feeManual){ S.feeManual=true; $('j-fix').value=''; renderFee(); updatePreview(); } });
   buildChips(); applyFeeDefaults();
