@@ -731,15 +731,15 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
         <div class="field"><label id="l-prov">Provider</label><div class="chips" id="c-prov" role="group" aria-labelledby="l-prov"></div></div>
         <div class="field"><label id="l-pay">Paid by</label><div class="chips" id="c-pay" role="group" aria-labelledby="l-pay"></div></div>
         <details class="jnote" id="j-notebox"><summary>+ Add journey</summary><div class="field" style="margin-top:8px"><label for="j-note">Journey (optional)</label><input type="text" id="j-note" maxlength="120" placeholder="e.g. Norrice Lea – T4 Heathrow"><p class="help" style="margin:6px 0 0">Useful for cash, hand and private jobs. It fills in the receipt for you.</p></div></details>
-        <div class="field"><label for="j-ex">Extras (£)</label><input type="text" class="money" id="j-ex" inputmode="numeric" autocomplete="off" placeholder="0.00">
-          <div class="chips tight xchips" id="c-ex" role="group" aria-label="Tap to add an extra"></div>
-          <div class="xedit" id="x-edit" hidden></div>
-          <p class="help" style="margin:4px 0 0">Drop-off fees and parking. Tap to add, tap again to remove.</p></div>
         <div class="two">
           <div class="field"><label for="j-amt">Fare (£) <span class="lbl-sub">no tip</span></label><input type="text" class="money" id="j-amt" inputmode="numeric" autocomplete="off" placeholder="0.00"></div>
           <div class="field"><label for="j-tips">Tip (£) <span class="lbl-sub">on top</span></label><input type="text" class="money" id="j-tips" inputmode="numeric" autocomplete="off" placeholder="0.00"></div>
         </div>
         <p class="help" style="margin-top:-6px">Enter them separately: £20 fare + £2 tip, not £22.</p>
+        <div class="field"><label for="j-ex">Extras (£)</label><input type="text" class="money" id="j-ex" inputmode="numeric" autocomplete="off" placeholder="0.00">
+          <div class="chips tight xchips" id="c-ex" role="group" aria-label="Tap to add an extra"></div>
+          <div class="xedit" id="x-edit" hidden></div>
+          <p class="help" style="margin:4px 0 0">Drop-off fees and parking. Tap to add, tap again to remove.</p></div>
         <div class="feeline"><span id="l-fee">Commission:</span> <span id="j-feetxt"></span> <button type="button" class="linkbtn" id="j-feechg">Change</button></div>
         <div id="j-feebox" hidden>
           <div class="seg" role="group" aria-labelledby="l-fee" style="margin-bottom:8px"><button type="button" id="fm-rule" aria-pressed="true">Set rule</button><button type="button" id="fm-man" aria-pressed="false">Manual</button></div>
