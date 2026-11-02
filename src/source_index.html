@@ -2160,7 +2160,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     var C=compute(S.entries), EI=expImpMap(), D={rows:[],gross:0,fees:0,tips:0,pay:{},exp:[],expTotal:0,expEst:0};
     S.entriesAll.forEach(function(e){
       if(e.date!==iso) return;
-      if(e.kind==='fare'){ if(C.byImp[e.id]) return; var g=eAmt(e), f=lineFee(e); D.rows.push({e:e,g:g,f:f,n:g-f}); D.gross+=g; D.fees+=f; D.tips+=+e.tips||0; var k=e.pay||'Other'; D.pay[k]=(D.pay[k]||0)+g; }
+      if(e.kind==='fare'){ if(C.byImp[e.id]) return; var g=eAmt(e), f=lineFee(e); var tp=+e.tips||0; D.rows.push({e:e,g:g,f:f,n:g-f,t:tp,gt:g+tp,nt:g-f+tp}); D.gross+=g; D.fees+=f; D.tips+=+e.tips||0; var k=e.pay||'Other'; D.pay[k]=(D.pay[k]||0)+g; }
       else if(e.kind==='tip'){ D.tips+=+e.amount||0; }
       else if(e.kind==='expense'){ if(expSuperseded(e,EI,false)) return; D.exp.push(e); D.expTotal+=+e.amount||0; if(e.src!=='import') D.expEst+=+e.amount||0; }
     });
@@ -2194,7 +2194,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     sm.innerHTML=h;
     var jh='<div class="cardhead"><h2>Jobs ('+D.rows.length+')</h2><button class="iconbtn" id="d-chart" type="button" aria-label="Jobs summary">&#9638;</button></div>';
     if(!D.rows.length) jh+='<div class="empty" style="padding:14px 0">No jobs for this day. Add one above.</div>'; else jh+='<div class="jhead"><span>Fare type</span><span>Gross</span><span>Net</span></div>';
-    D.rows.forEach(function(r){ jh+='<div class="jwrap"><button class="jrow" type="button" data-job="'+esc(r.e.id)+'"><span>'+ptag(r.e.provider||'Job')+'<span class="ppay">'+esc(r.e.pay||'')+'</span>'+(r.e.src==='import'?'<span class="badge">imported</span>':'')+(r.e.demo?'<span class="badge ind">practice</span>':'')+(r.e.note?'<div class="d" style="font-size:12px;color:var(--muted)">'+esc(r.e.note)+'</div>':'')+'</span><span class="b">'+r.g.toFixed(2)+'</span><span class="b">'+r.n.toFixed(2)+'</span></button><div class="jfoot"><button class="rc" type="button" data-rcj="'+esc(r.e.id)+'">Receipt</button><button class="jedit" type="button" data-jedit="'+esc(r.e.id)+'" aria-label="Edit this job">\u270E Edit</button></div></div>'; });
+    D.rows.forEach(function(r){ jh+='<div class="jwrap"><button class="jrow" type="button" data-job="'+esc(r.e.id)+'"><span>'+ptag(r.e.provider||'Job')+'<span class="ppay">'+esc(r.e.pay||'')+'</span>'+(r.e.src==='import'?'<span class="badge">imported</span>':'')+(r.e.demo?'<span class="badge ind">practice</span>':'')+(r.t?'<div class="d" style="font-size:12px;color:var(--muted)">incl. '+gbp2.format(r.t)+' tip</div>':'')+(r.e.note?'<div class="d" style="font-size:12px;color:var(--muted)">'+esc(r.e.note)+'</div>':'')+'</span><span class="b">'+r.gt.toFixed(2)+'</span><span class="b">'+r.nt.toFixed(2)+'</span></button><div class="jfoot"><button class="rc" type="button" data-rcj="'+esc(r.e.id)+'">Receipt</button><button class="jedit" type="button" data-jedit="'+esc(r.e.id)+'" aria-label="Edit this job">\u270E Edit</button></div></div>'; });
     jb.innerHTML=jh;
     var eh='';
     if(!D.exp.length) eh='<p class="note" style="margin:0">No expenses for this day.</p>';
@@ -2222,21 +2222,21 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
       h+='<button class="btn ghost small" id="js-back" type="button" style="margin-bottom:10px">‹ All providers</button><h2 style="margin:0 0 6px;font-size:15px;text-transform:none;letter-spacing:0;color:var(--ink)">'+ptag(prov)+'<span class="ppay">'+mine.length+' job'+(mine.length===1?'':'s')+'</span></h2>';
       h+='<div class="jhead"><span>Fare type</span><span>Gross</span><span>Net</span></div>';
       mine.forEach(function(r){
-        g+=r.g; n+=r.n; f+=r.f; t+=+r.e.tips||0; var k=r.e.pay||'Other'; if(!byPay[k]) byPay[k]={n:0,g:0,net:0}; byPay[k].n++; byPay[k].g+=r.g; byPay[k].net+=r.n;
-        h+='<button class="jrow" type="button" data-sjob="'+esc(r.e.id)+'"><span>'+esc(r.e.pay||'')+'<div style="font-size:12px;color:var(--muted)">fee '+gbp2.format(r.f)+((+r.e.tips)?' · tip '+gbp2.format(+r.e.tips):'')+(r.e.note?' · '+esc(r.e.note):'')+'</div></span><span class="b">'+r.g.toFixed(2)+'</span><span class="b">'+r.n.toFixed(2)+'</span></button>';
+        g+=r.g; n+=r.n; f+=r.f; t+=+r.e.tips||0; var k=r.e.pay||'Other'; if(!byPay[k]) byPay[k]={n:0,g:0,net:0}; byPay[k].n++; byPay[k].g+=r.gt; byPay[k].net+=r.nt;
+        h+='<button class="jrow" type="button" data-sjob="'+esc(r.e.id)+'"><span>'+esc(r.e.pay||'')+'<div style="font-size:12px;color:var(--muted)">fee '+gbp2.format(r.f)+((+r.e.tips)?' · tip '+gbp2.format(+r.e.tips):'')+(r.e.note?' · '+esc(r.e.note):'')+'</div></span><span class="b">'+r.gt.toFixed(2)+'</span><span class="b">'+r.nt.toFixed(2)+'</span></button>';
       });
       if(Object.keys(byPay).length>1){ h+='<h2 style="margin:14px 0 4px;font-size:12px">By payment type</h2>'; Object.keys(byPay).forEach(function(k){ h+='<div class="kv"><span class="k">'+esc(k)+' ('+byPay[k].n+')</span><span class="v">'+gbp2.format(byPay[k].g)+' → '+gbp2.format(byPay[k].net)+'</span></div>'; }); }
       h+='<div class="kv"><span class="k">Fees</span><span class="v">'+gbp2.format(f)+(g>0?' ('+(f/g*100).toFixed(1)+'%)':'')+'</span></div>';
       if(t>0) h+='<div class="kv"><span class="k">Tips</span><span class="v">'+gbp2.format(t)+'</span></div>';
-      h+='<div class="kv"><span class="k"><b>Total ('+mine.length+')</b></span><span class="v"><b>'+gbp2.format(g)+' → '+gbp2.format(n)+'</b></span></div>';
+      h+='<div class="kv"><span class="k"><b>Total ('+mine.length+')'+(t>0?' incl. tips':'')+'</b></span><span class="v"><b>'+gbp2.format(g+t)+' → '+gbp2.format(n+t)+'</b></span></div>';
       h+='<p class="note">Tap a job to edit it.</p>';
     } else {
       h+='<h2 style="margin:0 0 8px;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)">Jobs summary</h2>';
       var by={};
-      rows.forEach(function(r){ var k=r.e.provider||'Other'; if(!by[k]) by[k]={n:0,g:0,net:0}; by[k].n++; by[k].g+=r.g; by[k].net+=r.n; });
+      rows.forEach(function(r){ var k=r.e.provider||'Other'; if(!by[k]) by[k]={n:0,g:0,net:0}; by[k].n++; by[k].g+=r.gt; by[k].net+=r.nt; });
       var ks=Object.keys(by).sort(function(a,b){return by[b].g-by[a].g});
       ks.forEach(function(k){ h+='<button class="kv" type="button" data-sprov="'+esc(k)+'" style="width:100%;background:none;border-left:0;border-right:0;border-bottom:0;text-align:left;cursor:pointer;min-height:48px;align-items:center"><span class="k" style="color:var(--ink)">'+ptag(k)+'<span class="ppay">'+by[k].n+' job'+(by[k].n===1?'':'s')+' ›</span></span><span class="v">'+gbp2.format(by[k].g)+' → '+gbp2.format(by[k].net)+'</span></button>'; });
-      if(!ks.length) h+='<p class="note">No jobs for this day.</p>'; else h+='<div class="kv"><span class="k"><b>Total ('+rows.length+')</b></span><span class="v"><b>'+gbp2.format(D.gross)+' → '+gbp2.format(D.gross-D.fees)+'</b></span></div><p class="note">Tap a provider to see its jobs.</p>';
+      if(!ks.length) h+='<p class="note">No jobs for this day.</p>'; else { var rt=rows.reduce(function(x,r){return x+r.t},0); h+='<div class="kv"><span class="k"><b>Total ('+rows.length+')'+(rt>0?' incl. tips':'')+'</b></span><span class="v"><b>'+gbp2.format(D.gross+rt)+' → '+gbp2.format(D.gross-D.fees+rt)+'</b></span></div>'; h+='<p class="note">Tap a provider to see its jobs.</p>'; }
     }
     h+='<div style="height:12px"></div><button class="btn ghost" id="js-close2" type="button">Close</button>';
     body.innerHTML=h; $('jsum').hidden=false;
