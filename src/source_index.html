@@ -168,6 +168,8 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .cc .dots i{width:6px;height:6px;border-radius:50%;background:var(--ok)}
 .cc .dots i.ev{background:var(--accent)}
 .cc .dots i.nt{background:var(--nt-line)}
+.cc .amt{font-size:10.5px;line-height:1;color:var(--ok);font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+.csum{margin:10px 0 0;font-size:14px;color:var(--muted)}
 .tl{position:relative;margin-top:10px;border-top:1px solid var(--line)}
 .tl .hr{height:56px;border-bottom:1px solid var(--line);padding-left:46px;font-size:11px;color:var(--muted);position:relative;cursor:pointer}
 .tl .hr span{position:absolute;left:0;top:3px;width:40px;text-align:right}
@@ -776,8 +778,9 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     <div class="card">
       <div class="nav"><button type="button" id="c-prev" aria-label="Previous month">&#8249;</button><div class="ttl" id="c-title"></div><button type="button" id="c-next" aria-label="Next month">&#8250;</button></div>
       <div class="two" style="margin-top:10px"><select id="c-month" aria-label="Month"></select><select id="c-year" aria-label="Year"></select></div>
+      <div class="csum" id="c-sum"></div>
       <div class="cgrid" id="c-grid"></div>
-      <p class="note">Tap a day to see the whole day. Press and hold a Sunday for that week’s summary. Green dot: jobs or expenses. Blue dot: schedule event. Amber dot: Guard ceremony (roads around the Palace closed).</p>
+      <p class="note">Tap a day to see its jobs and expenses. The amount under a date is what you took that day. Press and hold a Sunday for that week’s summary. Green dot: expenses only. Blue dot: schedule event. Amber dot: Guard ceremony (roads around the Palace closed). For the hour-by-hour schedule, open the day and tap See the whole day.</p>
       <button class="btn ghost" id="c-back" type="button">Back to the day</button>
     </div>
   </section>
@@ -2959,12 +2962,15 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     var jobs={}, exps={}, evs={};
     S.entries.forEach(function(e){ if(e.date&&e.date.slice(0,7)===key){ if(e.kind==='expense') exps[e.date]=1; else jobs[e.date]=1; } });
     for(var di=0;di<42;di++){ var dd=dayAdd(mondayOf(key+'-01'),di); if(dayEvents(dd).length) evs[dd]=1; }
+    var amt={}, mJobs=0, mGross=0;
+    if(S.loaded&&S.loaded.entries){ Object.keys(jobs).forEach(function(d){ var D=dayData(d); if(D.rows.length){ amt[d]=D.gross; mJobs+=D.rows.length; mGross+=D.gross; } }); }
+    var cs=$('c-sum'); if(cs) cs.innerHTML=mJobs?'<b>'+MN[m]+'</b> \u00b7 '+mJobs+' job'+(mJobs===1?'':'s')+' \u00b7 <span class="num">'+gbp0.format(mGross)+'</span> taken':'No jobs recorded in '+MN[m]+' '+y+'.';
     var first=key+'-01', start=mondayOf(first), h='', t=todayISO(), names=['MON','TUE','WED','THU','FRI','SAT','SUN'];
     names.forEach(function(n,i){ h+='<div class="ch'+(i>4?' we':'')+'">'+n+'</div>'; });
     for(var i=0;i<42;i++){
       var d=dayAdd(start,i), inM=d.slice(0,7)===key, sun=dowOf(d)===0;
       if(i>=35 && !inM) break;
-      h+='<button type="button" class="cc'+(inM?'':' out')+(d===t?' today':'')+(d===S.day?' sel':'')+'" data-cd="'+d+'" data-sun="'+(sun?1:0)+'" aria-label="'+esc(dlabel(d))+'"><span>'+(+d.slice(8))+'</span><span class="dots">'+((jobs[d]||exps[d])?'<i></i>':'')+(evs[d]?'<i class="ev"></i>':'')+(dayNotices(d).some(function(n){return n.title.indexOf('Captain')<0})?'<i class="nt"></i>':'')+'</span></button>';
+      h+='<button type="button" class="cc'+(inM?'':' out')+(d===t?' today':'')+(d===S.day?' sel':'')+'" data-cd="'+d+'" data-sun="'+(sun?1:0)+'" aria-label="'+esc(dlabel(d))+'"><span>'+(+d.slice(8))+'</span>'+(amt[d]!=null?'<span class="amt">'+gbp0.format(amt[d])+'</span>':'')+'<span class="dots">'+((amt[d]==null&&(jobs[d]||exps[d]))?'<i></i>':'')+(evs[d]?'<i class="ev"></i>':'')+(dayNotices(d).some(function(n){return n.title.indexOf('Captain')<0})?'<i class="nt"></i>':'')+'</span></button>';
     }
     $('c-grid').innerHTML=h;
     Array.prototype.forEach.call($('c-grid').querySelectorAll('[data-cd]'),function(b){
@@ -2975,7 +2981,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
         ['pointerup','pointerleave','pointercancel'].forEach(function(ev){ b.addEventListener(ev,cancel); });
         b.addEventListener('contextmenu',function(ev){ ev.preventDefault(); });
       }
-      b.addEventListener('click',function(){ if(fired){ fired=false; return; } S.day=d; setEditing(null); renderDay(); renderEvents(); openFullDay(); });
+      b.addEventListener('click',function(){ if(fired){ fired=false; return; } S.day=d; setEditing(null); renderDay(); renderEvents(); showTab('today'); window.scrollTo(0,0); });
     });
   }
   function tmin(t){ var m=/^(\d\d):(\d\d)/.exec(t||''); return m? (+m[1])*60+(+m[2]) : null; }
@@ -3013,7 +3019,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     var diff=Math.round((Date.parse(mondayOf(d))-Date.parse(mondayOf(todayISO())))/604800000);
     S.rp.mode='week'; S.rp.off=diff; showTab('reports'); renderReports();
   }
-  $('d-cal').addEventListener('click',openFullDay);
+  $('d-cal').addEventListener('click',openCalendar);
   $('c-back').addEventListener('click',function(){ showTab('today'); });
   $('c-prev').addEventListener('click',function(){ S.cal.m--; if(S.cal.m<0){S.cal.m=11;S.cal.y--} renderCal(); });
   $('c-next').addEventListener('click',function(){ S.cal.m++; if(S.cal.m>11){S.cal.m=0;S.cal.y++} renderCal(); });
