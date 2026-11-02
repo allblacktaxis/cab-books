@@ -2491,8 +2491,9 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
         +'<div class="two"><div class="field"><label for="rp-cat">Category</label><select id="rp-cat">'+(($('e-cat')&&$('e-cat').innerHTML)||'')+'</select></div>'
         +'<div class="field"><label for="rp-amt">Amount</label><input type="text" class="money" id="rp-amt" inputmode="numeric" autocomplete="off" placeholder="0.00"></div></div>'
         +'<div class="field"><label for="rp-note">Note (optional)</label><input type="text" id="rp-note" maxlength="80" placeholder="e.g. Shell, Park Royal"></div>'
-        +'<p class="help">Paid by card? Just save the photo: it links itself to the bank line when your bank import brings in the same amount. Paid in cash? Use Add a cash expense instead, so the cost counts.</p>'
-        +'<button class="btn" type="button" id="rp-keep">Save photo for '+esc(dlabel(S.day))+'</button>';
+        +'<div class="field"><label id="rp-payl">Paid by</label><div class="seg" role="group" aria-labelledby="rp-payl"><button type="button" data-rppay="card" aria-pressed="'+(c.cash?'false':'true')+'">Card</button><button type="button" data-rppay="cash" aria-pressed="'+(c.cash?'true':'false')+'">Cash</button></div></div>'
+        +'<p class="help" id="rp-payhelp">'+(c.cash?'Cash won\'t show on any statement, so this adds the expense to your books now, with the photo attached.':'Card: the photo links itself to the bank line when your bank import brings in the same amount.')+'</p>'
+        +'<button class="btn" type="button" id="rp-keep">'+(c.cash?'Save cash expense for ':'Save photo for ')+esc(dlabel(S.day))+'</button>';
       el.innerHTML=h; var a=$('rp-amt'); if(a) moneyInput(a);
       var cs=$('rp-cat'); if(cs){ for(var i=0;i<cs.options.length;i++){ if(/fuel|diesel|petrol/i.test(cs.options[i].value||cs.options[i].text)){ cs.selectedIndex=i; break; } } }
       return;
@@ -2533,6 +2534,22 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     if(t.id==='rp-swap'&&S.rpCur){ rpPick({kind:'replace',id:S.rpCur.id}); return; }
     if(t.id==='rp-del'&&S.rpCur){ if(!S.rpDelArm){ S.rpDelArm=true; rpRenderView(); setTimeout(function(){ if(S.rpDelArm){ S.rpDelArm=false; rpRenderView(); } },3000); return; }
       var id=S.rpCur.id; rpClose(); rpDelete(id).then(function(){ toast('Photo deleted'); }); return; }
+    if((b=t.closest('[data-rppay]'))&&S.rpCur&&S.rpCur.kind==='new'){
+      /* keep what's typed while switching Card/Cash (Matt 2 Nov: cash car wash etc. must count as an expense) */
+      var keep={cat:$('rp-cat').value,amt:$('rp-amt').value,note:$('rp-note').value};
+      S.rpCur.cash=b.getAttribute('data-rppay')==='cash'; rpRenderView();
+      $('rp-cat').value=keep.cat; $('rp-amt').value=keep.amt; $('rp-note').value=keep.note; return;
+    }
+    if(t.id==='rp-keep'&&S.rpCur&&S.rpCur.kind==='new'&&S.rpCur.cash){
+      var ca=mv('rp-amt'), cc=$('rp-cat').value, cn=$('rp-note').value.trim(), cph=S.rpCur.img;
+      if(!(ca>0)){ toast('Enter the amount you paid.'); $('rp-amt').focus(); return; }
+      t.disabled=true; var er=S.db.collection('entries').doc();
+      er.set({kind:'expense',date:S.day,m:monthOf(S.day),category:cc,amount:Math.round(ca*100)/100,cash:true,note:cn,src:'manual',ts:Date.now(),demo:!!S.practice})
+        .then(function(){ return rpSave(cph,{date:S.day,eid:er.id,category:cc,amount:ca,note:cn}); })
+        .then(function(){ rpClose(); toast('Cash expense saved: '+gbp2.format(ca)+' with receipt photo'); })
+        .catch(function(e){ t.disabled=false; fail(e); });
+      return;
+    }
     if(t.id==='rp-keep'&&S.rpCur&&S.rpCur.kind==='new'){
       t.disabled=true; var ph=S.rpCur.img;
       rpSave(ph,{date:S.day,category:$('rp-cat').value,amount:mv('rp-amt'),note:$('rp-note').value.trim()}).then(function(){ rpClose(); toast('Receipt photo saved'); })
