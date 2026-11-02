@@ -175,6 +175,14 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .cc .dots i{width:6px;height:6px;border-radius:50%;background:var(--ok)}
 .cc .dots i.ev{background:var(--accent)}
 .cc .dots i.nt{background:var(--nt-line)}
+.cc .rbar{position:absolute;left:5px;right:5px;bottom:3px;height:3px;border-radius:2px}
+.cc .rbar.rec{background:var(--ok)}
+.cc .rbar.man{background:var(--warn)}
+.cc .rbar.part{background:linear-gradient(90deg,var(--ok) 50%,var(--warn) 50%)}
+.cc .amt.man{color:var(--warn)}
+.ckey{display:flex;flex-wrap:wrap;gap:6px 14px;margin:10px 0 0;font-size:13px;color:var(--muted)}
+.ckey i{display:inline-block;width:16px;height:4px;border-radius:2px;margin-right:6px;vertical-align:middle}
+.cc{padding-bottom:9px}
 .cc .amt{font-size:10.5px;line-height:1;color:var(--ok);font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
 .csum{margin:10px 0 0;font-size:14px;color:var(--muted)}
 .tl{position:relative;margin-top:10px;border-top:1px solid var(--line)}
@@ -787,6 +795,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
       <div class="two" style="margin-top:10px"><select id="c-month" aria-label="Month"></select><select id="c-year" aria-label="Year"></select></div>
       <div class="csum" id="c-sum"></div>
       <div class="cgrid" id="c-grid"></div>
+      <div class="ckey"><span><i style="background:var(--ok)"></i>Matches statements</span><span><i style="background:var(--warn)"></i>Typed in only (or bank estimate)</span><span><i style="background:linear-gradient(90deg,var(--ok) 50%,var(--warn) 50%)"></i>Some of each</span></div>
       <p class="note">Tap a day to see its jobs and expenses. The amount under a date is what you took that day. Press and hold a Sunday for that week’s summary. Green dot: expenses only. Blue dot: schedule event. Amber dot: Guard ceremony (roads around the Palace closed). For the hour-by-hour schedule, open the day and tap See the whole day.</p>
       <button class="btn ghost" id="c-back" type="button">Back to the day</button>
     </div>
@@ -2974,7 +2983,11 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     var jobs={}, exps={}, evs={};
     S.entries.forEach(function(e){ if(e.date&&e.date.slice(0,7)===key){ if(e.kind==='expense') exps[e.date]=1; else jobs[e.date]=1; } });
     for(var di=0;di<42;di++){ var dd=dayAdd(mondayOf(key+'-01'),di); if(dayEvents(dd).length) evs[dd]=1; }
-    var amt={}, mJobs=0, mGross=0;
+    var amt={}, mJobs=0, mGross=0, rs={};
+    /* Reconciled with statements (green) vs typed in only (amber), per day (Matt 2 Nov). Bank estimates count as not yet reconciled. */
+    if(S.loaded&&S.loaded.entries){ var CC=compute(S.entries); S.entries.forEach(function(e){ if(e.kind!=='fare'||!e.date||e.date.slice(0,7)!==key||e.superseded||CC.byImp[e.id]) return;
+      var ok=(e.src==='import'&&!e.est)||(e.src!=='import'&&CC.stat[e.id]==='covered'), r=rs[e.date]||(rs[e.date]={r:0,m:0}); if(ok) r.r++; else r.m++; }); }
+    function rsCls(d){ var r=rs[d]; if(!r) return ''; return r.m===0?'rec':(r.r===0?'man':'part'); }
     if(S.loaded&&S.loaded.entries){ Object.keys(jobs).forEach(function(d){ var D=dayData(d); if(D.rows.length){ amt[d]=D.gross; mJobs+=D.rows.length; mGross+=D.gross; } }); }
     var cs=$('c-sum'); if(cs) cs.innerHTML=mJobs?'<b>'+MN[m]+'</b> \u00b7 '+mJobs+' job'+(mJobs===1?'':'s')+' \u00b7 <span class="num">'+gbp0.format(mGross)+'</span> taken':'No jobs recorded in '+MN[m]+' '+y+'.';
     var first=key+'-01', start=mondayOf(first), h='', t=todayISO(), names=['MON','TUE','WED','THU','FRI','SAT','SUN'];
@@ -2982,7 +2995,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     for(var i=0;i<42;i++){
       var d=dayAdd(start,i), inM=d.slice(0,7)===key, sun=dowOf(d)===0;
       if(i>=35 && !inM) break;
-      h+='<button type="button" class="cc'+(inM?'':' out')+(d===t?' today':'')+(d===S.day?' sel':'')+'" data-cd="'+d+'" data-sun="'+(sun?1:0)+'" aria-label="'+esc(dlabel(d))+'"><span>'+(+d.slice(8))+'</span>'+(amt[d]!=null?'<span class="amt">'+gbp0.format(amt[d])+'</span>':'')+'<span class="dots">'+((amt[d]==null&&(jobs[d]||exps[d]))?'<i></i>':'')+(evs[d]?'<i class="ev"></i>':'')+(dayNotices(d).some(function(n){return n.title.indexOf('Captain')<0})?'<i class="nt"></i>':'')+'</span></button>';
+      h+='<button type="button" class="cc'+(inM?'':' out')+(d===t?' today':'')+(d===S.day?' sel':'')+'" data-cd="'+d+'" data-sun="'+(sun?1:0)+'" aria-label="'+esc(dlabel(d))+'"><span>'+(+d.slice(8))+'</span>'+(amt[d]!=null?'<span class="amt'+(rsCls(d)==='man'?' man':'')+'">'+gbp0.format(amt[d])+'</span>':'')+(rsCls(d)?'<span class="rbar '+rsCls(d)+'"></span>':'')+'<span class="dots">'+((amt[d]==null&&(jobs[d]||exps[d]))?'<i></i>':'')+(evs[d]?'<i class="ev"></i>':'')+(dayNotices(d).some(function(n){return n.title.indexOf('Captain')<0})?'<i class="nt"></i>':'')+'</span></button>';
     }
     $('c-grid').innerHTML=h;
     Array.prototype.forEach.call($('c-grid').querySelectorAll('[data-cd]'),function(b){
