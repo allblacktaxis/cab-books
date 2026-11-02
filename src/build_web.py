@@ -90,6 +90,13 @@ LOGIN_HTML = """<div id="signin" hidden role="dialog" aria-modal="true" aria-lab
     <p class="fine">New to Cab Books? <a href="/help.html" style="color:var(--accent)">Read the getting-started guide</a>.</p>
     <p class="fine">By using Cab Books you agree to how we look after your data: <a href="/privacy.html">privacy notice</a>.</p>
   </form>
+  <div class="box" id="vf-box" hidden>
+    <div class="lg"><div><b>Confirm your email</b><span>One last step before your books open</span></div></div>
+    <p style="margin:0">We've sent an email to <b id="vf-em"></b>. Open it and tap the link to confirm this is your address. Check junk or spam if it isn't there in a minute.</p>
+    <p class="err" id="vf-err" role="alert"></p>
+    <button class="btn" type="button" id="vf-done">I've tapped the link</button>
+    <div class="alt"><button type="button" id="vf-again">Send the email again</button><button type="button" id="vf-out">Use a different email</button></div>
+  </div>
 </div>
 """
 rep('<div class="toast" id="toast" hidden></div>', LOGIN_HTML + '<div class="toast" id="toast" hidden></div>')
@@ -329,10 +336,22 @@ BOOT = r"""  /* ---------- website plumbing: Firebase sign-in + each driver's pr
     var auth=firebase.auth(), fs=firebase.firestore();
     try{ fs.enablePersistence({synchronizeTabs:true}).catch(function(){}); }catch(e){}
     S.auth=auth; S.fs=fs; wireSignin(auth);
+    var VERIFY_FROM=Date.parse('2026-11-02T00:00:00Z');
+    function showVerify(u){
+      S.authUser=null; $('signin').hidden=false; $('si-form').hidden=true; $('vf-box').hidden=false; $('vf-em').textContent=u.email||''; $('vf-err').textContent=''; $('sync').textContent='Confirm your email';
+    }
+    $('vf-done').addEventListener('click',function(){ var u=auth.currentUser, b=$('vf-done'); if(!u) return; b.disabled=true; $('vf-err').textContent='';
+      u.reload().then(function(){ var v=auth.currentUser; if(v&&v.emailVerified){ return v.getIdToken(true).then(function(){ location.reload(); }); } $('vf-err').textContent='Not confirmed yet. Tap the link in the email, then try again.'; })
+       .catch(function(){ $('vf-err').textContent='Could not check. Try again in a moment.'; }).then(function(){ b.disabled=false; }); });
+    $('vf-again').addEventListener('click',function(){ var u=auth.currentUser; if(!u) return; u.sendEmailVerification().then(function(){ $('vf-err').textContent=''; toast('Email sent again to '+u.email+'.'); },function(e){ $('vf-err').textContent=(e&&e.code==='auth/too-many-requests')?'Too many tries. Wait a few minutes, then send again.':'Could not send. Try again in a moment.'; }); });
+    $('vf-out').addEventListener('click',function(){ auth.signOut(); });
     auth.onAuthStateChanged(function(u){
       resetState();
       if($('acctbtn')) $('acctbtn').hidden=!u;
       if(!u){ S.authUser=null; $('signin').hidden=false; siMode('in'); $('sync').textContent='Signed out'; renderAll(); return; }
+      /* New accounts must confirm their email before the books open (Matt 2 Nov). Accounts made before this went live are not blocked. */
+      if(!u.emailVerified && Date.parse((u.metadata&&u.metadata.creationTime)||0)>=VERIFY_FROM){ showVerify(u); return; }
+      $('vf-box').hidden=true; $('si-form').hidden=false;
       S.authUser=u; S.uid=u.uid; $('signin').hidden=true;
       S.syncLabel='Private to you'; $('sync').textContent='Loading…';
       S.db=driverDb(fs,u.uid); subscribe(S.db);
