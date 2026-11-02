@@ -135,6 +135,13 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .warnbox{border-left:3px solid var(--warn);padding:2px 0 2px 10px;font-size:13px;color:var(--muted);margin:0 0 12px}
 .chips.tight button{padding:6px 10px;min-height:40px;font-size:13px}
 .xchips{margin-top:8px}
+.exrow{display:flex;gap:8px;align-items:stretch}
+.exrow select{flex:1;min-width:0}
+.exrow input{width:110px;flex:none}
+.expick{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.expick:empty{display:none}
+.extag{display:inline-flex;align-items:center;gap:6px;font-size:13px;padding:4px 4px 4px 10px;border:1px solid var(--line);border-radius:999px;background:var(--bg);color:var(--ink)}
+.extag button{border:0;background:none;color:var(--muted);font-size:16px;line-height:1;min-width:28px;min-height:28px;cursor:pointer}
 .xchips button .xa{opacity:.75;font-weight:400;margin-left:4px}
 .xedit{margin-top:10px;padding:10px;border:1px dashed var(--line);border-radius:10px}
 .xrow{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid var(--line)}
@@ -186,6 +193,16 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .cc .dots i{width:6px;height:6px;border-radius:50%;background:var(--ok)}
 .cc .dots i.ev{background:var(--accent)}
 .cc .dots i.nt{background:var(--nt-line)}
+.cc .rbar{position:absolute;left:5px;right:5px;bottom:3px;height:3px;border-radius:2px}
+.cc .rbar.rec{background:var(--ok)}
+.cc .rbar.man{background:var(--warn)}
+.cc .rbar.part{background:linear-gradient(90deg,var(--ok) 50%,var(--warn) 50%)}
+.cc .amt.man{color:var(--warn)}
+.ckey{display:flex;flex-wrap:wrap;gap:6px 14px;margin:10px 0 0;font-size:13px;color:var(--muted)}
+.ckey i{display:inline-block;width:16px;height:4px;border-radius:2px;margin-right:6px;vertical-align:middle}
+.cc{padding-bottom:9px}
+.cc .amt{font-size:10.5px;line-height:1;color:var(--ok);font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+.csum{margin:10px 0 0;font-size:14px;color:var(--muted)}
 .tl{position:relative;margin-top:10px;border-top:1px solid var(--line)}
 .tl .hr{height:56px;border-bottom:1px solid var(--line);padding-left:46px;font-size:11px;color:var(--muted);position:relative;cursor:pointer}
 .tl .hr span{position:absolute;left:0;top:3px;width:40px;text-align:right}
@@ -730,16 +747,16 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
       <div id="d-form">
         <div class="field"><label id="l-prov">Provider</label><div class="chips" id="c-prov" role="group" aria-labelledby="l-prov"></div></div>
         <div class="field"><label id="l-pay">Paid by</label><div class="chips" id="c-pay" role="group" aria-labelledby="l-pay"></div></div>
-        <details class="jnote" id="j-notebox"><summary>+ Add journey</summary><div class="field" style="margin-top:8px"><label for="j-note">Journey (optional)</label><input type="text" id="j-note" maxlength="120" placeholder="e.g. Norrice Lea – T4 Heathrow"><p class="help" style="margin:6px 0 0">Useful for cash, hand and private jobs. It fills in the receipt for you.</p></div></details>
-        <div class="field"><label for="j-ex">Extras (£)</label><input type="text" class="money" id="j-ex" inputmode="numeric" autocomplete="off" placeholder="0.00">
-          <div class="chips tight xchips" id="c-ex" role="group" aria-label="Tap to add an extra"></div>
-          <div class="xedit" id="x-edit" hidden></div>
-          <p class="help" style="margin:4px 0 0">Drop-off fees and parking. Tap to add, tap again to remove.</p></div>
         <div class="two">
           <div class="field"><label for="j-amt">Fare (£) <span class="lbl-sub">no tip</span></label><input type="text" class="money" id="j-amt" inputmode="numeric" autocomplete="off" placeholder="0.00"></div>
           <div class="field"><label for="j-tips">Tip (£) <span class="lbl-sub">on top</span></label><input type="text" class="money" id="j-tips" inputmode="numeric" autocomplete="off" placeholder="0.00"></div>
         </div>
         <p class="help" style="margin-top:-6px">Enter them separately: £20 fare + £2 tip, not £22.</p>
+        <div class="field"><label for="j-exsel">Extras (£) <span class="lbl-sub">drop-off, parking</span></label>
+          <div class="exrow"><select id="j-exsel" aria-label="Add an extra"></select><input type="text" class="money" id="j-ex" inputmode="numeric" autocomplete="off" placeholder="0.00" aria-label="Extras total (£)"></div>
+          <div class="expick" id="c-ex"></div>
+          <div class="xedit" id="x-edit" hidden></div></div>
+        <details class="jnote" id="j-notebox"><summary>+ Add journey</summary><div class="field" style="margin-top:8px"><label for="j-note">Journey (optional)</label><input type="text" id="j-note" maxlength="120" placeholder="e.g. Norrice Lea – T4 Heathrow"><p class="help" style="margin:6px 0 0">Useful for cash, hand and private jobs. It fills in the receipt for you.</p></div></details>
         <div class="feeline"><span id="l-fee">Commission:</span> <span id="j-feetxt"></span> <button type="button" class="linkbtn" id="j-feechg">Change</button></div>
         <div id="j-feebox" hidden>
           <div class="seg" role="group" aria-labelledby="l-fee" style="margin-bottom:8px"><button type="button" id="fm-rule" aria-pressed="true">Set rule</button><button type="button" id="fm-man" aria-pressed="false">Manual</button></div>
@@ -810,8 +827,10 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     <div class="card">
       <div class="nav"><button type="button" id="c-prev" aria-label="Previous month">&#8249;</button><div class="ttl" id="c-title"></div><button type="button" id="c-next" aria-label="Next month">&#8250;</button></div>
       <div class="two" style="margin-top:10px"><select id="c-month" aria-label="Month"></select><select id="c-year" aria-label="Year"></select></div>
+      <div class="csum" id="c-sum"></div>
       <div class="cgrid" id="c-grid"></div>
-      <p class="note">Tap a day to see the whole day. Press and hold a Sunday for that week’s summary. Green dot: jobs or expenses. Blue dot: schedule event. Amber dot: Guard ceremony (roads around the Palace closed).</p>
+      <div class="ckey"><span><i style="background:var(--ok)"></i>Matches statements</span><span><i style="background:var(--warn)"></i>Typed in only (or bank estimate)</span><span><i style="background:linear-gradient(90deg,var(--ok) 50%,var(--warn) 50%)"></i>Some of each</span></div>
+      <p class="note">Tap a day to see its jobs and expenses. The amount under a date is what you took that day. Press and hold a Sunday for that week’s summary. Green dot: expenses only. Blue dot: schedule event. Amber dot: Guard ceremony (roads around the Palace closed). For the hour-by-hour schedule, open the day and tap See the whole day.</p>
       <button class="btn ghost" id="c-back" type="button">Back to the day</button>
     </div>
   </section>
@@ -849,9 +868,9 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
 
   <section id="tab-import" hidden>
     <div class="card" id="st-card">
-      <h2>Statements from FreeNow, Gett, Curb, ComCab and Uber</h2>
-      <p class="help">Choose one or more statements: FreeNow's weekly PDFs, Gett's daily or weekly PDFs, or Curb's reports (PDF, Excel or CSV). You can pick several at once. Cab Books works out which is which, checks the totals add up, and adds each job once. Reading the same statement again is safe.</p>
-      <div class="field"><label for="st-file">Statement files</label><input type="file" id="st-file" multiple accept=".pdf,.xlsx,.xls,.csv,application/pdf,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"></div>
+      <h2>Statements from FreeNow, Gett, Curb, ComCab, Uber and Taxiworld</h2>
+      <p class="help">Choose one or more statements: FreeNow's weekly PDFs, Gett's daily or weekly PDFs, Curb's reports (PDF, Excel or CSV), ComCab's driver statement and pay sheet, Uber's weekly statement, or Taxiworld's payment PDF. You can pick several at once. Cab Books works out which is which, checks the totals add up, and adds each job once. Reading the same statement again is safe.</p>
+      <div class="field"><label for="st-file">Statement files</label><input type="file" id="st-file" multiple accept=".pdf,.xlsx,.xls,.csv,.json,application/json,application/pdf,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"></div>
       <div class="field" style="margin-bottom:0"><label>When FreeNow or Gett say “cash”, the customer paid</label>
         <div class="seg" role="group" aria-label="Cash jobs were paid"><button type="button" data-stvia="card" aria-pressed="true">By card in my cab (Curb)</button><button type="button" data-stvia="cash" aria-pressed="false">In real cash</button></div></div>
       <div id="st-res"></div>
@@ -967,6 +986,13 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     <p class="fine">New to Cab Books? <a href="/help.html" style="color:var(--accent)">Read the getting-started guide</a>.</p>
     <p class="fine">By using Cab Books you agree to how we look after your data: <a href="/privacy.html">privacy notice</a>.</p>
   </form>
+  <div class="box" id="vf-box" hidden>
+    <div class="lg"><div><b>Confirm your email</b><span>One last step before your books open</span></div></div>
+    <p style="margin:0">We've sent an email to <b id="vf-em"></b>. Open it and tap the link to confirm this is your address. Check junk or spam if it isn't there in a minute.</p>
+    <p class="err" id="vf-err" role="alert"></p>
+    <button class="btn" type="button" id="vf-done">I've tapped the link</button>
+    <div class="alt"><button type="button" id="vf-again">Send the email again</button><button type="button" id="vf-out">Use a different email</button></div>
+  </div>
 </div>
 <div class="toast" id="toast" hidden></div>
 <div class="ovl" id="setovl" hidden role="dialog" aria-modal="true" aria-label="Settings"><div class="sheet"><div class="cardhead"><h2 style="margin:0">Settings</h2><button type="button" class="iconbtn" id="set-close" aria-label="Close settings">✕</button></div><div id="set-body"></div></div></div>
@@ -1009,14 +1035,15 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     var nk=Math.max(24,monthsDiff(st.start,monthOf(todayISO()))+13); for(i=0;i<nk;i++) keys.push(addMonths(st.start,i));
     var imp={}, act={}, ind={}, nFare={}, stat={}, byImp={};
     entries.forEach(function(e){
-      if(e.kind==='fare' && e.src==='import' && !e.superseded && !e.est){ var p=pkey(e.provider); if(p){ var id=e.m+'|'+p; if(!imp[id]||e.date>imp[id]) imp[id]=e.date; } }
+      if(e.kind==='fare' && e.src==='import' && !e.superseded && !e.est){ var p=pkey(e.provider)||pkey(e.card||''); if(p){ var id=e.m+'|'+p; if(!imp[id]||e.date>imp[id]) imp[id]=e.date; } }
     });
     entries.forEach(function(e){
       if(e.kind!=='fare') return;
       nFare[e.m]=(nFare[e.m]||0)+1;
       if(e.src==='import'&&e.superseded){ stat[e.id]='covered'; return; }
       if(e.src==='import'){ act[e.m]=(act[e.m]||0)+eAmt(e); stat[e.id]='actual'; return; }
-      var p=pkey(e.provider)||(bkey(e.provider)==='hand'&&e.pay==='Card'?'curb':null), md=S.months[e.m], cov='';
+      var ck=bkey(e.provider), cm=pkey(e.card||'')||'curb';
+      var p=pkey(e.provider)||(e.pay==='Card'&&(ck==='hand'?cm:(cm==='taxiworld'&&(ck==='jump'||ck==='blackcab'||ck==='other')?cm:null)))||null, md=S.months[e.m], cov='';
       if(p){
         cov=imp[e.m+'|'+p]||'';
         if(md){ var c=md.covered&&md.covered[p]; if(!c && !md.open) c=e.m+'-31'; if(c&&c>cov) cov=c; }
@@ -1664,7 +1691,8 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   /* FreeNow and Gett take no commission on extras (drop-off fees, parking) – Matt 29 Oct. Others (e.g. card machines) charge on the total. */
   var NOEXFEE=['freenow','gett'];
   function feeBaseAmt(e){ return (+e.amount||0)+(NOEXFEE.indexOf(String(e.provider||'').toLowerCase())>=0?0:(+e.extras||0)); }
-  function lineFee(e){var c=+e.commission||0, f=+e.feeFixed||0; return Math.round((feeBaseAmt(e)*c/100+f)*100)/100}
+  /* A fee is always a cost: a minus sign from a statement or a typed '-' must not turn it into income (Matt 2 Nov). */
+  function lineFee(e){var c=Math.abs(+e.commission||0), f=Math.abs(+e.feeFixed||0); return Math.round((feeBaseAmt(e)*c/100+f)*100)/100}
   function agg(P){
     var C=compute(S.entries), EI=expImpMap(), A={turn:0,tips:0,fees:0,exp:{},expTotal:0,expEst:0,jobs:0,prov:{},indic:0,loaded:0};
     function bp(name){var k=pkey(name)||String(name||'Other'); if(!A.prov[k]) A.prov[k]={label:PROV[k]||String(name||'Other'),jobs:0,turn:0,hist:0,fees:0,tips:0,pay:{}}; return A.prov[k]}
@@ -1961,8 +1989,9 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     if(pv) pv.addEventListener('click',function(){ S.rp.off=(S.rp.off||0)-1; renderReports(); });
     if(nx) nx.addEventListener('click',function(){ S.rp.off=Math.min(0,(S.rp.off||0)+1); renderReports(); });
     var f=$('rp-from'), t2=$('rp-to');
-    if(f) f.addEventListener('change',function(){ S.rp.from=f.value; renderReports(); });
-    if(t2) t2.addEventListener('change',function(){ S.rp.to=t2.value; renderReports(); });
+    /* The date box keeps focus after a pick, and renderReports skips while an input has focus - so release it first. */
+    function rpDate(inp,key){ if(!inp) return; inp.addEventListener('change',function(){ if(!inp.value) return; S.rp[key]=inp.value; inp.blur(); renderReports(); }); inp.addEventListener('blur',function(){ if(inp.value&&S.rp[key]!==inp.value){ S.rp[key]=inp.value; } setTimeout(function(){ if(!$('tab-reports').contains(document.activeElement)||document.activeElement===document.body) renderReports(); },0); }); }
+    rpDate(f,'from'); rpDate(t2,'to');
   }
 
   /* ---------- receipts ---------- */
@@ -2033,18 +2062,20 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   }
 
   /* ---------- fees ---------- */
-  var PROVS=['Freenow','Gett','CurbFlow','ComCab','Jump','Uber','Curb','Taxiworld','Helix','HIPS','Blackcab','Hand','Private'];
+  var PROVS=['Freenow','Gett','CurbFlow','ComCab','Jump','Uber','Curb','Taxiworld','Helix','HIPS','Blackcab','Other','Hand','Private'];
   var PROV_OFF=['Taxiworld','Helix','HIPS','CurbFlow']; /* hidden until a driver switches them on in 'Providers I use' */
   /* Card payments = the card machine/system in the cab (Curb, Taxiworld, Helix Pay, HIPS). Curb Flow = Curb's job app (like FreeNow). */
-  var PGROUPS=[['Job apps',['Freenow','Gett','CurbFlow','Uber','Jump','ComCab','Blackcab']],['Card machine in my cab',['Curb','Taxiworld','Helix','HIPS']],['Other fares',['Hand','Private']]];
+  var PGROUPS=[['Job apps',['Freenow','Gett','CurbFlow','Uber','Jump','ComCab','Blackcab','Other']],['Card machine in my cab',['Curb','Taxiworld','Helix','HIPS']],['Other fares',['Hand','Private']]];
   var CARDSYS=['Curb','HIPS','Helix','Taxiworld'], CARDK={curb:1,hips:1,helix:1,taxiworld:1};
   function isCardK(k){ return !!CARDK[k]; }
   /* The driver's own card system: the first one switched on in 'Providers I use' (Curb if none). */
   function cardSys(){ var c=CARDSYS.filter(provShown); return c[0]||'Curb'; }
   /* Card fee as [% , £ per payment]. Curb charges 2.75% + 20p a payment (plus 25p a payout). */
-  function cardRate(p){ p=p||cardSys(); if(bkey(p)==='curb'){ var d=feeDefault('Curb','Card')||[2.75]; return [d[0],0.20]; } return feeDefault(p,'Card')||[0,0]; }
+  function cardRate(p){ p=p||cardSys(); if(bkey(p)==='curb'){ var d=feeDefault('Curb','Card')||[2.75]; return [Math.abs(d[0]),0.20]; } var r=feeDefault(p,'Card')||[0,0]; return [Math.abs(+r[0]||0),Math.abs(+r[1]||0)]; }
   function cardNote(){ var p=cardSys(), r=cardRate(p); return pname(p)+'’s '+(+r[0]||0)+'%'+((+r[1]||0)?' + '+Math.round(r[1]*100)+'p':'')+(r[0]||r[1]?'':' (set it in Fee defaults)'); }
-  function provShown(p){ var sh=S.shown; return sh ? sh.indexOf(p)>=0 : PROV_OFF.indexOf(p)<0; }
+  /* Providers added to the app after a driver saved their list (not in 'known'; 'Other' for lists saved before it came back) use their default. */
+  function provNew(p){ var kn=S.provKnown; return kn ? kn.indexOf(p)<0 : p==='Other'; }
+  function provShown(p){ var sh=S.shown; if(sh&&sh.indexOf(p)<0&&provNew(p)) return PROV_OFF.indexOf(p)<0; return sh ? sh.indexOf(p)>=0 : PROV_OFF.indexOf(p)<0; }
   function renderProvPick(){
     var h='<div class="card" id="prov-card"><h2>Providers I use</h2><p class="help">Job apps and other fares appear as buttons when you add a job. Your card machine appears under “Paid by” (for example “Curb card”). Most drivers use one card machine. Jobs you have already logged keep their provider.</p>';
     PGROUPS.forEach(function(g){
@@ -2054,14 +2085,14 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     return h+'</div>';
   }
   function toggleShown(p){
-    var cur=(S.shown||PROVS.filter(provShown)).slice(), i=cur.indexOf(p);
+    var cur=PROVS.filter(provShown), i=cur.indexOf(p);
     if(i>=0){ if(cur.length<=1){ toast('Keep at least one provider.'); return; } cur.splice(i,1); } else cur.push(p);
     cur=PROVS.filter(function(x){return cur.indexOf(x)>=0});
-    S.db.collection('settings').doc('providers').set({shown:cur}).then(function(){ toast(p+(i>=0?' hidden':' shown')); }).catch(fail);
+    S.db.collection('settings').doc('providers').set({shown:cur,known:PROVS.slice()}).then(function(){ toast(p+(i>=0?' hidden':' shown')); }).catch(fail);
   }
   var PAYS=['Account','Card','Cash','Bank transfer'];
   /* Which payment types each provider allows (Matt, 27 Oct). Providers not listed allow all. */
-  var PAYRULE={freenow:['Account','Card','Cash'],gett:['Account','Card','Cash'],jump:['Card','Cash'],blackcab:['Card','Cash'],comcab:['Account','Card','Cash'],curb:['Card'],taxiworld:['Card'],helix:['Card'],hips:['Card'],curbflow:['Account','Card','Cash'],uber:['Account'],hand:['Card','Cash'],private:['Card','Bank transfer']};
+  var PAYRULE={freenow:['Account','Card','Cash'],gett:['Account','Card','Cash'],jump:['Card','Cash'],blackcab:['Card','Cash'],comcab:['Account','Card','Cash'],curb:['Card'],taxiworld:['Card'],helix:['Card'],hips:['Card'],curbflow:['Account','Card','Cash'],uber:['Account'],hand:['Card','Cash'],private:['Card','Bank transfer'],other:['Account','Card','Cash','Bank transfer']};
   function paysFor(p){ return PAYRULE[bkey(p)]||PAYS; }
   /* The card machines this driver uses (Settings → Providers I use → Card machine in my cab); Curb if none. */
   function cardSysAll(){ var c=CARDSYS.filter(provShown); return c.length?c:['Curb']; }
@@ -2070,7 +2101,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   /* Fee shown on the job form. Street/own jobs paid by card in the cab take the card machine's fee only.
      ComCab street hails paid by card are the same (ComCab takes only its card fee, e.g. HIPS 3% + 20p).
      App jobs (Gett, FreeNow…) paid by card in the cab take the app's commission PLUS the card machine's fee (Matt and Marcin, 31 Oct). */
-  var CARDFEE_PROV={hand:1,jump:1,blackcab:1,private:1,comcab:1};
+  var CARDFEE_PROV={hand:1,jump:1,blackcab:1,private:1,comcab:1,other:1};
   function formFee(prov,pay,date){
     if(pay!=='Card' || isCardK(bkey(prov))) return feeDefault(prov,pay,date);
     var cs=S.card||cardSys(), r=cardRate(cs), cp=+r[0]||0, cf=+r[1]||0;
@@ -2093,7 +2124,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     if(k==='gett' && pay==='Cash') return null;
     var r=feeBase(k), H=feeHist(k), d=date||todayISO();
     H.forEach(function(h){ if(h.from<=d) r=[+h.pct||0,+h.add||0]; });
-    return r;
+    return [Math.abs(+r[0]||0),Math.abs(+r[1]||0)];
   }
   /* ---- rate changes from a date ---- */
   function renderRateChanges(){
@@ -2186,7 +2217,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
 
   function saveFeeDefaults(){
     var fees={};
-    var old=S.settings.fees||{}; PROVS.forEach(function(n){ var k=n.toLowerCase(); if(!$('fd-'+k+'-p')){ if(old[k]) fees[k]=old[k]; return; } var p=+$('fd-'+k+'-p').value||0, f=mv('fd-'+k+'-f'), H=feeHist(k);
+    var old=S.settings.fees||{}; PROVS.forEach(function(n){ var k=n.toLowerCase(); if(!$('fd-'+k+'-p')){ if(old[k]) fees[k]=old[k]; return; } var p=Math.abs(+$('fd-'+k+'-p').value||0), f=Math.abs(mv('fd-'+k+'-f')), H=feeHist(k);
       /* the boxes show today's rate: if a change applies today, edit that change; otherwise the base rate */
       var t=todayISO(), last=-1; H.forEach(function(h,i){ if(h.from<=t) last=i; }); H=H.map(function(h){return {from:h.from,pct:+h.pct||0,add:+h.add||0}});
       if(last>=0){ var b=feeBase(k); H[last].pct=p; H[last].add=f; fees[k]={pct:b[0],add:b[1],hist:H}; } else fees[k]={pct:p,add:f,hist:H}; });
@@ -2202,7 +2233,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     var C=compute(S.entries), EI=expImpMap(), D={rows:[],gross:0,fees:0,tips:0,pay:{},exp:[],expTotal:0,expEst:0};
     S.entriesAll.forEach(function(e){
       if(e.date!==iso) return;
-      if(e.kind==='fare'){ if(C.byImp[e.id]) return; var g=eAmt(e), f=lineFee(e); D.rows.push({e:e,g:g,f:f,n:g-f}); D.gross+=g; D.fees+=f; D.tips+=+e.tips||0; var k=e.pay||'Other'; D.pay[k]=(D.pay[k]||0)+g; }
+      if(e.kind==='fare'){ if(C.byImp[e.id]) return; var g=eAmt(e), f=lineFee(e); var tp=+e.tips||0; D.rows.push({e:e,g:g,f:f,n:g-f,t:tp,gt:g+tp,nt:g-f+tp}); D.gross+=g; D.fees+=f; D.tips+=+e.tips||0; var k=e.pay||'Other'; D.pay[k]=(D.pay[k]||0)+g; }
       else if(e.kind==='tip'){ D.tips+=+e.amount||0; }
       else if(e.kind==='expense'){ if(expSuperseded(e,EI,false)) return; D.exp.push(e); D.expTotal+=+e.amount||0; if(e.src!=='import') D.expEst+=+e.amount||0; }
     });
@@ -2236,7 +2267,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     sm.innerHTML=h;
     var jh='<div class="cardhead"><h2>Jobs ('+D.rows.length+')</h2><button class="iconbtn" id="d-chart" type="button" aria-label="Jobs summary">&#9638;</button></div>';
     if(!D.rows.length) jh+='<div class="empty" style="padding:14px 0">No jobs for this day. Add one above.</div>'; else jh+='<div class="jhead"><span>Fare type</span><span>Gross</span><span>Net</span></div>';
-    D.rows.forEach(function(r){ jh+='<div class="jwrap"><button class="jrow" type="button" data-job="'+esc(r.e.id)+'"><span>'+ptag(r.e.provider||'Job')+'<span class="ppay">'+esc(r.e.pay||'')+'</span>'+(r.e.src==='import'?'<span class="badge">imported</span>':'')+(r.e.demo?'<span class="badge ind">practice</span>':'')+(r.e.note?'<div class="d" style="font-size:12px;color:var(--muted)">'+esc(r.e.note)+'</div>':'')+'</span><span class="b">'+r.g.toFixed(2)+'</span><span class="b">'+r.n.toFixed(2)+'</span></button><div class="jfoot"><button class="rc" type="button" data-rcj="'+esc(r.e.id)+'">Receipt</button><button class="jedit" type="button" data-jedit="'+esc(r.e.id)+'" aria-label="Edit this job">\u270E Edit</button></div></div>'; });
+    D.rows.forEach(function(r){ jh+='<div class="jwrap"><button class="jrow" type="button" data-job="'+esc(r.e.id)+'"><span>'+ptag(r.e.provider||'Job')+'<span class="ppay">'+esc(r.e.pay||'')+'</span>'+(r.e.src==='import'?'<span class="badge">imported</span>':'')+(r.e.demo?'<span class="badge ind">practice</span>':'')+(r.t?'<div class="d" style="font-size:12px;color:var(--muted)">incl. '+gbp2.format(r.t)+' tip</div>':'')+(r.e.note?'<div class="d" style="font-size:12px;color:var(--muted)">'+esc(r.e.note)+'</div>':'')+'</span><span class="b">'+r.gt.toFixed(2)+'</span><span class="b">'+r.nt.toFixed(2)+'</span></button><div class="jfoot"><button class="rc" type="button" data-rcj="'+esc(r.e.id)+'">Receipt</button><button class="jedit" type="button" data-jedit="'+esc(r.e.id)+'" aria-label="Edit this job">\u270E Edit</button></div></div>'; });
     jb.innerHTML=jh;
     var eh='';
     if(!D.exp.length) eh='<p class="note" style="margin:0">No expenses for this day.</p>';
@@ -2264,21 +2295,21 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
       h+='<button class="btn ghost small" id="js-back" type="button" style="margin-bottom:10px">‹ All providers</button><h2 style="margin:0 0 6px;font-size:15px;text-transform:none;letter-spacing:0;color:var(--ink)">'+ptag(prov)+'<span class="ppay">'+mine.length+' job'+(mine.length===1?'':'s')+'</span></h2>';
       h+='<div class="jhead"><span>Fare type</span><span>Gross</span><span>Net</span></div>';
       mine.forEach(function(r){
-        g+=r.g; n+=r.n; f+=r.f; t+=+r.e.tips||0; var k=r.e.pay||'Other'; if(!byPay[k]) byPay[k]={n:0,g:0,net:0}; byPay[k].n++; byPay[k].g+=r.g; byPay[k].net+=r.n;
-        h+='<button class="jrow" type="button" data-sjob="'+esc(r.e.id)+'"><span>'+esc(r.e.pay||'')+'<div style="font-size:12px;color:var(--muted)">fee '+gbp2.format(r.f)+((+r.e.tips)?' · tip '+gbp2.format(+r.e.tips):'')+(r.e.note?' · '+esc(r.e.note):'')+'</div></span><span class="b">'+r.g.toFixed(2)+'</span><span class="b">'+r.n.toFixed(2)+'</span></button>';
+        g+=r.g; n+=r.n; f+=r.f; t+=+r.e.tips||0; var k=r.e.pay||'Other'; if(!byPay[k]) byPay[k]={n:0,g:0,net:0}; byPay[k].n++; byPay[k].g+=r.gt; byPay[k].net+=r.nt;
+        h+='<button class="jrow" type="button" data-sjob="'+esc(r.e.id)+'"><span>'+esc(r.e.pay||'')+'<div style="font-size:12px;color:var(--muted)">fee '+gbp2.format(r.f)+((+r.e.tips)?' · tip '+gbp2.format(+r.e.tips):'')+(r.e.note?' · '+esc(r.e.note):'')+'</div></span><span class="b">'+r.gt.toFixed(2)+'</span><span class="b">'+r.nt.toFixed(2)+'</span></button>';
       });
       if(Object.keys(byPay).length>1){ h+='<h2 style="margin:14px 0 4px;font-size:12px">By payment type</h2>'; Object.keys(byPay).forEach(function(k){ h+='<div class="kv"><span class="k">'+esc(k)+' ('+byPay[k].n+')</span><span class="v">'+gbp2.format(byPay[k].g)+' → '+gbp2.format(byPay[k].net)+'</span></div>'; }); }
       h+='<div class="kv"><span class="k">Fees</span><span class="v">'+gbp2.format(f)+(g>0?' ('+(f/g*100).toFixed(1)+'%)':'')+'</span></div>';
       if(t>0) h+='<div class="kv"><span class="k">Tips</span><span class="v">'+gbp2.format(t)+'</span></div>';
-      h+='<div class="kv"><span class="k"><b>Total ('+mine.length+')</b></span><span class="v"><b>'+gbp2.format(g)+' → '+gbp2.format(n)+'</b></span></div>';
+      h+='<div class="kv"><span class="k"><b>Total ('+mine.length+')'+(t>0?' incl. tips':'')+'</b></span><span class="v"><b>'+gbp2.format(g+t)+' → '+gbp2.format(n+t)+'</b></span></div>';
       h+='<p class="note">Tap a job to edit it.</p>';
     } else {
       h+='<h2 style="margin:0 0 8px;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)">Jobs summary</h2>';
       var by={};
-      rows.forEach(function(r){ var k=r.e.provider||'Other'; if(!by[k]) by[k]={n:0,g:0,net:0}; by[k].n++; by[k].g+=r.g; by[k].net+=r.n; });
+      rows.forEach(function(r){ var k=r.e.provider||'Other'; if(!by[k]) by[k]={n:0,g:0,net:0}; by[k].n++; by[k].g+=r.gt; by[k].net+=r.nt; });
       var ks=Object.keys(by).sort(function(a,b){return by[b].g-by[a].g});
       ks.forEach(function(k){ h+='<button class="kv" type="button" data-sprov="'+esc(k)+'" style="width:100%;background:none;border-left:0;border-right:0;border-bottom:0;text-align:left;cursor:pointer;min-height:48px;align-items:center"><span class="k" style="color:var(--ink)">'+ptag(k)+'<span class="ppay">'+by[k].n+' job'+(by[k].n===1?'':'s')+' ›</span></span><span class="v">'+gbp2.format(by[k].g)+' → '+gbp2.format(by[k].net)+'</span></button>'; });
-      if(!ks.length) h+='<p class="note">No jobs for this day.</p>'; else h+='<div class="kv"><span class="k"><b>Total ('+rows.length+')</b></span><span class="v"><b>'+gbp2.format(D.gross)+' → '+gbp2.format(D.gross-D.fees)+'</b></span></div><p class="note">Tap a provider to see its jobs.</p>';
+      if(!ks.length) h+='<p class="note">No jobs for this day.</p>'; else { var rt=rows.reduce(function(x,r){return x+r.t},0); h+='<div class="kv"><span class="k"><b>Total ('+rows.length+')'+(rt>0?' incl. tips':'')+'</b></span><span class="v"><b>'+gbp2.format(D.gross+rt)+' → '+gbp2.format(D.gross-D.fees+rt)+'</b></span></div>'; h+='<p class="note">Tap a provider to see its jobs.</p>'; }
     }
     h+='<div style="height:12px"></div><button class="btn ghost" id="js-close2" type="button">Close</button>';
     body.innerHTML=h; $('jsum').hidden=false;
@@ -2318,7 +2349,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   function feeValues(){
     var d=formFee(S.prov,S.pay,S.day);
     if(!S.feeManual) return {pct:d?d[0]:0,fix:d?d[1]:0};
-    return {pct:0,fix:mv('j-fix')};
+    return {pct:0,fix:Math.abs(mv('j-fix'))};
   }
   function buildChips(){
     $('c-prov').innerHTML=PROVS.filter(function(p){return (provShown(p)&&!isCardK(bkey(p)))||p===S.prov}).map(function(p){return '<button type="button"'+pchip(p)+' data-prov="'+p+'" aria-pressed="'+(p===S.prov)+'">'+(p===S.prov?'\u2713 ':'')+(bkey(p)==='hand'?pdot(p):'')+esc(pname(p))+'</button>'}).join('');
@@ -2333,49 +2364,49 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   /* Drop-off charges by airport (Matt 31 Oct). Heathrow £6 = £7 barrier charge less £1 London taxi discount; Luton raised to £9. Heathrow, City and Gatwick are on auto-pay (number plate), so they show in the bank. */
   var AIRFEES=[['Heathrow',6],['City Airport',6],['Gatwick',10],['Stansted',10],['Luton',9]];
   function exList(){ return Array.isArray(S.exList)?S.exList:EX_STD; }
+  /* Extras: one drop-down (airports, parking, the driver's own) instead of buttons (Matt 2 Nov). Each pick shows as a small tag with x to remove. */
+  function exOpts(){
+    var o=AIRFEES.map(function(a,k){ return {v:'air:'+k,n:a[0]+' drop-off',a:a[1]}; });
+    o.push({v:'ask:Parking',n:'Parking',a:0});
+    exList().forEach(function(x,i){ if(x.air||/^parking$/i.test(x.n||'')) return; o.push({v:'own:'+i,n:x.n,a:+x.a||0}); });
+    o.push({v:'ask:Other extra',n:'Other extra',a:0});
+    return o;
+  }
+  function exAdd(nm,a){ S.exSeq=(S.exSeq||0)+1; var k='x'+S.exSeq; S.exPick[k]=Math.round(a*100)/100; S.exName[k]=nm; setMoney('j-ex',Math.round((mv('j-ex')+a)*100)/100); var ed=$('x-edit'); ed.hidden=true; ed.innerHTML=''; exRender(); updatePreview(); }
   function exRender(){
-    var box=$('c-ex'); if(!box) return; S.exPick=S.exPick||{};
-    S.exName=S.exName||{};
-    box.innerHTML=exList().map(function(x,i){ var on=!!S.exPick[i], nm=(on&&S.exName[i])||x.n; return '<button type="button" data-ex="'+i+'" aria-pressed="'+on+'">'+(on?'✓ ':'')+esc(nm)+'<span class="xa">'+((+x.a||0)?gbp2.format(+x.a):(on?gbp2.format(S.exPick[i]):(x.air?'▾':'£…')))+'</span></button>'; }).join('')
-      +'<button type="button" data-exedit="1" aria-pressed="false">'+($('x-edit').hidden?'+ My extras':'Done')+'</button>';
-    Array.prototype.forEach.call(box.querySelectorAll('button[data-ex]'),function(b){ b.addEventListener('click',function(){
-      var i=+b.getAttribute('data-ex'), x=exList()[i]; if(!x) return; var cur=mv('j-ex'), a=+x.a||0;
-      if(S.exPick[i]){ cur=Math.max(0,cur-(+S.exPick[i]||0)); delete S.exPick[i]; delete S.exName[i]; setMoney('j-ex',Math.round(cur*100)/100); exRender(); updatePreview(); return; }
-      if(x.air){ exAir(i); return; }
-      if(!a){ exAsk(i,x); return; }
-      S.exPick[i]=a; cur+=a; setMoney('j-ex',Math.round(cur*100)/100); exRender(); updatePreview(); }); });
-    box.querySelector('[data-exedit]').addEventListener('click',function(){ var ed=$('x-edit'); ed.hidden=!ed.hidden; exEditRender(); exRender(); });
+    var box=$('c-ex'), sel=$('j-exsel'); if(!box||!sel) return; S.exPick=S.exPick||{}; S.exName=S.exName||{};
+    sel.innerHTML='<option value="">+ Add an extra…</option>'+exOpts().map(function(o){ return '<option value="'+esc(o.v)+'">'+esc(o.n)+(o.a?' – '+gbp2.format(o.a):' – type amount')+'</option>'; }).join('')+'<option value="edit">Edit my extras…</option>';
+    sel.value='';
+    box.innerHTML=Object.keys(S.exPick).map(function(k){ return '<span class="extag">'+esc(S.exName[k]||'Extra')+' '+gbp2.format(+S.exPick[k]||0)+'<button type="button" data-exrm="'+k+'" aria-label="Remove '+esc(S.exName[k]||'extra')+'">✕</button></span>'; }).join('');
+    Array.prototype.forEach.call(box.querySelectorAll('[data-exrm]'),function(b){ b.addEventListener('click',function(){ var k=b.getAttribute('data-exrm'); setMoney('j-ex',Math.round(Math.max(0,mv('j-ex')-(+S.exPick[k]||0))*100)/100); delete S.exPick[k]; delete S.exName[k]; exRender(); updatePreview(); }); });
   }
-  function exAir(i){
-    var ed=$('x-edit'); ed.hidden=false;
-    ed.innerHTML='<p class="help" style="margin:0 0 6px">Which airport?</p><div class="chips tight xchips">'
-      +AIRFEES.map(function(a,k){ return '<button type="button" data-air="'+k+'">'+esc(a[0])+' <span class="xa">'+gbp2.format(a[1])+'</span></button>'; }).join('')+'</div>'
-      +'<div class="two" style="align-items:end;margin-top:8px"><div class="field" style="margin:0"><label for="x-amt">Other amount (£)</label><input type="text" class="money" id="x-amt" inputmode="numeric" autocomplete="off" placeholder="0.00"></div><button class="btn small" type="button" id="x-ok">Add</button></div>';
-    moneyInput($('x-amt'));
-    function put(nm,a){ S.exPick[i]=Math.round(a*100)/100; S.exName[i]=nm; setMoney('j-ex',Math.round((mv('j-ex')+a)*100)/100); ed.hidden=true; ed.innerHTML=''; exRender(); updatePreview(); }
-    Array.prototype.forEach.call(ed.querySelectorAll('[data-air]'),function(b){ b.addEventListener('click',function(){ var a=AIRFEES[+b.getAttribute('data-air')]; put(a[0]+' drop-off',a[1]); }); });
-    $('x-ok').addEventListener('click',function(){ var a=mv('x-amt'); if(!(a>0)){ toast('Enter the amount.'); return; } put('Airport drop-off',a); });
+  function exPicked(){
+    var sel=$('j-exsel'), v=sel.value; sel.value=''; if(!v) return;
+    if(v==='edit'){ var ed=$('x-edit'); ed.hidden=false; exEditRender(); return; }
+    var o=exOpts().filter(function(x){return x.v===v})[0]; if(!o) return;
+    if(o.a>0) exAdd(o.n,o.a); else exAsk(o.n);
   }
-  function exAsk(i,x){
+  function exAsk(nm){
     var ed=$('x-edit'); ed.hidden=false;
-    ed.innerHTML='<div class="two" style="align-items:end"><div class="field" style="margin:0"><label for="x-amt">'+esc(x.n)+' (£)</label><input type="text" class="money" id="x-amt" inputmode="numeric" autocomplete="off" placeholder="0.00"></div>'
+    ed.innerHTML='<div class="two" style="align-items:end"><div class="field" style="margin:0"><label for="x-amt">'+esc(nm)+' (£)</label><input type="text" class="money" id="x-amt" inputmode="numeric" autocomplete="off" placeholder="0.00"></div>'
       +'<button class="btn small" type="button" id="x-ok">Add</button></div>';
     moneyInput($('x-amt')); $('x-amt').focus();
-    function ok(){ var a=mv('x-amt'); if(!(a>0)){ toast('Enter the amount.'); return; } S.exPick[i]=Math.round(a*100)/100; setMoney('j-ex',Math.round((mv('j-ex')+a)*100)/100); ed.hidden=true; ed.innerHTML=''; exRender(); updatePreview(); }
+    function ok(){ var a=mv('x-amt'); if(!(a>0)){ toast('Enter the amount.'); return; } exAdd(nm,a); }
     $('x-ok').addEventListener('click',ok); $('x-amt').addEventListener('keydown',function(ev){ if(ev.key==='Enter') ok(); });
   }
   function exEditRender(){
     var ed=$('x-edit'); if(!ed||ed.hidden) return;
-    ed.innerHTML='<p class="help" style="margin:0 0 6px">Your extras buttons. Add the ones you use, remove the ones you don\'t.</p>'
-      +exList().map(function(x,i){ return '<div class="xrow"><span>'+esc(x.n)+' <span class="num">'+(x.air?'pick the airport':(+x.a||0)?gbp2.format(+x.a):'you type it each time')+'</span></span><button class="btn ghost small" type="button" data-exdel="'+i+'">Remove</button></div>'; }).join('')
+    ed.innerHTML='<p class="help" style="margin:0 0 6px">Your own extras for the list. The airports and Parking are always there.</p>'
+      +exList().map(function(x,i){ if(x.air||/^parking$/i.test(x.n||'')) return ''; return '<div class="xrow"><span>'+esc(x.n)+' <span class="num">'+(x.air?'pick the airport':(+x.a||0)?gbp2.format(+x.a):'you type it each time')+'</span></span><button class="btn ghost small" type="button" data-exdel="'+i+'">Remove</button></div>'; }).join('')
       +'<div class="two" style="margin-top:8px"><div class="field" style="margin:0"><label for="x-n">Name</label><input type="text" id="x-n" maxlength="30" placeholder="e.g. Parking"></div>'
       +'<div class="field" style="margin:0"><label for="x-a">Amount (£, blank = type each time)</label><input type="text" class="money" id="x-a" inputmode="numeric" autocomplete="off" placeholder="0.00"></div></div>'
-      +'<button class="btn small" type="button" id="x-add" style="margin-top:8px">Add button</button>'
-      +(Array.isArray(S.exList)?' <button class="btn ghost small" type="button" id="x-std" style="margin-top:8px">Back to the standard buttons</button>':'');
+      +'<button class="btn small" type="button" id="x-add" style="margin-top:8px">Add to the list</button> <button class="btn ghost small" type="button" id="x-close" style="margin-top:8px">Done</button>'
+      +(Array.isArray(S.exList)?' <button class="btn ghost small" type="button" id="x-std" style="margin-top:8px">Remove all my own extras</button>':'');
     Array.prototype.forEach.call(ed.querySelectorAll('input.money'),moneyInput);
     Array.prototype.forEach.call(ed.querySelectorAll('[data-exdel]'),function(b){ b.addEventListener('click',function(){ var L=exList().slice(); L.splice(+b.getAttribute('data-exdel'),1); exSave(L,'Button removed'); }); });
-    $('x-add').addEventListener('click',function(){ var n=$('x-n').value.trim(), a=mv('x-a'); if(!n){ toast('Give the extra a name.'); return; } var L=exList().slice(); if(L.length>=12){ toast('12 buttons at most.'); return; } L.push({n:n,a:Math.round(a*100)/100}); exSave(L,n+' added'); });
-    var sd=$('x-std'); if(sd) sd.addEventListener('click',function(){ exSave(null,'Standard buttons back'); });
+    $('x-add').addEventListener('click',function(){ var n=$('x-n').value.trim(), a=mv('x-a'); if(!n){ toast('Give the extra a name.'); return; } var L=exList().slice(); if(L.length>=14){ toast('12 of your own at most.'); return; } L.push({n:n,a:Math.round(a*100)/100}); exSave(L,n+' added'); });
+    var sd=$('x-std'); if(sd) sd.addEventListener('click',function(){ exSave(null,'Standard list back'); });
+    $('x-close').addEventListener('click',function(){ ed.hidden=true; ed.innerHTML=''; });
   }
   function exSave(L,msg){
     S.exList=L; S.exPick={}; S.exName={}; exEditRender(); exRender();
@@ -2424,7 +2455,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     $('j-save').disabled=true;
     /* Extras tapped on a new job (drop-off, parking) are also costs you paid: add each as an expense.
        Saved as not-cash, so once your bank import covers the day the bank's own line replaces it. */
-    var exAuto=[]; if(!old){ var XL=exList(); Object.keys(S.exPick||{}).forEach(function(i){ var a=Math.round((+S.exPick[i]||0)*100)/100, x=XL[i]; if(a>0&&x) exAuto.push({n:(S.exName&&S.exName[i])||x.n,a:a}); }); }
+    var exAuto=[]; if(!old){ Object.keys(S.exPick||{}).forEach(function(i){ var a=Math.round((+S.exPick[i]||0)*100)/100; if(a>0) exAuto.push({n:(S.exName&&S.exName[i])||'Extra',a:a}); }); }
     ref.set(data).then(function(){
       if(!exAuto.length) return;
       var b=S.db.batch();
@@ -2743,7 +2774,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     ['Electric charging',/NY[AX]\*|SQ \*MOTOR|NAYAX|EV POWER|POD ?POINT|BP PULSE|GRIDSERVE|CHARGEPLACE|CHARGEMASTER|SMART CHARGE|ESB EV/],
     ['Petrol',/\bBP\b|SHELL|ESSO|TEXACO|MURCO|\bJET\b|GULF|RONTEC|\bMFG\b|\bTGC\b|WANDSWORTH SF|\bFUEL\b|PETROL/],
     ['Parking / drop-off',/DROP ?OFF|\bLCA\b|LONDON CITY AIRPORT|APCOA|HEATHROW|GATWICK AIRPORT/],
-    ['Car rental',/\bCAB\s+[A-Z]{2}\d{2}\s?[A-Z]{3}\b|ECLIPSE INTEGRATED|^\s*CAB\s*$/],
+    ['Car rental',/\bCAB\s*,?\s*[A-Z]{2}\d{2}\s?[A-Z]{3}\b|ECLIPSE INTEGRATED|^\s*CAB\s*$|COMCAB|COMPUTER CAB/],   /* money out to ComCab = cab rent paid by card when the statement didn't cover it (Marcin 2 Nov) */
     ['Cleaning / admin supplies',/AMAZON|AMZN/],
     ['Car wash',/CAR ?WASH|LUXE SHINE|VM CAR|VALETING/],
     ['Union',/LICENSED TAXI DRIV/],
@@ -3006,12 +3037,19 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     var jobs={}, exps={}, evs={};
     S.entries.forEach(function(e){ if(e.date&&e.date.slice(0,7)===key){ if(e.kind==='expense') exps[e.date]=1; else jobs[e.date]=1; } });
     for(var di=0;di<42;di++){ var dd=dayAdd(mondayOf(key+'-01'),di); if(dayEvents(dd).length) evs[dd]=1; }
+    var amt={}, mJobs=0, mGross=0, rs={};
+    /* Reconciled with statements (green) vs typed in only (amber), per day (Matt 2 Nov). Bank estimates count as not yet reconciled. */
+    if(S.loaded&&S.loaded.entries){ var CC=compute(S.entries); S.entries.forEach(function(e){ if(e.kind!=='fare'||!e.date||e.date.slice(0,7)!==key||e.superseded||CC.byImp[e.id]) return;
+      var ok=(e.src==='import'&&!e.est)||(e.src!=='import'&&CC.stat[e.id]==='covered'), r=rs[e.date]||(rs[e.date]={r:0,m:0}); if(ok) r.r++; else r.m++; }); }
+    function rsCls(d){ var r=rs[d]; if(!r) return ''; return r.m===0?'rec':(r.r===0?'man':'part'); }
+    if(S.loaded&&S.loaded.entries){ Object.keys(jobs).forEach(function(d){ var D=dayData(d); if(D.rows.length){ amt[d]=D.gross; mJobs+=D.rows.length; mGross+=D.gross; } }); }
+    var cs=$('c-sum'); if(cs) cs.innerHTML=mJobs?'<b>'+MN[m]+'</b> \u00b7 '+mJobs+' job'+(mJobs===1?'':'s')+' \u00b7 <span class="num">'+gbp0.format(mGross)+'</span> taken':'No jobs recorded in '+MN[m]+' '+y+'.';
     var first=key+'-01', start=mondayOf(first), h='', t=todayISO(), names=['MON','TUE','WED','THU','FRI','SAT','SUN'];
     names.forEach(function(n,i){ h+='<div class="ch'+(i>4?' we':'')+'">'+n+'</div>'; });
     for(var i=0;i<42;i++){
       var d=dayAdd(start,i), inM=d.slice(0,7)===key, sun=dowOf(d)===0;
       if(i>=35 && !inM) break;
-      h+='<button type="button" class="cc'+(inM?'':' out')+(d===t?' today':'')+(d===S.day?' sel':'')+'" data-cd="'+d+'" data-sun="'+(sun?1:0)+'" aria-label="'+esc(dlabel(d))+'"><span>'+(+d.slice(8))+'</span><span class="dots">'+((jobs[d]||exps[d])?'<i></i>':'')+(evs[d]?'<i class="ev"></i>':'')+(dayNotices(d).some(function(n){return n.title.indexOf('Captain')<0})?'<i class="nt"></i>':'')+'</span></button>';
+      h+='<button type="button" class="cc'+(inM?'':' out')+(d===t?' today':'')+(d===S.day?' sel':'')+'" data-cd="'+d+'" data-sun="'+(sun?1:0)+'" aria-label="'+esc(dlabel(d))+'"><span>'+(+d.slice(8))+'</span>'+(amt[d]!=null?'<span class="amt'+(rsCls(d)==='man'?' man':'')+'">'+gbp0.format(amt[d])+'</span>':'')+(rsCls(d)?'<span class="rbar '+rsCls(d)+'"></span>':'')+'<span class="dots">'+((amt[d]==null&&(jobs[d]||exps[d]))?'<i></i>':'')+(evs[d]?'<i class="ev"></i>':'')+(dayNotices(d).some(function(n){return n.title.indexOf('Captain')<0})?'<i class="nt"></i>':'')+'</span></button>';
     }
     $('c-grid').innerHTML=h;
     Array.prototype.forEach.call($('c-grid').querySelectorAll('[data-cd]'),function(b){
@@ -3022,7 +3060,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
         ['pointerup','pointerleave','pointercancel'].forEach(function(ev){ b.addEventListener(ev,cancel); });
         b.addEventListener('contextmenu',function(ev){ ev.preventDefault(); });
       }
-      b.addEventListener('click',function(){ if(fired){ fired=false; return; } S.day=d; setEditing(null); renderDay(); renderEvents(); openFullDay(); });
+      b.addEventListener('click',function(){ if(fired){ fired=false; return; } S.day=d; setEditing(null); renderDay(); renderEvents(); showTab('today'); window.scrollTo(0,0); });
     });
   }
   function tmin(t){ var m=/^(\d\d):(\d\d)/.exec(t||''); return m? (+m[1])*60+(+m[2]) : null; }
@@ -3060,7 +3098,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     var diff=Math.round((Date.parse(mondayOf(d))-Date.parse(mondayOf(todayISO())))/604800000);
     S.rp.mode='week'; S.rp.off=diff; showTab('reports'); renderReports();
   }
-  $('d-cal').addEventListener('click',openFullDay);
+  $('d-cal').addEventListener('click',openCalendar);
   $('c-back').addEventListener('click',function(){ showTab('today'); });
   $('c-prev').addEventListener('click',function(){ S.cal.m--; if(S.cal.m<0){S.cal.m=11;S.cal.y--} renderCal(); });
   $('c-next').addEventListener('click',function(){ S.cal.m++; if(S.cal.m>11){S.cal.m=0;S.cal.y++} renderCal(); });
@@ -4519,7 +4557,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   }); });
   Array.prototype.forEach.call(document.querySelectorAll('input.money'),moneyInput);
   ['j-amt','j-tips','j-ex','j-fix'].forEach(function(id){ $(id).addEventListener('input',updatePreview); });
-  exRender();
+  exRender(); $('j-exsel').addEventListener('change',exPicked);
   function ePay(c){ $('e-cash').checked=c; $('e-pcash').setAttribute('aria-pressed',c); $('e-pcard').setAttribute('aria-pressed',!c); $('e-payhelp').textContent=c?'Cash never shows in the bank, so it is only counted from here.':'Counted now; replaced by the bank line once you import that statement.'; }
   $('e-pcash').addEventListener('click',function(){ ePay(true); }); $('e-pcard').addEventListener('click',function(){ ePay(false); });
   $('j-feechg').addEventListener('click',function(){ if(S.feeManual&&formFee(S.prov,S.pay)){ S.feeManual=false; S.feeOpen=false; } else S.feeOpen=!S.feeOpen; renderFee(); updatePreview(); });
@@ -4980,7 +5018,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
       if(/^(FARES|CHARGES|BALANCE|SAVINGS SCHEME|OTHER DEDUCTIONS|PAYMENT|TRIP DETAILS)\b/.test(t)&&!/\d+\.\d\d\s*$/.test(t)){ sec=t.split(/\s/)[0]; if(t.indexOf('SAVINGS')===0) sec='SAVINGS'; if(t.indexOf('OTHER')===0) sec='OTHER'; if(t.indexOf('TRIP')===0) sec='TRIP'; return; }
       var m=/^(.+?)\s{2,}(-?[\d,]+\.\d\d)\s{2,}(-?[\d,]+\.\d\d)\s{2,}(-?[\d,]+\.\d\d)$/.exec(t);
       if(sec==='FARES'&&m){ if(/^Total Fares/i.test(m[1])) fareTot=ccNum(m[4]); else fares+=ccNum(m[4]); return; }
-      if(sec==='CHARGES'&&m){ var lab=m[1].trim(), v=-ccNum(m[4]);
+      if(sec==='CHARGES'&&m){ var lab=m[1].trim(), v=Math.abs(ccNum(m[4]));
         if(/^Total Charges/i.test(lab)){ chgTot=v; return; }
         if(/rental|\brent\b|hire|subscription|lease/i.test(lab)){ rent+=v; S0.costs.push({id:S0.costs.some(function(x){return x.category==='Car rental'})?'ccr-'+hash(no+'|'+lab):'ccrent-'+no,date:S0.to||S0.from,category:'Car rental',amount:r2(v),note:lab+' ('+gbp2.format(-ccNum(m[2]))+' + VAT '+gbp2.format(-ccNum(m[3]))+'), taken off ComCab statement '+no}); }
         else fees+=v; return; }
@@ -4999,7 +5037,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     S0.total=r2(fareTot!=null?fareTot:fares); S0.fees=r2(fees); S0.rent=r2(rent);
     /* card fees per job from the PDF alone: % share on the fare, the per-job charge split evenly (the Pay Sheet, if added, gives exact ones) */
     var jf=S0.jobs.reduce(function(a,j){return a+j.fare},0);
-    if(S0.jobs.length&&jf){ var pct=0, per=0; L.forEach(function(l){ var m=/^(.+?)\s{2,}(-?[\d,]+\.\d\d)\s{2,}(-?[\d,]+\.\d\d)\s{2,}(-?[\d,]+\.\d\d)$/.exec(l.trim()); if(!m) return; if(/per job/i.test(m[1])) per+=-ccNum(m[4]); else if(/%|commission/i.test(m[1])) pct+=-ccNum(m[4]); });
+    if(S0.jobs.length&&jf){ var pct=0, per=0; L.forEach(function(l){ var m=/^(.+?)\s{2,}(-?[\d,]+\.\d\d)\s{2,}(-?[\d,]+\.\d\d)\s{2,}(-?[\d,]+\.\d\d)$/.exec(l.trim()); if(!m) return; if(/per job/i.test(m[1])) per+=Math.abs(ccNum(m[4])); else if(/%|commission/i.test(m[1])) pct+=Math.abs(ccNum(m[4])); });
       S0.jobs.forEach(function(j){ j.fee=r2(j.fare/jf*pct+per/S0.jobs.length); });
       var d=r2(fees-S0.jobs.reduce(function(a,j){return a+j.fee},0)); S0.jobs[S0.jobs.length-1].fee=r2(S0.jobs[S0.jobs.length-1].fee+d); }
     var jt=r2(S0.jobs.reduce(function(a,j){return a+j.fare+j.tip+(j.extras||0)},0));
@@ -5023,14 +5061,14 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
       var type=String(r[c('job type')]||'').trim(), cashPaid=v(r,'passenger paid by cash'), ccPaid=v(r,'passenger paid by cc');
       var pay=cashPaid>0?'Cash':(/credit card|card/i.test(type)||ccPaid>0?'Card':'Account');
       var fare=r2(v(r,'fare amount')+v(r,'extras amount')+v(r,'waiting amount')+v(r,'premium amount')), tip=r2(v(r,'tips amount')+v(r,'account gratuity amount'));
-      var fee=r2((v(r,'credit card percentage')+v(r,'commission paid')+v(r,'cash booking fee'))*1.2+v(r,'credit card amount'));
+      var fee=r2((Math.abs(v(r,'credit card percentage'))+Math.abs(v(r,'commission paid'))+Math.abs(v(r,'cash booking fee')))*1.2+Math.abs(v(r,'credit card amount')));
       S1.jobs.push({id:'cc-'+jn,ref:jn,date:d,time:tm,type:type,method:type,pay:pay,cash:pay==='Cash',fare:fare,tip:tip,extras:r2(v(r,'expenses amount')),fee:fee});
     }
     var hj=-1; for(;i<rows.length;i++){ if(String(rows[i][0]).trim()==='Job Number'){ hj=i; break; } }
     if(hj>=0){ var AH=rows[hj].map(function(x){return String(x).toLowerCase().trim()}), ca=AH.indexOf('adjustment'), cd=AH.indexOf('job date'), cc=AH.indexOf('commission paid');
       for(var k=hj+1;k<rows.length;k++){ var a=rows[k], an=String(a[0]).trim(); if(!an) continue; var amt=ca>=0?stMoney(a[ca]):0; if(!amt) continue;
         var ad=a[cd] instanceof Date?stCell(a[cd]):stDMY(String(a[cd]||''));
-        S1.extras.push({id:'ccadj-'+an+'-'+Math.round(amt*100),date:ad||(S1.jobs.length?S1.jobs[S1.jobs.length-1].date:''),label:'ComCab adjustment '+an+(cc>=0&&stMoney(a[cc])?' (commission '+gbp2.format(stMoney(a[cc])*1.2)+')':''),amount:r2(amt-(cc>=0?stMoney(a[cc])*1.2:0))}); } }
+        S1.extras.push({id:'ccadj-'+an+'-'+Math.round(amt*100),date:ad||(S1.jobs.length?S1.jobs[S1.jobs.length-1].date:''),label:'ComCab adjustment '+an+(cc>=0&&stMoney(a[cc])?' (commission '+gbp2.format(Math.abs(stMoney(a[cc]))*1.2)+')':''),amount:r2(amt-(cc>=0?Math.abs(stMoney(a[cc]))*1.2:0))}); } }
     if(!S1.jobs.length&&!S1.extras.length) return null;
     var ds=S1.jobs.map(function(j){return j.date}).sort(); S1.from=ds[0]||''; S1.to=ds[ds.length-1]||'';
     S1.total=r2(S1.jobs.reduce(function(a,j){return a+j.fare+j.tip+(j.extras||0)},0));
@@ -5070,6 +5108,57 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     S0.checks.push(chk(true,'Uber takes no commission on black cab trips; payouts to your bank are the earlier balance, matched to the bank by amount.'));
     return S0;
   }
+  /* ---- Taxiworld (Marcin, 2 Nov): "Payment from Taxiworld" PDF, one per payout. Card jobs list = every card payment
+     (Meter = street/hand jobs on the Taxiworld card machine; jump = Jump app jobs paid through it). Fare & Extras + Tip = Total.
+     Card fee is one total (3.6% + VAT = 4.32% of the total, tips included); it is shared across the jobs by amount. */
+  function twStmt(L,name){
+    var txt=L.join('\n'), per=/(\d{1,2} [A-Za-z]{3} \d{4})\s*-\s*(\d{1,2} [A-Za-z]{3} \d{4})/.exec(txt);
+    var paid=stLong((/Paid on:?\s*(\d{1,2} [A-Za-z]{3,9} \d{4})/.exec(txt)||[])[1]||'');
+    var S0={prov:'Taxiworld',kind:'payment',label:'Taxiworld payment',jobs:[],extras:[],costs:[],checks:[],file:name};
+    S0.from=per?stLong(per[1]):''; S0.to=per?stLong(per[2]):'';
+    var seen={}, gross=0;
+    L.forEach(function(l){
+      var m=/^(\d{1,2} [A-Za-z]{3} \d{4})\s+(\d\d:\d\d)\s+([A-Za-z][A-Za-z ]*?)\s+(£\s?[\d,]+\.\d\d|-)\s+(£\s?[\d,]+\.\d\d|-)\s+(£\s?[\d,]+\.\d\d)$/.exec(l.trim());
+      if(!m) return;
+      var d=stLong(m[1]), type=m[3].trim(), fare=stMoney(m[4]), tip=stMoney(m[5]), tot=stMoney(m[6]);
+      var id='tw-'+d.replace(/-/g,'')+'-'+m[2].replace(':','')+'-'+Math.round(tot*100); if(seen[id]) return; seen[id]=1;
+      var jump=/^jump/i.test(type);
+      S0.jobs.push({id:id,ref:'',date:d,time:m[2],type:jump?'Jump app':'Card payment',method:jump?'Jump, paid on the Taxiworld card machine':'Taxiworld card',pay:'Card',cash:false,fare:fare,tip:tip,fee:0,prov:jump?'Jump':'Taxiworld',card:'Taxiworld'});
+      gross+=tot;
+    });
+    if(!S0.jobs.length) return {err:'This Taxiworld statement has no card jobs Cab Books could read.',file:name};
+    var tl=/\bTotal\s+£\s?([\d,]+\.\d\d)\s+£\s?([\d,]+\.\d\d)\s+£\s?([\d,]+\.\d\d)/.exec(txt);
+    var fees=Math.abs(stMoney((/Card transaction fees\s+(-?\s?£\s?-?[\d,]+\.\d\d)/.exec(txt)||/Card fees\s+(-?\s?£\s?-?[\d,]+\.\d\d)/.exec(txt)||[])[1]||''));
+    var net=stMoney((/Net payment:?\s+(£\s?[\d,]+\.\d\d)/.exec(txt)||[])[1]||'');
+    gross=r2(gross); S0.total=gross; S0.fees=r2(fees);
+    if(fees&&gross){ var used=0; S0.jobs.forEach(function(j,i){ var t=j.fare+j.tip; j.fee=i===S0.jobs.length-1?r2(fees-used):r2(fees*t/gross); used=r2(used+j.fee); }); }
+    if(net){ S0.payout=r2(net); S0.payDate=paid||(S0.to?addDays(S0.to,1):''); }
+    S0.ref='taxiworld-'+(S0.payDate||S0.to)+'-'+Math.round(net*100);
+    if(tl) S0.checks.push(chk(near(gross,stMoney(tl[3])),S0.jobs.length+' card payments add up to the statement total of '+gbp2.format(stMoney(tl[3]))));
+    else S0.checks.push(chk(true,S0.jobs.length+' card payments, '+gbp2.format(gross)+' in total.'));
+    if(net) S0.checks.push(chk(near(gross-fees,net),'Total '+gbp2.format(gross)+' − card fees '+gbp2.format(fees)+' = payment '+gbp2.format(net)+(paid?' on '+fmtD(paid):'')));
+    var nj=S0.jobs.filter(function(j){return j.prov==='Jump'}).length; if(nj) S0.checks.push(chk(true,nj+' Jump job'+(nj===1?'':'s')+' paid on the card machine, filed under Jump.'));
+    if(gross) S0.checks.push(chk(true,'Card fee '+(fees/gross*100).toFixed(2)+'% of the total, shared across the jobs.'));
+    return S0;
+  }
+  /* ---- A Cab Books data file (.json, e.g. statements Claude converted for a driver): bring its jobs and costs in like a statement (Marcin, 2 Nov). */
+  function cbJson(data,name){
+    var E=data&&data.collections&&data.collections.entries; if(!E||typeof E!=='object') return {err:'This file is not a Cab Books data file.',file:name};
+    var ids=Object.keys(E), fares=ids.filter(function(k){return E[k]&&E[k].kind==='fare'}), provs={};
+    fares.forEach(function(k){ provs[E[k].provider||'Job']=1; });
+    var pv=Object.keys(provs), S0={prov:pv.length===1?pv[0]:'Mixed',kind:'file',label:'Cab Books file'+(pv.length?' ('+pv.join(', ')+')':''),jobs:[],extras:[],costs:[],checks:[],file:name};
+    var tot=0, fee=0;
+    fares.forEach(function(k){ var e=E[k];
+      var f=Math.abs(+e.feeFixed||0)+Math.round(Math.abs(+e.commission||0)*((+e.amount||0)+(+e.extras||0)))/100;
+      S0.jobs.push({id:k,ref:e.ref||'',date:e.date,time:e.time||'',type:'',method:e.note||'',pay:e.pay||'Account',cash:e.pay==='Cash',fare:+e.amount||0,tip:+e.tips||0,extras:+e.extras||0,fee:r2(f),prov:e.provider,card:e.card});
+      tot+=(+e.amount||0)+(+e.extras||0); fee+=f; });
+    ids.forEach(function(k){ var e=E[k]; if(e&&e.kind==='expense') S0.costs.push({id:k,date:e.date,category:e.category||'Other',amount:Math.abs(+e.amount||0),note:e.note||''}); });
+    if(!S0.jobs.length&&!S0.costs.length) return {err:'Nothing to bring in from this file.',file:name};
+    var ds=S0.jobs.concat(S0.costs).map(function(j){return j.date}).filter(Boolean).sort(); S0.from=ds[0]||''; S0.to=ds[ds.length-1]||'';
+    S0.total=r2(tot); S0.fees=r2(fee); S0.ref='cbfile-'+hash(ids.sort().join('|'));
+    S0.checks.push(chk(true,S0.jobs.length+' jobs ('+gbp2.format(tot)+', fees '+gbp2.format(fee)+')'+(S0.costs.length?' and '+S0.costs.length+' cost'+(S0.costs.length===1?'':'s'):'')+' in this file. Anything already in your books is skipped.'));
+    return S0;
+  }
   /* read one file → statement object (or {err}) */
   function stReadFile(f){
     var nm=f.name||'file', low=nm.toLowerCase();
@@ -5084,13 +5173,18 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
           if(/Credit Card Transaction Report/i.test(t)) return curbPdf(L,nm);
           if(/ComCab owes you|You owe ComCab/i.test(t)&&/Driver Statement/i.test(t)) return ccStmt(L,nm);
           if(/Weekly Statement/.test(t)&&/Your earnings and entitlements/.test(t)) return uberStmt(L,nm);
-          return {err:'Not a statement Cab Books knows yet (it reads FreeNow, Gett, Curb, ComCab and Uber). Send us a copy and we’ll add it.',file:nm};
+          if(/Taxiworld/i.test(t)&&/Net payment/i.test(t)&&/Card jobs|Card transaction fees/i.test(t)) return twStmt(L,nm);
+          return {err:'Not a statement Cab Books knows yet (it reads FreeNow, Gett, Curb, ComCab, Uber and Taxiworld). Send us a copy and we’ll add it.',file:nm};
         });
+      }
+      if(/\.json$/.test(low)||f.type==='application/json'){
+        var js; try{ js=JSON.parse(new TextDecoder('utf-8').decode(buf)); }catch(e){ return {err:'This file could not be read.',file:nm}; }
+        return cbJson(js,nm);
       }
       if(/\.(xlsx|xls|csv|txt)$/.test(low)){
         return stSheetRows(buf).then(function(rows){ return ccSheet(rows,nm)||curbSheet(rows,nm)||{err:'This spreadsheet is not a Curb or ComCab report Cab Books knows. For bank statements use the Bank statement box below.',file:nm}; });
       }
-      return {err:'Choose a PDF, Excel or CSV file.',file:nm};
+      return {err:'Choose a PDF, Excel, CSV or Cab Books (.json) file.',file:nm};
     }).catch(function(e){ return {err:(e&&e.message)||'Could not read this file.',file:nm}; });
   }
   /* ---- which money is already counted ---- */
@@ -5130,9 +5224,10 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
       s.jobs.forEach(function(j){
         if(existing[j.id]||have[j.id]){ plan.dup++; return; } existing[j.id]=1;
         var lt=stLoadedTo(s.prov,monthOf(j.date)); if(lt&&j.date<=lt){ plan.loaded++; return; }
-        var e={kind:'fare',src:'import',stmt:rec.id,provider:s.prov,date:j.date,m:monthOf(j.date),time:j.time||'',ref:j.ref,
-          pay:j.pay||(s.prov==='Curb'?'Card':(j.cash?'Cash':'Account')),amount:j.fare,extras:j.extras||0,tips:j.tip,commission:0,feeFixed:j.fee,
+        var e={kind:'fare',src:'import',stmt:rec.id,provider:j.prov||s.prov,date:j.date,m:monthOf(j.date),time:j.time||'',ref:j.ref,
+          pay:j.pay||(s.prov==='Curb'?'Card':(j.cash?'Cash':'Account')),amount:j.fare,extras:j.extras||0,tips:j.tip,commission:0,feeFixed:Math.abs(+j.fee||0),
           note:(j.type&&j.type!=='Tour'&&j.type!=='Ride'&&j.type!=='Card payment'?j.type+' · ':'')+(s.prov==='Curb'?'':j.method),ts:Date.now()};
+        if(j.card) e.card=j.card;
         if(j.cash&&(s.prov==='Freenow'||s.prov==='Gett')&&viaCard){ e.cashFare=j.fare; e.amount=0; e.viaCard=true; e.note='Paid by card in the cab: '+gbp2.format(j.fare)+' counted in Curb’s report'; plan.cashFares+=j.fare; plan.cashN++; }
         plan.add.push({id:j.id,data:e}); P.n++; P.fare+=e.amount; P.tip+=e.tips; P.fee+=j.fee;
       });
@@ -5257,7 +5352,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   function subscribe(db){
     function onErr(name){return function(e){ $('sync').textContent='Could not load '+name; }}
     unsubs.push(db.collection('settings').onSnapshot(function(snap){
-      snap.docs.forEach(function(d){ if(d.id==='stopts'&&d.exists){ S.stopts=d.data()||{}; stSyncVia(); } if(d.id==='tipstats'&&d.exists){ S.tipstats=d.data(); } if(d.id==='business'&&d.exists){ S.biz=d.data()||{}; } if(d.id==='practice'){ S.practice=!!(d.exists&&d.data().on); } if(d.id==='drivers'&&d.exists){ var nm=d.data().names; if(Array.isArray(nm)&&nm.length) S.drivers=nm; } if(d.id==='providers'&&d.exists){ var sv=d.data().shown; S.shown=Array.isArray(sv)&&sv.length?sv:null; if(S.shown&&S.shown.indexOf(S.prov)<0&&!S.editId){ S.prov=S.shown[0]; if(typeof applyFeeDefaults==='function') applyFeeDefaults(); } if(typeof buildChips==='function') buildChips(); } if(d.id==='bank'&&d.exists){ S.bankCov=d.data().covered||''; if(typeof bkStatus==='function') bkStatus(); } if(d.id==='main'&&d.exists){ var v=d.data(); S.settings=Object.assign({},DEF,{threshold:+v.threshold||DEF.threshold,amberPct:+v.amberPct||DEF.amberPct,redPct:+v.redPct||DEF.redPct,start:v.start||DEF.start,fees:v.fees||{}}); } });
+      snap.docs.forEach(function(d){ if(d.id==='stopts'&&d.exists){ S.stopts=d.data()||{}; stSyncVia(); } if(d.id==='tipstats'&&d.exists){ S.tipstats=d.data(); } if(d.id==='business'&&d.exists){ S.biz=d.data()||{}; } if(d.id==='practice'){ S.practice=!!(d.exists&&d.data().on); } if(d.id==='drivers'&&d.exists){ var nm=d.data().names; if(Array.isArray(nm)&&nm.length) S.drivers=nm; } if(d.id==='providers'&&d.exists){ var sv=d.data().shown, kn=d.data().known; S.shown=Array.isArray(sv)&&sv.length?sv:null; S.provKnown=Array.isArray(kn)?kn:null; if(S.shown&&S.shown.indexOf(S.prov)<0&&!S.editId){ S.prov=S.shown[0]; if(typeof applyFeeDefaults==='function') applyFeeDefaults(); } if(typeof buildChips==='function') buildChips(); } if(d.id==='bank'&&d.exists){ S.bankCov=d.data().covered||''; if(typeof bkStatus==='function') bkStatus(); } if(d.id==='main'&&d.exists){ var v=d.data(); S.settings=Object.assign({},DEF,{threshold:+v.threshold||DEF.threshold,amberPct:+v.amberPct||DEF.amberPct,redPct:+v.redPct||DEF.redPct,start:v.start||DEF.start,fees:v.fees||{}}); } });
       var md=null; snap.docs.forEach(function(d){ if(d.id==='look'&&d.exists){ var lk=(d.data()||{}).theme; if(lk&&lk!==S.look) applyLook(lk); } if(d.id==='opening'&&d.exists) S.opening=d.data()||{}; if(d.id==='tax'&&d.exists) S.tax=d.data()||{}; if(d.id==='mode'&&d.exists){ var mv=(d.data()||{}).mode; if(mv==='full'||mv==='track') md=mv; } if(d.id==='extras'&&d.exists){ var xl=(d.data()||{}).list; S.exList=Array.isArray(xl)?xl:null; if(typeof exRender==='function') exRender(); } if(d.id==='tabs'&&d.exists){ var tv=(d.data()||{}).shown; S.bar=Array.isArray(tv)&&tv.length?tv:null; } if(d.id==='alerts'&&d.exists){ var av=d.data()||{}; S.al={on:av.on!==false,min:+av.min||4,express:av.express!==false,off:Array.isArray(av.off)?av.off:[]}; if(typeof alRender==='function') alRender(); } }); S.mode=md||null; S.loaded.settings=true; applyMode(); renderAll();
     },onErr('settings')));
     unsubs.push(db.collection('months').onSnapshot(function(snap){
@@ -5492,10 +5587,22 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     var auth=firebase.auth(), fs=firebase.firestore();
     try{ fs.enablePersistence({synchronizeTabs:true}).catch(function(){}); }catch(e){}
     S.auth=auth; S.fs=fs; wireSignin(auth);
+    var VERIFY_FROM=Date.parse('2026-11-02T00:00:00Z');
+    function showVerify(u){
+      S.authUser=null; $('signin').hidden=false; $('si-form').hidden=true; $('vf-box').hidden=false; $('vf-em').textContent=u.email||''; $('vf-err').textContent=''; $('sync').textContent='Confirm your email';
+    }
+    $('vf-done').addEventListener('click',function(){ var u=auth.currentUser, b=$('vf-done'); if(!u) return; b.disabled=true; $('vf-err').textContent='';
+      u.reload().then(function(){ var v=auth.currentUser; if(v&&v.emailVerified){ return v.getIdToken(true).then(function(){ location.reload(); }); } $('vf-err').textContent='Not confirmed yet. Tap the link in the email, then try again.'; })
+       .catch(function(){ $('vf-err').textContent='Could not check. Try again in a moment.'; }).then(function(){ b.disabled=false; }); });
+    $('vf-again').addEventListener('click',function(){ var u=auth.currentUser; if(!u) return; u.sendEmailVerification().then(function(){ $('vf-err').textContent=''; toast('Email sent again to '+u.email+'.'); },function(e){ $('vf-err').textContent=(e&&e.code==='auth/too-many-requests')?'Too many tries. Wait a few minutes, then send again.':'Could not send. Try again in a moment.'; }); });
+    $('vf-out').addEventListener('click',function(){ auth.signOut(); });
     auth.onAuthStateChanged(function(u){
       resetState();
       if($('acctbtn')) $('acctbtn').hidden=!u;
       if(!u){ S.authUser=null; $('signin').hidden=false; siMode('in'); $('sync').textContent='Signed out'; renderAll(); return; }
+      /* New accounts must confirm their email before the books open (Matt 2 Nov). Accounts made before this went live are not blocked. */
+      if(!u.emailVerified && Date.parse((u.metadata&&u.metadata.creationTime)||0)>=VERIFY_FROM){ showVerify(u); return; }
+      $('vf-box').hidden=true; $('si-form').hidden=false;
       S.authUser=u; S.uid=u.uid; $('signin').hidden=true;
       S.syncLabel='Private to you'; $('sync').textContent='Loading…';
       S.db=driverDb(fs,u.uid); subscribe(S.db);
