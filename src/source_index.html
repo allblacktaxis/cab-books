@@ -1917,8 +1917,9 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     if(pv) pv.addEventListener('click',function(){ S.rp.off=(S.rp.off||0)-1; renderReports(); });
     if(nx) nx.addEventListener('click',function(){ S.rp.off=Math.min(0,(S.rp.off||0)+1); renderReports(); });
     var f=$('rp-from'), t2=$('rp-to');
-    if(f) f.addEventListener('change',function(){ S.rp.from=f.value; renderReports(); });
-    if(t2) t2.addEventListener('change',function(){ S.rp.to=t2.value; renderReports(); });
+    /* The date box keeps focus after a pick, and renderReports skips while an input has focus - so release it first. */
+    function rpDate(inp,key){ if(!inp) return; inp.addEventListener('change',function(){ if(!inp.value) return; S.rp[key]=inp.value; inp.blur(); renderReports(); }); inp.addEventListener('blur',function(){ if(inp.value&&S.rp[key]!==inp.value){ S.rp[key]=inp.value; } setTimeout(function(){ if(!$('tab-reports').contains(document.activeElement)||document.activeElement===document.body) renderReports(); },0); }); }
+    rpDate(f,'from'); rpDate(t2,'to');
   }
 
   /* ---------- receipts ---------- */
