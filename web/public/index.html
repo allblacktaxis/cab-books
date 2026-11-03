@@ -871,6 +871,11 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   <section id="tab-tools" hidden></section>
 
   <section id="tab-import" hidden>
+    <div class="card" id="ts-card" hidden style="border-left:4px solid var(--warn,#d98b00)">
+      <h2 id="ts-title">To sort out</h2>
+      <p class="help">Bank lines you weren’t sure about. Add a note while you find out, then choose what each one is and tap Done. Nothing here counts in your books until it’s sorted.</p>
+      <div id="ts-list"></div>
+    </div>
     <div class="card" id="st-card">
       <h2>Statements from FreeNow, Gett, Curb, ComCab, Uber and Taxiworld</h2>
       <p class="help">Choose one or more statements: FreeNow's weekly PDFs, Gett's daily or weekly PDFs, Curb's reports (PDF, Excel or CSV), ComCab's driver statement and pay sheet, Uber's weekly statement, or Taxiworld's payment PDF. You can pick several at once. Cab Books works out which is which, checks the totals add up, and adds each job once. Reading the same statement again is safe.</p>
@@ -921,9 +926,12 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
       <div class="preview" id="bk-prev"></div>
       <div id="bk-income"></div>
       <div id="bk-cats"></div>
-      <h2 style="margin:16px 0 6px">Needs a decision</h2>
-      <p class="help">These payees are not recognised. They are left out as personal unless you pick a category, and your choice is remembered next time.</p>
+      <h2 style="margin:16px 0 6px">Needs a decision: money out</h2>
+      <p class="help">These payees are not recognised. They are left out as personal unless you pick a category. Pick “Not sure – sort out later” to park one on your To sort out list. Your choice is remembered next time.</p>
       <div id="bk-review"></div>
+      <h2 style="margin:16px 0 6px">Needs a decision: money in</h2>
+      <p class="help">Money in that is not from a taxi app, such as a private client paying by bank transfer. Nothing here is counted until you say what it is; anything left as “Not sure” goes on your To sort out list.</p>
+      <div id="bk-review-in"></div>
       <div style="height:12px"></div>
       <button class="btn" id="bk-save" type="button">Import</button>
     </div>
@@ -2873,12 +2881,25 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     if(IN.dup) h+='<p class="note">'+IN.dup+' already brought in.</p>';
     return h+'</div>';
   }
-  function bkCats(){ return EXPCATS.concat(['ignore']); }
-  function bkLabel(c){ return c==='ignore'?'Personal / ignore':c; }
+  function bkCats(){ return EXPCATS.concat(['ignore','later']); }
+  function bkLabel(c){ return c==='ignore'?'Personal / ignore':c==='later'?'Not sure – sort out later':c; }
+  /* Money in that isn't from a taxi app (Matt, 3 Nov 2026). Only 'private' and 'refund' change the books. */
+  var INCATS=[['later','Not sure – sort out later'],['private','Private job not logged yet (counts for VAT)'],['paid','Payment for a job already in my books'],['share','Money passed between drivers'],['refund','Refund of a business cost'],['ignore','Personal / my own transfer']];
+  function inLabel(c){ for(var i=0;i<INCATS.length;i++) if(INCATS[i][0]===c) return INCATS[i][1]; return c; }
+  function bkInRule(key){ var br=S.bankRules||{}, ks=Object.keys(br); for(var i=0;i<ks.length;i++){ var r=br[ks[i]]; if(r&&r.pattern&&key&&r.pattern==='in:'+key) return r.category; } return null; }
+  function bkInEff(r){ return (S.bk.choiceIn||{})[r.key||('#'+r.id)]||bkInRule(r.key)||'later'; }
+  /* Entry written for a decided line (from a bank import or the To sort out list). Same ids as a bank import, so re-importing skips them. */
+  function bkDecisionEntry(dir,x,cat){
+    var b={date:x.d,m:monthOf(x.d),src:'import',ts:Date.now()};
+    if(dir==='out') return cat==='ignore'||cat==='later'?null:Object.assign(b,{kind:'expense',category:cat,amount:Math.round(x.amt*100)/100,note:String(x.desc||'').slice(0,120)});
+    if(cat==='private') return Object.assign(b,{kind:'fare',provider:'Private',pay:'Bank transfer',amount:Math.round(x.amt*100)/100,extras:0,tips:0,commission:0,feeFixed:0,note:('From bank: '+(x.desc||'')).slice(0,120)});
+    if(cat==='refund') return Object.assign(b,{kind:'expense',category:'Other',amount:-Math.round(x.amt*100)/100,note:('Refund: '+(x.desc||'')).slice(0,120)});
+    return null;
+  }
   function bkRead(text){
     var rows=parseCSV(text); if(rows.length<2){ toast('I could not find a header line and rows.'); return; }
     var head=rows[0].map(function(x){return x.trim()});
-    S.bk={head:head,raw:rows.slice(1),choice:{}};
+    S.bk={head:head,raw:rows.slice(1),choice:{},choiceIn:{}};
     var opts=head.map(function(h,i){return '<option value="'+i+'">'+esc(h||('Column '+(i+1)))+'</option>'}).join('');
     ['bk-date','bk-desc','bk-out','bk-in'].forEach(function(id){ $(id).innerHTML=opts; });
     function guess(re,id,def){ var ix=head.findIndex(function(h){return re.test(h)}); $(id).value=String(ix>=0?ix:def); }
@@ -2894,7 +2915,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   function bkBuild(){
     if(!S.bk) return;
     var di=+$('bk-date').value, ci=+$('bk-desc').value, oi=+$('bk-out').value, neg=$('bk-neg').checked, from=$('bk-from').value;
-    var ii=+$('bk-in').value, incOn=$('bk-inc').checked, inc=[], seenI={};
+    var ii=+$('bk-in').value, incOn=$('bk-inc').checked, inc=[], oth=[], seenI={};
     var rows=[], skipped=0, maxDate='', seen={};
     S.bk.raw.forEach(function(r){
       var d=parseDate(r[di]); if(!d){ skipped++; return; }
@@ -2906,9 +2927,9 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
         if(ii===oi){ if(neg && !isNaN(a) && a>0) inA=a; }
         else { var vi=parseAmt(r[ii]); if(!isNaN(vi)) inA=Math.abs(vi); }
         if(inA>0){
-          var idesc=String(r[ci]||'').trim(), pv=bkIncomeProv(idesc);
-          if(pv){ var ib='bankin|'+d+'|'+inA.toFixed(2)+'|'+idesc; seenI[ib]=(seenI[ib]||0)+1;
-            inc.push({d:d,desc:idesc,net:inA,prov:pv,gross:bkGross(pv,d,inA),id:'bi'+hash(ib)+'n'+seenI[ib]}); }
+          var idesc=String(r[ci]||'').trim(), pv=bkIncomeProv(idesc), ib='bankin|'+d+'|'+inA.toFixed(2)+'|'+idesc; seenI[ib]=(seenI[ib]||0)+1;
+          if(pv) inc.push({d:d,desc:idesc,net:inA,prov:pv,gross:bkGross(pv,d,inA),id:'bi'+hash(ib)+'n'+seenI[ib]});
+          else oth.push({d:d,desc:idesc,amt:inA,key:normKey(idesc),id:'bo'+hash(ib)+'n'+seenI[ib]});
         }
       }
       if(isNaN(a)) return;
@@ -2917,7 +2938,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
       seen[base]=(seen[base]||0)+1;
       rows.push({d:d,desc:desc,amt:out,key:key,auto:bkMatch(desc),id:'b'+hash(base)+'n'+seen[base]});
     });
-    S.bk.rows=rows; S.bk.inc=inc; S.bk.maxDate=maxDate; S.bk.skipped=skipped; bkRender();
+    S.bk.rows=rows; S.bk.inc=inc; S.bk.oth=oth; S.bk.maxDate=maxDate; S.bk.skipped=skipped; bkRender();
   }
   function bkEff(r){ return r.auto||S.bk.choice[r.key||('#'+r.id)]||'ignore'; }
   function bkRender(){
@@ -2940,18 +2961,34 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     if(!gs.length) gh='<p class="note" style="margin:0">Everything was recognised.</p>';
     $('bk-review').innerHTML=gh;
     Array.prototype.forEach.call($('bk-review').querySelectorAll('[data-bkg]'),function(sel){ sel.addEventListener('change',function(){ S.bk.choice[sel.getAttribute('data-bkg')]=sel.value; bkRender(); }); });
-    var toAdd=rows.filter(function(r){return bkEff(r)!=='ignore'&&!existing[r.id]}).length;
+    /* Money in not from a taxi app, grouped by payer. */
+    var TS=S.tosort||{}, oth=(B.oth||[]).filter(function(x){return !existing[x.id]&&!TS[x.id]}), og={}, oh='';
+    oth.forEach(function(x){ var k=x.key||('#'+x.id); if(!og[k]) og[k]={key:k,n:0,t:0,s:x.desc}; og[k].n++; og[k].t+=x.amt; });
+    Object.keys(og).map(function(k){return og[k]}).sort(function(a,b){return b.t-a.t}).forEach(function(g){
+      var cur=(B.choiceIn||{})[g.key]||bkInRule(g.key)||'later';
+      oh+='<div class="logitem"><div style="min-width:0"><div>'+esc(g.key.charAt(0)==='#'?g.s.slice(0,40):g.key)+'</div><div class="d">'+g.n+' payment'+(g.n>1?'s':'')+' in · '+gbp2.format(g.t)+'</div></div><select data-bkin="'+esc(g.key)+'" aria-label="What is '+esc(g.key)+'" style="width:auto;max-width:52%">'+INCATS.map(function(c){return '<option value="'+c[0]+'"'+(c[0]===cur?' selected':'')+'>'+esc(c[1])+'</option>'}).join('')+'</select></div>';
+    });
+    $('bk-review-in').innerHTML=oh||'<p class="note" style="margin:0">'+($('bk-inc').checked?'All money in was recognised.':'Turn on “Bring in payments from taxi apps” to see money in.')+'</p>';
+    Array.prototype.forEach.call($('bk-review-in').querySelectorAll('[data-bkin]'),function(sel){ sel.addEventListener('change',function(){ S.bk.choiceIn[sel.getAttribute('data-bkin')]=sel.value; bkRender(); }); });
+    var later=rows.filter(function(r){return bkEff(r)==='later'&&!existing[r.id]&&!TS[r.id]}).length+oth.filter(function(x){return bkInEff(x)==='later'}).length;
+    var inOth=oth.filter(function(x){var c=bkInEff(x);return c==='private'||c==='refund'}).length;
+    var toAdd=rows.filter(function(r){var c=bkEff(r);return c!=='ignore'&&c!=='later'&&!existing[r.id]}).length;
     var IN=bkIncomePlan(existing); $('bk-income').innerHTML=bkIncomeHtml(IN);
     var inAdd=IN.add.length, parts=[];
-    if(inAdd) parts.push(inAdd+' payment'+(inAdd>1?'s':'')+' in'); if(toAdd) parts.push(toAdd+' expense'+(toAdd>1?'s':''));
-    $('bk-save').disabled=(!rows.length&&!inAdd)||(!toAdd&&!inAdd&&!(B.maxDate>S.bankCov)); $('bk-save').textContent=parts.length?('Import '+parts.join(' and ')):(B.maxDate>S.bankCov?'Mark statement as covered':'Nothing new to import');
+    if(inAdd+inOth) parts.push((inAdd+inOth)+' payment'+((inAdd+inOth)>1?'s':'')+' in'); if(toAdd) parts.push(toAdd+' expense'+(toAdd>1?'s':'')); if(later) parts.push(later+' to sort out');
+    $('bk-save').disabled=(!rows.length&&!inAdd&&!oth.length)||(!toAdd&&!inAdd&&!inOth&&!later&&!(B.maxDate>S.bankCov)); $('bk-save').textContent=parts.length?('Import '+parts.join(' and ')):(B.maxDate>S.bankCov?'Mark statement as covered':'Nothing new to import');
   }
   function bkSave(){
     if(!S.db||!S.bk||!S.bk.rows) return;
     var B=S.bk, existing={}; S.entries.forEach(function(e){existing[e.id]=1});
-    var todo=B.rows.filter(function(r){return bkEff(r)!=='ignore'&&!existing[r.id]}), i=0, done=0;
+    var TS=S.tosort||{};
+    var todo=B.rows.filter(function(r){var c=bkEff(r);return c!=='ignore'&&c!=='later'&&!existing[r.id]}), i=0, done=0;
     var IN=bkIncomePlan(existing), incTodo=IN.add.slice(), incDone=0;
-    var learn=Object.keys(B.choice).filter(function(k){return k.charAt(0)!=='#'});
+    var learn=Object.keys(B.choice).filter(function(k){return k.charAt(0)!=='#'&&B.choice[k]!=='later'});
+    var learnIn=Object.keys(B.choiceIn||{}).filter(function(k){return k.charAt(0)!=='#'&&B.choiceIn[k]!=='later'});
+    var oth=(B.oth||[]).filter(function(x){return !existing[x.id]&&!TS[x.id]});
+    var laterOut=B.rows.filter(function(r){return bkEff(r)==='later'&&!existing[r.id]&&!TS[r.id]}), laterIn=oth.filter(function(x){return bkInEff(x)==='later'});
+    var privIn=oth.filter(function(x){return bkInEff(x)==='private'}), refIn=oth.filter(function(x){return bkInEff(x)==='refund'});
     $('bk-save').disabled=true;
     function finish(){
       var jobs=[], st=S.settings, early=incTodo.reduce(function(m,x){ var k=monthOf(x.d); return !m||k<m?k:m; },'');
@@ -2960,6 +2997,10 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
       }
       if(early){ var rs0=recStart(); jobs.push(S.db.collection('settings').doc('opening').set({done:true,recStart:early<rs0?early:rs0,ts:Date.now()})); }
       learn.forEach(function(k){ jobs.push(S.db.collection('bankrules').doc('p'+hash(k)).set({pattern:k,category:B.choice[k],ts:Date.now()})); });
+      learnIn.forEach(function(k){ jobs.push(S.db.collection('bankrules').doc('pi'+hash(k)).set({pattern:'in:'+k,category:B.choiceIn[k],ts:Date.now()})); });
+      privIn.concat(refIn).forEach(function(x){ var e=bkDecisionEntry('in',x,bkInEff(x)); if(e) jobs.push(S.db.collection('entries').doc(x.id).set(e)); });
+      laterOut.forEach(function(r){ jobs.push(S.db.collection('tosort').doc(r.id).set({dir:'out',d:r.d,desc:r.desc,amt:r.amt,key:r.key||'',note:'',ts:Date.now()})); });
+      laterIn.forEach(function(x){ jobs.push(S.db.collection('tosort').doc(x.id).set({dir:'in',d:x.d,desc:x.desc,amt:x.amt,key:x.key||'',note:'',ts:Date.now()})); });
       if(B.maxDate&&B.maxDate>S.bankCov) jobs.push(S.db.collection('settings').doc('bank').set({covered:B.maxDate}));
       Promise.all(jobs).then(function(){
         /* A result box that stays on screen, so the driver can see the statement was taken in and what came from it (Matt, 3 Nov 2026). */
@@ -2970,7 +3011,10 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
           +'<div class="kv"><span class="k">Expenses added</span><span class="v">'+done+' · '+gbp2.format(exSum)+'</span></div>'
           +(dupN?'<div class="kv"><span class="k">Already in your books (skipped)</span><span class="v">'+dupN+'</span></div>':'')
           +(ignN?'<div class="kv"><span class="k">Left out as personal</span><span class="v">'+ignN+'</span></div>':'')
-          +'<p class="note" style="margin:6px 0 0">Bank figures now count up to <b>'+esc(dlabel(cov))+'</b>. Nothing more to do. You can see these in the Log tab, and the statement is listed under “What you’ve imported” at the bottom of this page, where it can be removed if it was the wrong one.</p>';
+          +(privIn.length?'<div class="kv"><span class="k">Private jobs paid by bank transfer</span><span class="v">'+privIn.length+' · '+gbp2.format(privIn.reduce(function(a,x){return a+x.amt},0))+'</span></div>':'')
+          +(refIn.length?'<div class="kv"><span class="k">Refunds of business costs</span><span class="v">'+refIn.length+' · '+gbp2.format(refIn.reduce(function(a,x){return a+x.amt},0))+'</span></div>':'')
+          +((laterOut.length+laterIn.length)?'<div class="kv"><span class="k"><b>To sort out</b></span><span class="v"><b>'+(laterOut.length+laterIn.length)+'</b></span></div>':'')
+          +'<p class="note" style="margin:6px 0 0">Bank figures now count up to <b>'+esc(dlabel(cov))+'</b>. '+((laterOut.length+laterIn.length)?'The lines you weren’t sure about are on your <b>To sort out</b> list at the top of this page.':'Nothing more to do.')+' You can see these in the Log tab, and the statement is listed under “What you’ve imported” at the bottom of this page, where it can be removed if it was the wrong one.</p>';
           bd.scrollIntoView({behavior:'smooth',block:'center'}); }
         toast((incDone?'Brought in '+incDone+' payments from taxi apps and ':'Imported ')+done+' expenses. Bank figures now count up to '+dlabel(B.maxDate>S.bankCov?B.maxDate:S.bankCov)+'.'); S.bk=null; $('bk-map').hidden=true; $('bk-text').value=''; $('bk-file').value=''; setTimeout(bkStatus,300);
         if(S.forceImport){ S.forceImport=false; showTab('position'); } }).catch(fail);
@@ -4582,7 +4626,8 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
 
   function bkStatus(){ var el=$('bk-status'); if(!el) return;
     var inc=0,exp=0,last=''; (S.entries||[]).forEach(function(e){ if(e.src!=='import') return; if(e.kind==='expense'){ exp++; } else if(e.est==='bank'&&!e.superseded){ inc++; } else return; if(e.date>last) last=e.date; });
-    el.innerHTML=S.bankCov?'<b style="color:var(--ok)">✓ Bank statement received.</b> Your books include bank lines up to <b>'+esc(dlabel(S.bankCov))+'</b>: '+inc+' payment'+(inc===1?'':'s')+' from taxi apps and '+exp+' expense'+(exp===1?'':'s')+'. To add more, choose a newer statement below.':'<b>No bank statement brought in yet.</b> Choose your CSV, check the columns, then tap <b>Import</b> at the bottom. Nothing is saved until you tap Import.'; }
+    var tsn=Object.keys(S.tosort||{}).length;
+    el.innerHTML=(tsn?'<b style="color:var(--warn,#d98b00)">'+tsn+' bank line'+(tsn===1?'':'s')+' to sort out</b> – see the top of this page. ':'')+(S.bankCov?'<b style="color:var(--ok)">✓ Bank statement received.</b> Your books include bank lines up to <b>'+esc(dlabel(S.bankCov))+'</b>: '+inc+' payment'+(inc===1?'':'s')+' from taxi apps and '+exp+' expense'+(exp===1?'':'s')+'. To add more, choose a newer statement below.':'<b>No bank statement brought in yet.</b> Choose your CSV, check the columns, then tap <b>Import</b> at the bottom. Nothing is saved until you tap Import.'); }
   function showTab(t){
     if(t==='import') setTimeout(function(){ bkStatus(); ihRender(); },0);
     if(t!=='import') S.forceImport=false;
@@ -5244,6 +5289,29 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   /* ---- Import history: find an import and remove it with everything that came from it (Matt, 3 Nov 2026) ----
      Statement imports are grouped by their statement (stmt id). Bank, CSV and calendar imports carry no file id,
      so their records are grouped by the time they were added (one import = one burst of writes). */
+  /* ---- To sort out: bank lines parked as "Not sure" (Matt, 3 Nov 2026) ---- */
+  function tsRender(){
+    var card=$('ts-card'), box=$('ts-list'); if(!card||!box) return;
+    var L=Object.keys(S.tosort||{}).map(function(k){return S.tosort[k]}).sort(function(a,b){return (a.d||'')<(b.d||'')?-1:1});
+    card.hidden=!L.length; $('ts-title').textContent='To sort out ('+L.length+')'; if(!L.length){ box.innerHTML=''; return; }
+    box.innerHTML=L.map(function(t){
+      var opts=t.dir==='in'?INCATS.filter(function(c){return c[0]!=='later'}).map(function(c){return '<option value="'+c[0]+'">'+esc(c[1])+'</option>'}).join('')
+                           :EXPCATS.concat(['ignore']).map(function(c){return '<option value="'+esc(c)+'">'+esc(bkLabel(c))+'</option>'}).join('');
+      return '<div style="padding:10px 0;border-top:1px solid var(--line)">'
+        +'<div style="display:flex;justify-content:space-between;gap:10px"><div style="min-width:0"><b>'+esc(String(t.desc||'').slice(0,60))+'</b><div class="note">'+esc(fmtD(t.d))+' · '+(t.dir==='in'?'money in':'money out')+'</div></div><div class="num" style="flex:none;font-weight:700;color:'+(t.dir==='in'?'var(--ok)':'var(--ink)')+'">'+(t.dir==='in'?'+':'−')+gbp2.format(t.amt)+'</div></div>'
+        +'<input type="text" data-tsnote="'+esc(t.id)+'" value="'+esc(t.note||'')+'" placeholder="Note (what it might be, who to ask…)" style="margin-top:8px">'
+        +'<div style="display:flex;gap:8px;margin-top:8px"><select data-tscat="'+esc(t.id)+'" aria-label="What is it" style="flex:1;min-width:0"><option value="">What is it?</option>'+opts+'</select><button class="btn small" type="button" data-tsdo="'+esc(t.id)+'" style="flex:none;width:auto">Done</button></div></div>';
+    }).join('');
+    Array.prototype.forEach.call(box.querySelectorAll('[data-tsnote]'),function(inp){ inp.addEventListener('change',function(){ var id=inp.getAttribute('data-tsnote'), t=S.tosort[id]; if(!t) return; var d=Object.assign({},t); delete d.id; d.note=inp.value.trim().slice(0,300); S.db.collection('tosort').doc(id).set(d).then(function(){toast('Note saved')}).catch(fail); }); });
+    Array.prototype.forEach.call(box.querySelectorAll('[data-tsdo]'),function(b){ b.addEventListener('click',function(){
+      var id=b.getAttribute('data-tsdo'), t=S.tosort[id], sel=box.querySelector('[data-tscat="'+id+'"]'), cat=sel&&sel.value; if(!t) return;
+      if(!cat){ toast('Choose what it is first.'); if(sel) sel.focus(); return; }
+      b.disabled=true; var x={d:t.d,desc:t.desc,amt:+t.amt||0}, e=bkDecisionEntry(t.dir,x,cat), jobs=[];
+      if(e){ if(t.note) e.note=(e.note+' – '+t.note).slice(0,200); jobs.push(S.db.collection('entries').doc(id).set(e)); }
+      if(t.key) jobs.push(S.db.collection('bankrules').doc((t.dir==='in'?'pi':'p')+hash(t.key)).set({pattern:(t.dir==='in'?'in:':'')+t.key,category:cat,ts:Date.now()}));
+      Promise.all(jobs).then(function(){ return S.db.collection('tosort').doc(id).delete(); }).then(function(){ toast(e?'Sorted: added to your books':'Sorted: left out of your books'); }).catch(function(er){ fail(er); b.disabled=false; });
+    }); });
+  }
   function ihGroups(){
     var G={}, out=[], loose=[];
     (S.entriesRaw||[]).forEach(function(e){
@@ -5465,6 +5533,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     unsubs.push(db.collection('events').onSnapshot(function(snap){ var o={}; snap.docs.forEach(function(d){ if(d.exists) o[d.id]=d.data(); }); S.events=o; renderAll(); },function(){}));
     unsubs.push(db.collection('bankrules').onSnapshot(function(snap){ var o={}; snap.docs.forEach(function(d){ if(d.exists) o[d.id]=d.data(); }); S.bankRules=o; },function(){}));
     unsubs.push(db.collection('rules').onSnapshot(function(snap){ var o={}; snap.docs.forEach(function(d){ if(d.exists) o[d.id]=d.data(); }); S.rules=o; renderAll(); },function(){}));
+    unsubs.push(db.collection('tosort').onSnapshot(function(snap){ var o={}; snap.docs.forEach(function(d){ if(d.exists) o[d.id]=Object.assign({id:d.id},d.data()); }); S.tosort=o; tsRender(); if(S.tab==='import') bkStatus(); },function(){}));
     unsubs.push(db.collection('stmts').onSnapshot(function(snap){ var o={}; snap.docs.forEach(function(d){ if(d.exists) o[d.id]=Object.assign({id:d.id},d.data()); }); S.stmts=o; if(S.tab==='months') renderMonths(); if(S.tab==='import') ihRender(); },function(){}));
     unsubs.push(db.collection('closes').onSnapshot(function(snap){ var o={}; snap.docs.forEach(function(d){ if(d.exists) o[d.id]=d.data(); }); S.closes=o; renderMonths(); },function(){}));
     unsubs.push(db.collection('history').onSnapshot(function(snap){ var o={}; snap.docs.forEach(function(d){ if(d.exists) o[d.id]=d.data(); }); S.hist=o; if(S.tab==='log') renderLog(); },function(){}));
