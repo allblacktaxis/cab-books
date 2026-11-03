@@ -2421,9 +2421,8 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     var exAuto=[]; if(!old){ Object.keys(S.exPick||{}).forEach(function(i){ var a=Math.round((+S.exPick[i]||0)*100)/100; if(a>0) exAuto.push({n:(S.exName&&S.exName[i])||'Extra',a:a}); }); }
     ref.set(data).then(function(){
       if(!exAuto.length) return;
-      var b=S.db.batch();
-      exAuto.forEach(function(x){ var er=S.db.collection('entries').doc(), d={kind:'expense',date:S.day,m:monthOf(S.day),category:'Parking / drop-off',amount:x.a,cash:false,note:x.n+' (from job)',fromJob:ref.id,src:'manual',ts:Date.now()}; if(data.demo) d.demo=true; b.set(er,d); });
-      return b.commit();
+      /* One write per extra (the website's books store has no batch). */
+      return Promise.all(exAuto.map(function(x){ var er=S.db.collection('entries').doc(), d={kind:'expense',date:S.day,m:monthOf(S.day),category:'Parking / drop-off',amount:x.a,cash:false,note:x.n+' (from job)',fromJob:ref.id,src:'manual',ts:Date.now()}; if(data.demo) d.demo=true; return er.set(d); }));
     }).then(function(){
       toast((old?'Updated: ':'Saved: ')+gbp2.format(data.amount)+(exAuto.length?' + '+exAuto.map(function(x){return x.n+' '+gbp2.format(x.a)}).join(', ')+' added to expenses':'')+(S.prov==='Gett'&&S.pay==='Cash'&&!f.feeFixed&&!f.commission?' (no Gett fee entered)':''));
       setEditing(null); clearForm();
