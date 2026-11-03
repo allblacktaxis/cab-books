@@ -898,6 +898,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
       <h2>Bank statement</h2>
       <p class="help" id="bk-help">Brings in what the taxi apps paid you and the money going out. Payments from FreeNow, Gett, Uber, Curb, ComCab, Taxiworld, Helix Pay and HIPS are recognised, with the commission added back to estimate your fares. Payees are sorted into categories, and anything unknown is left out as personal until you say otherwise. Bank figures replace the expenses you typed, up to the statement's last date.</p>
       <div id="bk-status" class="help" style="margin:-4px 0 10px"></div>
+      <div id="bk-done" class="preview" style="border-left:4px solid var(--ok)" hidden></div>
       <div class="field"><label for="bk-file">CSV file</label><input type="file" id="bk-file" accept=".csv,.txt,text/csv,text/plain"></div>
       <div class="field"><label for="bk-text">…or paste the rows (with the header line)</label><textarea id="bk-text" spellcheck="false" placeholder="Date,Description,Paid out,Paid in"></textarea></div>
       <button class="btn ghost" id="bk-read" type="button">Read it</button>
@@ -2960,7 +2961,18 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
       if(early){ var rs0=recStart(); jobs.push(S.db.collection('settings').doc('opening').set({done:true,recStart:early<rs0?early:rs0,ts:Date.now()})); }
       learn.forEach(function(k){ jobs.push(S.db.collection('bankrules').doc('p'+hash(k)).set({pattern:k,category:B.choice[k],ts:Date.now()})); });
       if(B.maxDate&&B.maxDate>S.bankCov) jobs.push(S.db.collection('settings').doc('bank').set({covered:B.maxDate}));
-      Promise.all(jobs).then(function(){ toast((incDone?'Brought in '+incDone+' payments from taxi apps and ':'Imported ')+done+' expenses. Bank figures now count up to '+dlabel(B.maxDate>S.bankCov?B.maxDate:S.bankCov)+'.'); S.bk=null; $('bk-map').hidden=true; $('bk-text').value=''; $('bk-file').value=''; setTimeout(bkStatus,300);
+      Promise.all(jobs).then(function(){
+        /* A result box that stays on screen, so the driver can see the statement was taken in and what came from it (Matt, 3 Nov 2026). */
+        var inSum=incTodo.slice(0,incDone).reduce(function(a,x){return a+(+x.net||0)},0), exSum=todo.slice(0,done).reduce(function(a,r){return a+(+r.amt||0)},0);
+        var dupN=B.rows.filter(function(r){return existing[r.id]}).length, ignN=B.rows.filter(function(r){return bkEff(r)==='ignore'&&!existing[r.id]}).length, cov=B.maxDate>S.bankCov?B.maxDate:S.bankCov;
+        var bd=$('bk-done'); if(bd){ bd.hidden=false; bd.innerHTML='<b style="color:var(--ok)">✓ Done. Your bank statement is in your books.</b>'
+          +'<div class="kv"><span class="k">Payments from taxi apps</span><span class="v">'+incDone+' · '+gbp2.format(inSum)+'</span></div>'
+          +'<div class="kv"><span class="k">Expenses added</span><span class="v">'+done+' · '+gbp2.format(exSum)+'</span></div>'
+          +(dupN?'<div class="kv"><span class="k">Already in your books (skipped)</span><span class="v">'+dupN+'</span></div>':'')
+          +(ignN?'<div class="kv"><span class="k">Left out as personal</span><span class="v">'+ignN+'</span></div>':'')
+          +'<p class="note" style="margin:6px 0 0">Bank figures now count up to <b>'+esc(dlabel(cov))+'</b>. Nothing more to do. You can see these in the Log tab, and the statement is listed under “What you’ve imported” at the bottom of this page, where it can be removed if it was the wrong one.</p>';
+          bd.scrollIntoView({behavior:'smooth',block:'center'}); }
+        toast((incDone?'Brought in '+incDone+' payments from taxi apps and ':'Imported ')+done+' expenses. Bank figures now count up to '+dlabel(B.maxDate>S.bankCov?B.maxDate:S.bankCov)+'.'); S.bk=null; $('bk-map').hidden=true; $('bk-text').value=''; $('bk-file').value=''; setTimeout(bkStatus,300);
         if(S.forceImport){ S.forceImport=false; showTab('position'); } }).catch(fail);
     }
     function nextIn(){
@@ -2978,7 +2990,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     }
     nextIn();
   }
-  $('bk-file').addEventListener('change',function(){ var f=this.files&&this.files[0]; if(!f) return; var rd=new FileReader(); rd.onload=function(){ $('bk-text').value=String(rd.result).slice(0,3000000); bkRead(String(rd.result)); }; rd.readAsText(f); });
+  $('bk-file').addEventListener('change',function(){ var bd=$('bk-done'); if(bd) bd.hidden=true; var f=this.files&&this.files[0]; if(!f) return; var rd=new FileReader(); rd.onload=function(){ $('bk-text').value=String(rd.result).slice(0,3000000); bkRead(String(rd.result)); }; rd.readAsText(f); });
   $('bk-read').addEventListener('click',function(){ var t=$('bk-text').value.trim(); if(!t){toast('Choose a file or paste some rows first.');return} bkRead(t); });
   ['bk-date','bk-desc','bk-out','bk-from','bk-neg','bk-in','bk-inc'].forEach(function(id){ $(id).addEventListener('change',bkBuild); });
   $('bk-save').addEventListener('click',bkSave);
