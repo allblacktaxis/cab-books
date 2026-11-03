@@ -1911,7 +1911,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     var P=period(), A=agg(P), r=S.rp, h='';
     h+='<div class="card"><h2>Report</h2><div class="chips tight" role="group" aria-label="Period">'+RMODES.map(function(x){return '<button type="button" data-rm="'+x[0]+'" aria-pressed="'+(r.mode===x[0])+'">'+x[1]+'</button>'}).join('')+'</div>';
     if(P.nav) h+='<div class="nav" style="margin-top:12px"><button type="button" id="rp-prev" aria-label="Earlier">‹</button><div class="ttl">'+esc(P.label)+'</div><button type="button" id="rp-next" aria-label="Later"'+((r.off||0)>=0?' disabled':'')+'>›</button></div>';
-    else if(r.mode==='custom') h+='<div class="two" style="margin-top:12px"><div class="field" style="margin:0"><label for="rp-from">From</label><input type="date" id="rp-from" value="'+esc(P.from)+'"></div><div class="field" style="margin:0"><label for="rp-to">To</label><input type="date" id="rp-to" value="'+esc(P.to)+'"></div></div>';
+    else if(r.mode==='custom') h+='<div class="two" style="margin-top:12px"><div class="field" style="margin:0"><label for="rp-from">From</label><input type="date" id="rp-from" value="'+esc(P.from)+'"></div><div class="field" style="margin:0"><label for="rp-to">To</label><input type="date" id="rp-to" value="'+esc(P.to)+'"></div></div><button class="btn" type="button" id="rp-calc" style="width:100%;margin-top:10px">Calculate</button>';
     else h+='<div class="nav" style="margin-top:12px"><div class="ttl">'+esc(P.label)+'</div></div>';
     h+='</div>';
     var empty = !A.jobs && !A.turn && !A.tips && !A.expTotal;
@@ -1956,6 +1956,8 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     /* The date box keeps focus after a pick, and renderReports skips while an input has focus - so release it first. */
     function rpDate(inp,key){ if(!inp) return; inp.addEventListener('change',function(){ if(!inp.value) return; S.rp[key]=inp.value; inp.blur(); renderReports(); }); inp.addEventListener('blur',function(){ if(inp.value&&S.rp[key]!==inp.value){ S.rp[key]=inp.value; } setTimeout(function(){ if(!$('tab-reports').contains(document.activeElement)||document.activeElement===document.body) renderReports(); },0); }); }
     rpDate(f,'from'); rpDate(t2,'to');
+    /* Calculate: read both dates and redraw the report (Matt, 3 Nov 2026). */
+    var cb=$('rp-calc'); if(cb) cb.addEventListener('click',function(){ if(f&&f.value) S.rp.from=f.value; if(t2&&t2.value) S.rp.to=t2.value; var a=document.activeElement; if(a&&a.blur) a.blur(); renderReports(); var el=$('tab-reports'); if(el) el.scrollIntoView({block:'start'}); });
   }
 
   /* ---------- receipts ---------- */
