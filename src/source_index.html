@@ -1634,9 +1634,11 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     else { P.from=r.from||dayAdd(t,-6); P.to=r.to||t; if(P.to<P.from){var x=P.from;P.from=P.to;P.to=x} P.label=dlabel(P.from)+' – '+dlabel(P.to); P.nav=false; }
     return P;
   }
-  /* FreeNow and Gett take no commission on extras (drop-off fees, parking) – Matt 29 Oct. Others (e.g. card machines) charge on the total. */
-  var NOEXFEE=['freenow','gett'];
-  function feeBaseAmt(e){ return (+e.amount||0)+(NOEXFEE.indexOf(String(e.provider||'').toLowerCase())>=0?0:(+e.extras||0)); }
+  /* Commission rules for jobs (Matt, 3 Nov 2026). Tips never carry commission.
+     Job apps (FreeNow, Gett, ComCab, Uber if it ever charges): commission on the fare only, not on extras.
+     Card machines (Curb, HIPS – card taken in the cab): fee on fare + extras. */
+  var NOEXFEE=['freenow','gett','comcab','uber'];
+  function feeBaseAmt(e){ return (+e.amount||0)+(NOEXFEE.indexOf(bkey(e.provider))>=0?0:(+e.extras||0)); }
   /* A fee is always a cost: a minus sign from a statement or a typed '-' must not turn it into income (Matt 2 Nov). */
   function lineFee(e){var c=Math.abs(+e.commission||0), f=Math.abs(+e.feeFixed||0); return Math.round((feeBaseAmt(e)*c/100+f)*100)/100}
   function agg(P){
