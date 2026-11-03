@@ -106,8 +106,6 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
   padding:6px max(8px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-left,0px))}
 .tabs button{background:none;border:0;padding:10px 1px;min-height:48px;font-size:12px;color:var(--muted);cursor:pointer;border-radius:8px}
 .tabs button[aria-current=page]{color:var(--accent);font-weight:600;background:var(--accent-soft)}
-.kbsave{position:fixed;left:0;right:0;bottom:0;z-index:35;padding:8px 16px;background:var(--surface);border-top:1px solid var(--line);box-shadow:0 -4px 12px rgba(0,0,0,.12);display:none}
-.kbsave.on{display:block}.kbsave .btn{width:100%;margin:0}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(76px + env(safe-area-inset-bottom,0px));z-index:30;
   background:var(--ink);color:var(--bg);padding:10px 14px;border-radius:8px;font-size:13px;max-width:min(92vw,520px);box-shadow:0 4px 18px var(--shadow)}
 .chips{display:flex;flex-wrap:wrap;gap:8px}
@@ -731,8 +729,8 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
           <div id="j-feeedit" hidden><label for="j-fix" style="margin-bottom:4px">Fee for this job (£)</label><input type="text" class="money" id="j-fix" inputmode="numeric" autocomplete="off" placeholder="0.00"></div>
         </div>
         <p class="warnbox" id="j-hint" hidden>Gett cash fees vary, so enter this job's fee as a fixed amount.</p>
-        <div class="preview" id="j-preview" hidden></div>
         <button class="btn" id="j-save" type="button">Save job</button>
+        <div class="preview" id="j-preview" style="margin-top:12px" hidden></div>
         <div class="two" id="j-edit" hidden style="margin-top:10px"><button class="btn ghost small" id="j-rcpt" type="button">Receipt</button><button class="btn ghost small" id="j-cancel" type="button">Cancel</button></div>
         <button class="btn ghost small" id="j-del" type="button" hidden style="margin-top:10px;width:100%">Delete this job</button>
       </div>
@@ -4541,28 +4539,6 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     var vv=window.visualViewport, done=false; if(vv){ var h=function(){ if(done) return; done=true; vv.removeEventListener('resize',h); setTimeout(go,30); }; vv.addEventListener('resize',h); setTimeout(function(){ if(!done){ done=true; vv.removeEventListener('resize',h); go(); } },450); }
   }
   ['j-amt','j-tips'].forEach(function(id){ var el=$(id); if(el) el.addEventListener('focus',fareToTop); });
-  /* While typing in the job form, a Save job bar sits just above the phone keyboard whenever the real
-     Save job button is hidden behind it, so there is no need to close the keyboard first (Matt, 3 Nov 2026). */
-  (function(){
-    var ids=['j-amt','j-tips','j-ex','j-note','j-fix'], kb=document.createElement('div'); kb.className='kbsave';
-    kb.innerHTML='<button class="btn" type="button">Save job</button>'; document.body.appendChild(kb);
-    var b=kb.firstChild, vv=window.visualViewport, on=false;
-    function inForm(){ var a=document.activeElement; return !!a && ids.indexOf(a.id)>=0; }
-    function place(){
-      if(!on) return;
-      var top=vv?vv.offsetTop:0, h=vv?vv.height:window.innerHeight, r=$('j-save').getBoundingClientRect();
-      var seen=r.height>0 && r.top>=top && r.bottom<=top+h;
-      kb.classList.toggle('on',!seen);
-      kb.style.bottom=Math.max(0,window.innerHeight-(top+h))+'px';
-    }
-    function show(){ on=true; place(); setTimeout(place,350); }
-    function hide(){ setTimeout(function(){ if(!inForm()){ on=false; kb.classList.remove('on'); } },150); }
-    ids.forEach(function(id){ var el=$(id); if(el){ el.addEventListener('focus',show); el.addEventListener('blur',hide); } });
-    if(vv){ vv.addEventListener('resize',place); vv.addEventListener('scroll',place); } window.addEventListener('scroll',place,{passive:true});
-    /* Keep the keyboard from closing on the tap itself, then save. */
-    b.addEventListener('pointerdown',function(ev){ ev.preventDefault(); });
-    b.addEventListener('click',function(){ var a=document.activeElement; if(a&&a.blur) a.blur(); on=false; kb.classList.remove('on'); saveJob(); });
-  })();
   $('d-toggle').addEventListener('click',function(){ S.addOpen=!S.addOpen; renderDay(); });
   $('d-prev').addEventListener('click',function(){ S.day=dayAdd(S.day,-1); setEditing(null); renderDay(); renderEvents(); });
   $('d-next').addEventListener('click',function(){ S.day=dayAdd(S.day,1); setEditing(null); renderDay(); renderEvents(); });
