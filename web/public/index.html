@@ -1981,15 +1981,19 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     } else {
       var PP=null, AP=null; if(P.nav){ PP=period({mode:r.mode,off:(r.off||0)-1,from:r.from,to:r.to}); AP=agg(PP); }
       function delta(now,before){ if(!AP||!(before>0)) return ''; var d=(now-before)/before*100, up=d>=0; return '<span class="delta '+(up?'up':'dn')+'">'+(up?'\u25B2 ':'\u25BC ')+Math.abs(d).toFixed(0)+'%</span>'; }
-      h+='<div class="card hero"><div class="label">Turnover'+(P.monthly?', excluding tips':' from jobs logged')+'</div><div class="big">'+gbp2.format(A.turn)+'</div>';
-      if(AP && AP.turn>0) h+='<div class="label" style="margin-top:2px">'+delta(A.turn,AP.turn)+' on '+esc(PP.label)+' ('+gbp0.format(AP.turn)+')</div>';
-      h+='<div class="kv"><span class="k">Tips</span><span class="v">'+gbp2.format(A.tips)+'</span></div>';
+      /* Gross view (fares + extras + tips) by default; VAT view shows turnover without tips (Matt, 3 Nov 2026). */
+      var vat=!!S.rpVat, big=vat?A.turn:A.turn+A.tips, bigP=AP?(vat?AP.turn:AP.turn+AP.tips):0;
+      h+='<div class="card hero"><div class="seg" role="group" aria-label="View" style="margin-bottom:10px"><button type="button" data-rpvat="0" aria-pressed="'+!vat+'">Gross, with tips</button><button type="button" data-rpvat="1" aria-pressed="'+vat+'">VAT view, no tips</button></div>';
+      h+='<div class="label">'+(vat?'Turnover for VAT, excluding tips':'Taken, including tips')+(P.monthly?'':' (jobs logged)')+'</div><div class="big">'+gbp2.format(big)+'</div>';
+      if(AP && bigP>0) h+='<div class="label" style="margin-top:2px">'+delta(big,bigP)+' on '+esc(PP.label)+' ('+gbp0.format(bigP)+')</div>';
+      h+=vat?'<div class="kv"><span class="k">Tips (not VAT turnover)</span><span class="v">'+gbp2.format(A.tips)+'</span></div>'
+            :'<div class="kv"><span class="k">of which tips</span><span class="v">'+gbp2.format(A.tips)+'</span></div><div class="kv"><span class="k">VAT turnover (no tips)</span><span class="v">'+gbp2.format(A.turn)+'</span></div>';
       h+='<div class="kv"><span class="k">Commission and fees</span><span class="v">−'+gbp2.format(A.fees)+'</span></div>';
       h+='<div class="kv"><span class="k">Expenses and rent</span><span class="v">−'+gbp2.format(A.expTotal)+'</span></div>';
       h+='<div class="kv hl"><span class="k"><b>Profit</b></span><span class="v">'+(AP&&AP.profit>0?delta(A.profit,AP.profit)+' ':'')+gbp2.format(A.profit)+'</span></div>';
       if(!P.monthly) h+='<div class="kv"><span class="k">Jobs</span><span class="v">'+A.jobs+'</span></div>';
       if(A.indic>0) h+='<div class="kv"><span class="k">Not yet confirmed by statements</span><span class="v">'+gbp2.format(A.indic)+'</span></div>';
-      h+='<p class="note">Profit = turnover + tips − commission and fees − expenses.</p></div>';
+      h+='<p class="note">'+(vat?'Profit = turnover + tips − commission and fees − expenses.':'Profit = taken (including tips) − commission and fees − expenses.')+'</p></div>';
       if(P.monthly && P.keys.length>1) h+=repBars(P)+profitBars(P);
       var pk=Object.keys(A.prov).filter(function(k){return A.prov[k].turn||A.prov[k].jobs}).sort(function(a,b){return A.prov[b].turn-A.prov[a].turn});
       var tot=pk.reduce(function(s,k){return s+A.prov[k].turn},0)||1;
@@ -2007,6 +2011,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
       }
     }
     el.innerHTML=h;
+    Array.prototype.forEach.call(el.querySelectorAll('[data-rpvat]'),function(b){ b.addEventListener('click',function(){ S.rpVat=b.getAttribute('data-rpvat')==='1'; renderReports(); }); });
     Array.prototype.forEach.call(el.querySelectorAll('[data-rm]'),function(b){ b.addEventListener('click',function(){ S.rp.mode=b.getAttribute('data-rm'); S.rp.off=0; renderReports(); }); });
     var pv=$('rp-prev'), nx=$('rp-next');
     if(pv) pv.addEventListener('click',function(){ S.rp.off=(S.rp.off||0)-1; renderReports(); });
@@ -2258,7 +2263,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     var C=compute(S.entries), EI=expImpMap(), D={rows:[],gross:0,fees:0,tips:0,pay:{},exp:[],expTotal:0,expEst:0};
     S.entriesAll.forEach(function(e){
       if(e.date!==iso) return;
-      if(e.kind==='fare'){ if(C.byImp[e.id]) return; var g=eAmt(e), f=lineFee(e); var tp=+e.tips||0; D.rows.push({e:e,g:g,f:f,n:g-f,t:tp,gt:g+tp,nt:g-f+tp}); D.gross+=g; D.fees+=f; D.tips+=+e.tips||0; var k=e.pay||'Other'; D.pay[k]=(D.pay[k]||0)+g; }
+      if(e.kind==='fare'){ if(C.byImp[e.id]) return; var g=eAmt(e), f=lineFee(e); var tp=+e.tips||0; D.rows.push({e:e,g:g,f:f,n:g-f,t:tp,gt:g+tp,nt:g-f+tp}); D.gross+=g; D.fees+=f; D.tips+=+e.tips||0; var k=e.pay||'Other'; D.pay[k]=(D.pay[k]||0)+g+tp; }
       else if(e.kind==='tip'){ D.tips+=+e.amount||0; }
       else if(e.kind==='expense'){ if(expSuperseded(e,EI,false)) return; D.exp.push(e); D.expTotal+=+e.amount||0; if(e.src!=='import') D.expEst+=+e.amount||0; }
     });
@@ -2275,20 +2280,20 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     if(!S.db){ sm.innerHTML='<div class="empty"><b>Sign in to see your figures</b>Sign in to Cab Books to see your figures.</div>'; jb.hidden=true; ex.innerHTML=''; return; }
     if(!S.loaded.entries||!S.loaded.months){ sm.innerHTML='<div class="empty">Loading…</div>'; return; }
     jb.hidden=false;
-    var D=dayData(S.day), after=D.gross-D.fees, afterExp=after+D.tips-D.expTotal, rate=taxRate(), tax=afterExp>0?afterExp*rate:0;
+    var D=dayData(S.day), taken=D.gross+D.tips, after=taken-D.fees, afterExp=after-D.expTotal, rate=taxRate(), tax=afterExp>0?afterExp*rate:0;
     var take=afterExp-tax;
-    var hl=$('d-head'); if(hl){ hl.innerHTML=D.rows.length?'<b>'+D.rows.length+' job'+(D.rows.length===1?'':'s')+'</b> · <span class="num">'+gbp0.format(D.gross)+'</span> taken · <span class="num">'+gbp0.format(after)+'</span> after fees':'No jobs yet '+(S.day===todayISO()?'today':'this day'); }
+    var hl=$('d-head'); if(hl){ hl.innerHTML=D.rows.length?'<b>'+D.rows.length+' job'+(D.rows.length===1?'':'s')+'</b> · <span class="num">'+gbp0.format(taken)+'</span> taken · <span class="num">'+gbp0.format(after)+'</span> after fees':'No jobs yet '+(S.day===todayISO()?'today':'this day'); }
     var tb=$('d-today'); if(tb){ var onT=(S.day===todayISO()); tb.hidden=onT; tb.parentNode.style.gridTemplateColumns=onT?'1fr':''; }
     var h='<h2>'+(S.day===todayISO()?'Today':'This day')+'</h2><div class="sgrid3">'
-      +'<div class="s3"><div class="l">Taken</div><div class="n num">'+gbp2.format(D.gross)+'</div></div>'
+      +'<div class="s3"><div class="l">Taken</div><div class="n num">'+gbp2.format(taken)+'</div></div>'
       +'<div class="s3"><div class="l">After fees</div><div class="n num">'+gbp2.format(after)+'</div></div>'
       +'<div class="s3 hi"><div class="l">Take-home</div><div class="n num">'+gbp2.format(take)+'</div></div></div>'
       +'<details class="more"><summary>More detail</summary><div class="sgrid" style="margin-top:12px">'
       +cell('Fees'+(D.gross>0?' (~'+(D.fees/D.gross*100).toFixed(1)+'%)':''),gbp2.format(D.fees),'dim')
       +cell('Account',gbp2.format(D.pay['Account']||0))+cell('Card',gbp2.format(D.pay['Card']||0))+cell('Cash',gbp2.format(D.pay['Cash']||0));
     if(D.pay['Bank transfer']) h+=cell('Bank transfer',gbp2.format(D.pay['Bank transfer']));
-    h+=cell('Tips',gbp2.format(D.tips))+cell(D.expEst>0?'Expenses (est.)':'Expenses',gbp2.format(D.expTotal))+cell('After expenses',gbp2.format(afterExp))+cell('Tax (est.)',gbp2.format(tax),'dim')+'</div>';
-    h+='<p class="note">Take-home = after fees + tips − expenses − estimated tax. Tips are not part of VAT turnover. Tax is a rough share, using this tax year’s average rate on profit.</p></details>';
+    h+=cell('Tips (in Taken)',gbp2.format(D.tips))+cell('VAT turnover (no tips)',gbp2.format(D.gross))+cell(D.expEst>0?'Expenses (est.)':'Expenses',gbp2.format(D.expTotal))+cell('After expenses',gbp2.format(afterExp))+cell('Tax (est.)',gbp2.format(tax),'dim')+'</div>';
+    h+='<p class="note">Taken includes tips. Take-home = taken − fees − expenses − estimated tax. Tips are not part of VAT turnover; that figure is shown separately. Tax is a rough share, using this tax year’s average rate on profit.</p></details>';
     sm.innerHTML=h;
     var jh='<div class="cardhead"><h2>Jobs ('+D.rows.length+')</h2><button class="iconbtn" id="d-chart" type="button" aria-label="Jobs summary">&#9638;</button></div>';
     if(!D.rows.length) jh+='<div class="empty" style="padding:14px 0">No jobs for this day. Add one above.</div>'; else jh+='<div class="jhead"><span>Fare type</span><span>Gross</span><span>Net</span></div>';
