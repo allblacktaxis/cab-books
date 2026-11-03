@@ -5299,7 +5299,19 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
         /* Bank estimates this statement had replaced come back if no other statement still covers them. */
         var left=stList().filter(function(s){return s.id!==g.stmt}), back=[];
         if(g.stmt) (S.entriesRaw||[]).forEach(function(e){ if(gone[e.id]||e.est!=='bank'||!e.superseded) return; var net=bankNet(e); if(net==null||!stCoversBank(e.provider,e.date,net,left)) back.push(e); });
-        return Promise.all(back.map(function(e){ var d=Object.assign({},e); delete d.id; delete d.superseded; return S.db.collection('entries').doc(e.id).set(d); })).then(function(){ return back.length; });
+        /* Removing a bank import also winds back "bank lines up to" to the last bank line still in the books,
+           so a replacement statement isn't skipped and typed expenses for those days count again (Marcin, 3 Nov 2026). */
+        var cj=Promise.resolve();
+        if(g.label==='Bank statement'){
+          var last=''; (S.entriesRaw||[]).forEach(function(e){ if(gone[e.id]||e.src!=='import'||e.stmt) return; if(!(e.est==='bank'||(e.kind==='expense'&&!e.provider))) return; if(e.date>last) last=e.date; });
+          /* "To sort out" lines saved with this import go too; ones from other imports keep their dates. */
+          var t0=Infinity,t1=0; (S.entriesRaw||[]).forEach(function(e){ if(!gone[e.id]) return; var t=+e.ts||0; if(t<t0) t0=t; if(t>t1) t1=t; });
+          var tsDel=[]; Object.keys(S.tosort||{}).forEach(function(k){ var t=S.tosort[k]; if(!t) return; var tt=+t.ts||0;
+            if(t1&&tt>=t0-60000&&tt<=t1+60000){ tsDel.push(k); return; } if(t.d>last) last=t.d; });
+          cj=Promise.all(tsDel.map(function(k){ return S.db.collection('tosort').doc(k).delete(); }));
+          if(last<(S.bankCov||'')){ S.bankCov=last; cj=cj.then(function(){ return S.db.collection('settings').doc('bank').set({covered:last}); }); var bf=$('bk-from'); if(bf) bf.value=''; }
+        }
+        return cj.then(function(){ return Promise.all(back.map(function(e){ var d=Object.assign({},e); delete d.id; delete d.superseded; return S.db.collection('entries').doc(e.id).set(d); })); }).then(function(){ if(typeof bkStatus==='function') bkStatus(); return back.length; });
       }).then(function(nb){ toast('Removed '+g.label+': '+n+' record'+(n===1?'':'s')+(nb?', '+nb+' bank estimate'+(nb===1?'':'s')+' restored':'')); ihRender(); }).catch(function(e){ fail(e); ihRender(); });
     });
   }
