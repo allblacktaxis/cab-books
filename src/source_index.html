@@ -1634,9 +1634,12 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     else { P.from=r.from||dayAdd(t,-6); P.to=r.to||t; if(P.to<P.from){var x=P.from;P.from=P.to;P.to=x} P.label=dlabel(P.from)+' – '+dlabel(P.to); P.nav=false; }
     return P;
   }
-  /* FreeNow and Gett take no commission on extras (drop-off fees, parking) – Matt 29 Oct. Others (e.g. card machines) charge on the total. */
-  var NOEXFEE=['freenow','gett'];
-  function feeBaseAmt(e){ return (+e.amount||0)+(NOEXFEE.indexOf(String(e.provider||'').toLowerCase())>=0?0:(+e.extras||0)); }
+  /* Commission rules for jobs (Matt, 3 Nov 2026). Tips never carry commission.
+     Job apps (FreeNow, Gett, ComCab, Uber if it ever charges): commission on the fare only, not on extras.
+     Card machines (Curb, HIPS – card taken in the cab): fee on fare + extras. */
+  var NOEXFEE=['freenow','gett','comcab','uber'];
+  function feeIsCard(e){ var k=bkey(e.provider); return isCardK(k) || (e.pay==='Card' && !!CARDFEE_PROV[k]); }
+  function feeBaseAmt(e){ var x=+e.extras||0; if(!feeIsCard(e) && NOEXFEE.indexOf(bkey(e.provider))>=0) x=0; return (+e.amount||0)+x; }
   /* A fee is always a cost: a minus sign from a statement or a typed '-' must not turn it into income (Matt 2 Nov). */
   function lineFee(e){var c=Math.abs(+e.commission||0), f=Math.abs(+e.feeFixed||0); return Math.round((feeBaseAmt(e)*c/100+f)*100)/100}
   function agg(P){
@@ -5095,7 +5098,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     var pv=Object.keys(provs), S0={prov:pv.length===1?pv[0]:'Mixed',kind:'file',label:'Cab Books file'+(pv.length?' ('+pv.join(', ')+')':''),jobs:[],extras:[],costs:[],checks:[],file:name};
     var tot=0, fee=0;
     fares.forEach(function(k){ var e=E[k];
-      var f=Math.abs(+e.feeFixed||0)+Math.round(Math.abs(+e.commission||0)*((+e.amount||0)+(+e.extras||0)))/100;
+      var f=Math.abs(+e.feeFixed||0)+Math.round(Math.abs(+e.commission||0)*feeBaseAmt(e))/100;
       S0.jobs.push({id:k,ref:e.ref||'',date:e.date,time:e.time||'',type:'',method:e.note||'',pay:e.pay||'Account',cash:e.pay==='Cash',fare:+e.amount||0,tip:+e.tips||0,extras:+e.extras||0,fee:r2(f),prov:e.provider,card:e.card});
       tot+=(+e.amount||0)+(+e.extras||0); fee+=f; });
     ids.forEach(function(k){ var e=E[k]; if(e&&e.kind==='expense') S0.costs.push({id:k,date:e.date,category:e.category||'Other',amount:Math.abs(+e.amount||0),note:e.note||''}); });
