@@ -409,8 +409,10 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .pdot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:7px;flex:none;vertical-align:0}
 .chips button .pdot{margin-right:6px}
 /* Job form: provider and 'Paid by' buttons all the same size, three to a row (Matt, 3 Nov 2026) */
+#j-title{font-size:20px;font-weight:700;color:var(--ink)}
 #c-prov,#c-pay{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 #c-prov button,#c-pay button{width:100%;min-height:48px;padding:8px 6px;display:flex;align-items:center;justify-content:center;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#c-prov button{min-height:58px}
 
 /* ===== Modern refresh (27 Oct): borderless surfaces, larger radii, sentence case, icon tab bar ===== */
 body{font-size:15px;letter-spacing:-.005em}
@@ -746,7 +748,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
       </div>
     </details>
     <div class="card">
-      <div class="cardhead"><h2 id="j-title">Add job</h2><button class="btn ghost small" id="d-toggle" type="button">Hide</button></div>
+      <div class="cardhead"><h2 id="j-title">Add job</h2><button class="btn ghost small" id="d-toggle" type="button" hidden>Hide</button></div>
       <div id="d-form">
         <div class="field"><label id="l-prov">Provider</label><div class="chips" id="c-prov" role="group" aria-labelledby="l-prov"></div></div>
         <div class="field"><label id="l-pay">Paid by</label><div class="chips" id="c-pay" role="group" aria-labelledby="l-pay"></div></div>
@@ -2302,7 +2304,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     Array.prototype.forEach.call(jb.querySelectorAll('[data-job]'),function(b){ b.addEventListener('click',function(){ editJob(b.getAttribute('data-job')); }); });
     Array.prototype.forEach.call(jb.querySelectorAll('[data-jedit]'),function(b){ b.addEventListener('click',function(){ var id=b.getAttribute('data-jedit'); editJob(id); var f=$('d-form'); if(f && String(id).indexOf('bill:')!==0){ S.addOpen=true; f.hidden=false; $('d-toggle').textContent='Hide'; f.scrollIntoView({behavior:'smooth',block:'start'}); } }); });
     Array.prototype.forEach.call(ex.querySelectorAll('[data-xdel]'),function(b){ b.addEventListener('click',function(){ delEntry(b.getAttribute('data-xdel')); }); });
-    if(S.addOpen===null) S.addOpen=true;
+    S.addOpen=true; /* the job form is always open – no Hide button (Matt, 3 Nov 2026) */
     $('d-form').hidden=!S.addOpen; $('d-toggle').textContent=S.addOpen?'Hide':'Show';
   }
   function openJobsSummary(D,prov){
