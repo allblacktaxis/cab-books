@@ -4584,6 +4584,15 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   $('ru-cat').innerHTML=EXPCATS.map(function(x){return '<option>'+x+'</option>'}).join(''); resetRuleForm();
   $('ru-save').addEventListener('click',saveRule); $('ru-cancel').addEventListener('click',function(){ resetRuleForm(); $('ru-form').open=false; });
   $('j-save').addEventListener('click',saveJob); $('e-add').addEventListener('click',saveExpense);
+  /* Tapping Fare (or Tip) brings that row to the top of the screen, so Save job shows above the keyboard (Matt, 3 Nov 2026). */
+  function fareToTop(){
+    var row=$('j-amt').closest('.field'); row=row&&row.parentElement||row; if(!row) return;
+    function go(){ var y=row.getBoundingClientRect().top+(window.pageYOffset||document.documentElement.scrollTop)-8; window.scrollTo({top:Math.max(0,y),behavior:'smooth'}); }
+    setTimeout(go,60);
+    /* Again once the phone keyboard has finished opening (it moves the page). */
+    var vv=window.visualViewport, done=false; if(vv){ var h=function(){ if(done) return; done=true; vv.removeEventListener('resize',h); setTimeout(go,30); }; vv.addEventListener('resize',h); setTimeout(function(){ if(!done){ done=true; vv.removeEventListener('resize',h); go(); } },450); }
+  }
+  ['j-amt','j-tips'].forEach(function(id){ var el=$(id); if(el) el.addEventListener('focus',fareToTop); });
   $('d-toggle').addEventListener('click',function(){ S.addOpen=!S.addOpen; renderDay(); });
   $('d-prev').addEventListener('click',function(){ S.day=dayAdd(S.day,-1); setEditing(null); renderDay(); renderEvents(); });
   $('d-next').addEventListener('click',function(){ S.day=dayAdd(S.day,1); setEditing(null); renderDay(); renderEvents(); });
