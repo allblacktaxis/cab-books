@@ -2346,6 +2346,8 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     $('j-hint').hidden=!!d;
   }
   function applyFeeDefaults(){
+    /* Settle the payment type first (e.g. Hand → card machine), so the fee matches the button shown as selected. */
+    fixPay(); if(S.pay==='Card' && CARDSYS.indexOf(S.card)<0) S.card=cardSys();
     var d=formFee(S.prov,S.pay,S.day);
     $('j-fix').value=''; S.feeManual=!d; renderFee();
   }
