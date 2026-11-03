@@ -375,6 +375,9 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .phand{display:inline-block;margin-right:6px;font-size:15px;line-height:1}
 .pdot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:7px;flex:none;vertical-align:0}
 .chips button .pdot{margin-right:6px}
+/* Job form: provider and 'Paid by' buttons all the same size, three to a row (Matt, 3 Nov 2026) */
+#c-prov,#c-pay{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+#c-prov button,#c-pay button{width:100%;min-height:48px;padding:8px 6px;display:flex;align-items:center;justify-content:center;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 /* ===== Modern refresh (27 Oct): borderless surfaces, larger radii, sentence case, icon tab bar ===== */
 body{font-size:15px;letter-spacing:-.005em}
