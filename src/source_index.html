@@ -1692,7 +1692,10 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
           A.loaded++;
           if(md.parts) Object.keys(md.parts).forEach(function(p){ var b=bp(p), v=(+md.parts[p]||0); b.turn+=v; b.hist+=v; });
           A.tips+=+md.tips||0; A.fees+=+md.fees||0;
-          var ex=md.expenses||{}; Object.keys(ex).forEach(function(c){ addExp(c,+ex[c]||0); });
+          /* Once a bank statement for this month is imported, the bank lines are the costs: the workbook's own
+             expense figures for the month are dropped so the same rent and petrol aren't counted twice (Matt, Oct 2026). */
+          var bankM=S.entries.some(function(e){ return e.m===k&&e.kind==='expense'&&e.src==='import'&&!e.stmt; });
+          var ex=bankM?{}:(md.expenses||{}); Object.keys(ex).forEach(function(c){ addExp(c,+ex[c]||0); });
         }
         if(idx>=0 && C.used[idx]!=null && !C.planned[idx]) A.turn+=C.used[idx];
       });
