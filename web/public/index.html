@@ -877,9 +877,9 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
       <div id="ts-list"></div>
     </div>
     <div class="card" id="st-card">
-      <h2>Statements from FreeNow, Gett, Curb, ComCab, Uber and Taxiworld</h2>
+      <h2>Taxi app statements (PDFs)</h2><p class="help" style="margin:-4px 0 8px"><b>FreeNow, Gett, Uber, Curb, ComCab and Taxiworld.</b> Their PDFs go here, not in the bank box further down.</p>
       <p class="help">Choose one or more statements: FreeNow's weekly PDFs, Gett's daily or weekly PDFs, Curb's reports (PDF, Excel or CSV), ComCab's driver statement and pay sheet, Uber's weekly statement, or Taxiworld's payment PDF. You can pick several at once. Cab Books works out which is which, checks the totals add up, and adds each job once. Reading the same statement again is safe.</p>
-      <div class="field"><label for="st-file">Statement files</label><input type="file" id="st-file" multiple accept=".pdf,.xlsx,.xls,.csv,.json,application/json,application/pdf,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"></div>
+      <div class="field"><label for="st-file">Choose your taxi app statements (PDF, Excel or CSV)</label><input type="file" id="st-file" multiple accept=".pdf,.xlsx,.xls,.csv,.json,application/json,application/pdf,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"></div>
       <div class="field" style="margin-bottom:0"><label>When FreeNow or Gett say “cash”, the customer paid</label>
         <div class="seg" role="group" aria-label="Cash jobs were paid"><button type="button" data-stvia="card" aria-pressed="true">By card in my cab (Curb)</button><button type="button" data-stvia="cash" aria-pressed="false">In real cash</button></div></div>
       <div id="st-res"></div>
@@ -900,11 +900,11 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
       </div>
     </div>
     <div class="card" id="bk-card">
-      <h2>Bank statement</h2>
+      <h2>Bank statement (CSV only)</h2>
       <p class="help" id="bk-help">Brings in what the taxi apps paid you and the money going out. Payments from FreeNow, Gett, Uber, Curb, ComCab, Taxiworld, Helix Pay and HIPS are recognised, with the commission added back to estimate your fares. Payees are sorted into categories, and anything unknown is left out as personal until you say otherwise. Bank figures replace the expenses you typed, up to the statement's last date.</p>
       <div id="bk-status" class="help" style="margin:-4px 0 10px"></div>
       <div id="bk-done" class="preview" style="border-left:4px solid var(--ok)" hidden></div>
-      <div class="field"><label for="bk-file">CSV file</label><input type="file" id="bk-file" accept=".csv,.txt,text/csv,text/plain"></div>
+      <div class="field"><label for="bk-file">Choose your bank CSV file</label><p class="help" style="margin:2px 0 6px">PDFs from FreeNow, Gett or Uber go in <b>Taxi app statements</b> at the top of this page.</p><input type="file" id="bk-file" accept=".csv,.txt,text/csv,text/plain"></div>
       <div class="field"><label for="bk-text">…or paste the rows (with the header line)</label><textarea id="bk-text" spellcheck="false" placeholder="Date,Description,Paid out,Paid in"></textarea></div>
       <button class="btn ghost" id="bk-read" type="button">Read it</button>
     </div>
@@ -2266,7 +2266,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
 
   /* ---------- day page ---------- */
   S.prov='Freenow'; S.pay='Account'; S.day=todayISO(); S.editId=null; S.addOpen=null;
-  var EXPCATS=['Car rental','Petrol','Electric charging','Parking / drop-off','Car wash','Cab repairs / parts','Cleaning / admin supplies','Union','Phone / broadband','Other'];
+  var EXPCATS=['Car rental','Petrol','Electric charging','Parking / drop-off','Car wash','Cab repairs / parts','Cleaning / admin supplies','Union','Phone / broadband','Paid another driver (shared job)','Other'];
   function dayLabel(iso){var p=iso.split('-'),d=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][dowOf(iso)],ML=['January','February','March','April','May','June','July','August','September','October','November','December'];return d+' '+(+p[2])+' '+ML[+p[1]-1]+(p[0]!==String(new Date().getFullYear())?' '+p[0]:'')}
   function dayData(iso){
     var C=compute(S.entries), EI=expImpMap(), D={rows:[],gross:0,fees:0,tips:0,pay:{},exp:[],expTotal:0,expEst:0};
@@ -4703,7 +4703,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   document.addEventListener('keydown',function(ev){ if(ev.key==='Escape' && !$('setovl').hidden) closeSettings(); });
   $('jsum').addEventListener('click',function(ev){ if(ev.target===$('jsum')) $('jsum').hidden=true; });
   $('m-prov').innerHTML=PROVS.map(function(x){return popt(x)}).join('');
-  $('m-cat').innerHTML=['Car rental','Petrol','Electric charging','Parking / drop-off','Car wash','Cab repairs / parts','Cleaning / admin supplies','Union','Phone / broadband','Other'].map(function(x){return '<option>'+x+'</option>'}).join('');
+  $('m-cat').innerHTML=['Car rental','Petrol','Electric charging','Parking / drop-off','Car wash','Cab repairs / parts','Cleaning / admin supplies','Union','Phone / broadband','Paid another driver (shared job)','Other'].map(function(x){return '<option>'+x+'</option>'}).join('');
   $('i-file').addEventListener('change',function(){
     var f=this.files&&this.files[0]; if(!f) return;
     var rd=new FileReader(); rd.onload=function(){ $('i-text').value=String(rd.result).slice(0,2000000); readCSV(String(rd.result)); }; rd.readAsText(f);
