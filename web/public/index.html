@@ -936,11 +936,12 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
       <button class="btn" id="bk-save" type="button">Import</button>
     </div>
     <div class="card">
-      <h2>Import a statement</h2>
-      <p class="help">Choose a CSV from your bank or a provider, or paste its rows. Rows already imported are skipped, so you can safely import the same file twice.</p>
+      <details><summary style="cursor:pointer;font-weight:700">Other spreadsheet (advanced)</summary>
+      <p class="help" style="margin-top:8px">Only for a list Cab Books doesn't read by itself, such as your own list of private-client fares, where you match the columns yourself. Taxi app statements go in the box at the top, and bank statements in the Bank statement box. Rows already imported are skipped.</p>
       <div class="field"><label for="i-file">CSV file</label><input type="file" id="i-file" accept=".csv,.txt,text/csv,text/plain"></div>
-      <div class="field"><label for="i-text">…or paste the rows (with the header line)</label><textarea id="i-text" spellcheck="false" placeholder="Date,Description,Amount&#10;26/10/2026,CURB MOBILITY,45.20"></textarea></div>
+      <div class="field"><label for="i-text">…or paste the rows (with the header line)</label><textarea id="i-text" spellcheck="false" placeholder="Date,Description,Amount&#10;26/10/2026,Private client,45.20"></textarea></div>
       <button class="btn ghost" id="i-read" type="button">Read it</button>
+      </details>
     </div>
     <div class="card" id="i-map" hidden>
       <h2>Match the columns</h2>
@@ -5097,6 +5098,34 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     S0.checks.push(chk(true,'Curb fee worked out as 2.75% of each payment + 20p (none on manual entries or refunds).'));
     return S0;
   }
+  /* ---- Heathrow drop-off account export (Matt, 4 Nov): ReceiptId, AmountPaid, EntryDateTime, LocationCode, Status…
+     Paid by auto-pay from a separate account, so these never show in the bank: each paid receipt becomes a
+     Parking / drop-off cost. Cancelled receipts are skipped. Drop-offs before the bank records in Cab Books start
+     are left out, because those months' costs are in the earlier workbook figures. */
+  function lhrSheet(rows,name){
+    var hi=-1, H=null;
+    for(var i=0;i<Math.min(rows.length,6);i++){ var low=rows[i].map(function(c){return String(c).toLowerCase().replace(/[^a-z]/g,'')});
+      if(low.indexOf('receiptid')>=0&&low.indexOf('amountpaid')>=0){ hi=i; H=low; break; } }
+    if(hi<0) return null;
+    var col=function(n){ return H.indexOf(n); }, cR=col('receiptid'), cA=col('amountpaid'), cE=col('entrydatetime'), cV=col('provideddatetime')>=0?col('provideddatetime'):col('providedvisitdatetime'), cP=col('paymentdatetime'), cC=col('cancellationdatetime'), cS=col('status'), cL=col('locationcode');
+    var start=''; (S.entriesRaw||[]).forEach(function(e){ if(e.src==='import'&&!e.stmt&&e.kind==='expense'&&!e.provider&&e.date&&(!start||e.date<start)) start=e.date; }); if(start) start=start.slice(0,8)+'01';   /* whole months: the workbook covers months before that */
+    var S0={prov:'Heathrow',kind:'costs',label:'Heathrow drop-off receipts',jobs:[],extras:[],costs:[],checks:[],file:name}, cancelled=0, early=0, earlyAmt=0, seen={};
+    rows.slice(hi+1).forEach(function(r){
+      var id=String(r[cR]==null?'':r[cR]).trim(); if(!id||seen[id]) return; seen[id]=1;
+      if((cC>=0&&String(r[cC]||'').trim())||(cS>=0&&/cancel|refund/i.test(String(r[cS]||'')))){ cancelled++; return; }
+      var d=stCell(cE>=0&&r[cE]?r[cE]:cV>=0&&r[cV]?r[cV]:r[cP]), amt=Math.abs(stMoney(r[cA])); if(!d||!amt) return;
+      if(start&&d<start){ early++; earlyAmt+=amt; return; }
+      var t=cL>=0?String(r[cL]||'').replace(/^HEATHROW/i,'').trim():'';
+      S0.costs.push({id:'lhr-'+id.replace(/[^A-Za-z0-9]/g,''),date:d,category:'Parking / drop-off',amount:r2(amt),note:'Heathrow drop-off'+(t?' '+t:'')});
+    });
+    if(!S0.costs.length&&!early) return null;
+    var ds=S0.costs.map(function(c){return c.date}).sort(); S0.from=ds[0]||''; S0.to=ds[ds.length-1]||''; S0.ref='lhr-'+(S0.from||'none')+'-'+(S0.to||'none');
+    var tot=r2(S0.costs.reduce(function(s,c){return s+c.amount},0)); S0.total=tot;
+    S0.checks.push(chk(true,S0.costs.length+' paid drop-off'+(S0.costs.length===1?'':'s')+', '+gbp2.format(tot)+', added as Parking / drop-off costs (paid from another account, so not in your bank).'));
+    if(early) S0.checks.push(chk(true,early+' earlier drop-off'+(early===1?'':'s')+' ('+gbp2.format(earlyAmt)+') before '+dlabel(start)+' left out: those months are in your earlier workbook figures.'));
+    if(cancelled) S0.checks.push(chk(true,cancelled+' cancelled receipt'+(cancelled===1?'':'s')+' skipped.'));
+    return S0;
+  }
   /* ---- Curb portal's transaction export (Tran<date>.csv, Matt 4 Nov): TranDate, CRTYPE, amount, ApprovalCode,
      Trips (fare), Extras, tips… One row per card payment, same auth codes as the card transaction report,
      so the two never double up. Refunds come as minus amounts. A row with no approval code (Curb notes
@@ -5345,7 +5374,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
         return cbJson(js,nm);
       }
       if(/\.(xlsx|xls|csv|txt)$/.test(low)){
-        return stSheetRows(buf).catch(function(e){ if(/numbers/i.test(String(e&&e.message||e))) throw new Error('This is an Apple Numbers file. Open it in Numbers, tap ⋯ → Export → Excel (or CSV), and choose that file here. Or download it again from Curb and save it straight to Files without opening it.'); throw e; }).then(function(rows){ return ccSheet(rows,nm)||curbSheet(rows,nm)||{err:'This spreadsheet is not a Curb or ComCab report Cab Books knows. For bank statements use the Bank statement box below.',file:nm}; });
+        return stSheetRows(buf).catch(function(e){ if(/numbers/i.test(String(e&&e.message||e))) throw new Error('This is an Apple Numbers file. Open it in Numbers, tap ⋯ → Export → Excel (or CSV), and choose that file here. Or download it again from Curb and save it straight to Files without opening it.'); throw e; }).then(function(rows){ return ccSheet(rows,nm)||curbSheet(rows,nm)||lhrSheet(rows,nm)||{err:'This spreadsheet is not a Curb or ComCab report Cab Books knows. For bank statements use the Bank statement box below.',file:nm}; });
       }
       return {err:'Choose a PDF, Excel, CSV or Cab Books (.json) file.',file:nm};
     }).catch(function(e){ return {err:(e&&e.message)||'Could not read this file.',file:nm}; });
