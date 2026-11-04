@@ -879,7 +879,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     <div class="card" id="st-card">
       <h2>Taxi app statements (PDFs)</h2><p class="help" style="margin:-4px 0 8px"><b>FreeNow, Gett, Uber, Curb, ComCab and Taxiworld.</b> Their PDFs go here, not in the bank box further down.</p>
       <p class="help">Choose one or more statements: FreeNow's weekly PDFs, Gett's daily or weekly PDFs, Curb's reports (PDF, Excel or CSV), ComCab's driver statement and pay sheet, Uber's weekly statement, or Taxiworld's payment PDF. You can pick several at once. Cab Books works out which is which, checks the totals add up, and adds each job once. Reading the same statement again is safe.</p>
-      <div class="field"><label for="st-file">Choose your taxi app statements (PDF, Excel or CSV)</label><input type="file" id="st-file" multiple accept=".pdf,.xlsx,.xls,.csv,.json,application/json,application/pdf,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"></div>
+      <div class="field"><label for="st-file">Choose your taxi app statements (PDF, Excel or CSV)</label><input type="file" id="st-file" multiple></div>
       <div class="field" style="margin-bottom:0"><label>When FreeNow or Gett say “cash”, the customer paid</label>
         <div class="seg" role="group" aria-label="Cash jobs were paid"><button type="button" data-stvia="card" aria-pressed="true">By card in my cab (Curb)</button><button type="button" data-stvia="cash" aria-pressed="false">In real cash</button></div></div>
       <div id="st-res"></div>
@@ -5284,6 +5284,13 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   function stReadFile(f){
     var nm=f.name||'file', low=nm.toLowerCase();
     return stBuf(f).then(function(buf){
+      /* Go by what's inside, not the name: Curb's downloads can arrive with no ending, e.g. "TRANTO26110402233" (Matt, 4 Nov). */
+      var hd=new Uint8Array(buf.slice(0,8)), sig=String.fromCharCode.apply(null,hd);
+      var isPdf=sig.indexOf('%PDF')===0, isZip=sig.indexOf('PK')===0, isOle=hd[0]===0xD0&&hd[1]===0xCF&&hd[2]===0x11&&hd[3]===0xE0;
+      var first=new TextDecoder('utf-8').decode(buf.slice(0,64)).replace(/^\uFEFF/,'').trim().charAt(0);
+      if(isPdf) low=low.replace(/(\.[a-z0-9]{1,5})?$/,'')+'.pdf';
+      else if(first==='{'&&!isZip&&!isOle) low+='.json';
+      else if(!/\.(xlsx|xls|csv|txt|json|pdf)$/.test(low)) low+=isZip?'.xlsx':isOle?'.xls':'.csv';
       if(/\.pdf$/.test(low)||f.type==='application/pdf'){
         return stPdfLines(buf).then(function(L){
           var t=L.join('\n');
