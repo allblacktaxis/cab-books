@@ -4878,8 +4878,15 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     if(!d.jobs.length || d.jobs.some(function(j){return !j.date || !(j.fare>0)})){ toast('Each job needs a date and a fare.'); return; }
     var no=S.bv.no||nextBillNo(), old=S.bills[no]||{};
     var data=Object.assign(d,{no:no,demo:!!old.demo,otherPaid:old.otherPaid||{},paid:!!old.paid,paidDate:old.paidDate||'',created:old.created||Date.now(),ts:Date.now()});
-    $('bd-save').disabled=true;
-    S.db.collection('bills').doc(no).set(data).then(function(){ toast('Receipt '+no+' saved'); S.bv={mode:'view',no:no,draft:null,armDel:false,filter:S.bv.filter}; renderBills(); window.scrollTo(0,0); }).catch(function(e){ fail(e); $('bd-save').disabled=false; });
+    var sb=$('bd-save'); if(sb) sb.disabled=true;
+    /* Don't wait for the server to confirm before moving on: on a phone with a weak or stalled connection that wait
+       never ended and the button stayed greyed out (Matt, 4 Nov). The change is kept on the phone and sent when it can. */
+    var done=false;
+    function finish(){ if(done) return; done=true; toast('Receipt '+no+' saved'); if(S.bv.mode==='edit'){ var ae=document.activeElement; if(ae&&ae.blur) ae.blur(); S.bv={mode:'view',no:no,draft:null,armDel:false,filter:S.bv.filter}; renderBills(); window.scrollTo(0,0); } }
+    function oops(e){ if(done){ toast('Receipt '+no+' could not be saved: '+((e&&e.message)||'try again')); return; } done=true; fail(e); var x=$('bd-save'); if(x) x.disabled=false; }
+    var p; try{ p=S.db.collection('bills').doc(no).set(data); }catch(e){ oops(e); return; }
+    Promise.resolve(p).then(finish,oops);
+    setTimeout(finish,1500);
   }
   function billText(b,no){ var c=billCalc(b), L=[brandName(),'Taxi Journey Receipt '+no,'Date: '+dlabel(b.date),'Receipt to: '+b.customer,''];
     (b.jobs||[]).forEach(function(j,i){ L.push('Job '+(i+1)+' - '+fmtD(j.date)+' - '+(j.route||'')+' - Driver: '+(j.driver||S.drivers[0])+' - '+gbp2.format(+j.fare||0)+((+j.parking)?' (parking/drop off '+gbp2.format(+j.parking)+')':'')); });
