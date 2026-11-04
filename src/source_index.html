@@ -2874,10 +2874,10 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     if(!S.bk) return;
     var di=+$('bk-date').value, ci=+$('bk-desc').value, oi=+$('bk-out').value, neg=$('bk-neg').checked, from=$('bk-from').value;
     var ii=+$('bk-in').value, incOn=$('bk-inc').checked, inc=[], oth=[], seenI={};
-    var rows=[], skipped=0, maxDate='', seen={};
+    var rows=[], skipped=0, maxDate='', seen={}, early=0, earliest='';
     S.bk.raw.forEach(function(r){
       var d=parseDate(r[di]); if(!d){ skipped++; return; }
-      if(from&&d<from) return;
+      if(from&&d<from){ early++; if(!earliest||d<earliest) earliest=d; return; }
       if(d>maxDate) maxDate=d;
       var a=parseAmt(r[oi]);
       if(incOn){
@@ -2896,7 +2896,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
       seen[base]=(seen[base]||0)+1;
       rows.push({d:d,desc:desc,amt:out,key:key,auto:bkMatch(desc),id:'b'+hash(base)+'n'+seen[base]});
     });
-    S.bk.rows=rows; S.bk.inc=inc; S.bk.oth=oth; S.bk.maxDate=maxDate; S.bk.skipped=skipped; bkRender();
+    S.bk.rows=rows; S.bk.inc=inc; S.bk.oth=oth; S.bk.maxDate=maxDate; S.bk.skipped=skipped; S.bk.early=early; S.bk.earliest=earliest; bkRender();
   }
   function bkEff(r){ return r.auto||S.bk.choice[r.key||('#'+r.id)]||'ignore'; }
   function bkRender(){
@@ -2935,6 +2935,9 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     var inAdd=IN.add.length, parts=[];
     if(inAdd+inOth) parts.push((inAdd+inOth)+' payment'+((inAdd+inOth)>1?'s':'')+' in'); if(toAdd) parts.push(toAdd+' expense'+(toAdd>1?'s':'')); if(later) parts.push(later+' to sort out');
     $('bk-save').disabled=(!rows.length&&!inAdd&&!oth.length)||(!toAdd&&!inAdd&&!inOth&&!later&&!(B.maxDate>S.bankCov)); $('bk-save').textContent=parts.length?('Import '+parts.join(' and ')):(B.maxDate>S.bankCov?'Mark statement as covered':'Nothing new to import');
+    /* Rows dated before "Only rows on or after" are left out; say so, so an older statement doesn't look empty (Matt, 4 Nov). */
+    var fn=$('bk-fromnote'); if(!fn){ fn=document.createElement('p'); fn.id='bk-fromnote'; fn.className='warnbox'; var fb=$('bk-from'); if(fb&&fb.parentNode) fb.parentNode.parentNode.insertBefore(fn,fb.parentNode.nextSibling); }
+    if(fn){ if(B.early){ fn.hidden=false; fn.textContent=B.early+' row'+(B.early===1?' is':'s are')+' dated before '+dlabel($('bk-from').value)+' (from '+dlabel(B.earliest)+'), so '+(B.early===1?'it is':'they are')+' left out. To bring '+(B.early===1?'it':'them')+' in, change "Only rows on or after" to '+dlabel(B.earliest)+'. Lines already in your books are never added twice.'; } else fn.hidden=true; }
   }
   function bkSave(){
     if(!S.db||!S.bk||!S.bk.rows) return;
