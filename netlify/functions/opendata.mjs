@@ -115,7 +115,7 @@ export function summariseTube(lines) {
   }
   return out.sort((a, b) => a.name.localeCompare(b.name, 'en', { sensitivity: 'base' }));
 }
-async function getTube() {
+export async function getTube() {
   const key = process.env.TFL_APP_KEY;
   const r = await fetch(TUBE_URL + (key ? '?app_key=' + encodeURIComponent(key) : ''), { headers: { Accept: 'application/json', 'User-Agent': 'CabBooks-line-status/1.0' } });
   if (!r.ok) throw new Error('source_' + r.status);
