@@ -2759,7 +2759,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   S.bankRules={}; S.bankCov=''; S.bk=null;
   var BK_RULES=[
     ['Electric charging',/NY[AX]\*|SQ \*MOTOR|NAYAX|EV POWER|POD ?POINT|BP PULSE|GRIDSERVE|CHARGEPLACE|CHARGEMASTER|SMART CHARGE|ESB EV/],
-    ['Petrol',/\bBP\b|SHELL|ESSO|TEXACO|MURCO|\bJET\b|GULF|RONTEC|\bMFG\b|\bTGC\b|WANDSWORTH SF|\bFUEL\b|PETROL/],
+    ['Petrol',/\bBP\b|SHELL|ESSO|TEXACO|MURCO|\bJET\b|GULF|RONTEC|\bMFG\b|\bTGC\b|WANDSWORTH SF|\bSF\b\s*,?\s*CONNEC|\bFUEL\b|PETROL/],
     ['Parking / drop-off',/DROP ?OFF|\bLCA\b|LONDON CITY AIRPORT|APCOA|HEATHROW|GATWICK AIRPORT/],
     ['Car rental',/\bCAB\s*,?\s*[A-Z]{2}\d{2}\s?[A-Z]{3}\b|ECLIPSE INTEGRATED|^\s*CAB\s*$|COMCAB|COMPUTER CAB/],   /* money out to ComCab = cab rent paid by card when the statement didn't cover it (Marcin 2 Nov) */
     ['Cleaning / admin supplies',/AMAZON|AMZN/],
