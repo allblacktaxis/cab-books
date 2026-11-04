@@ -1308,10 +1308,15 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
       h+='<div class="mrow'+(j===ci?' now':'')+'"><div class="top"><span class="m">'+esc(mlabel(k))+(C.planned[j]?'<span class="tag">plan</span>':'')+(md&&md.opening?'<span class="tag">before Cab Books</span>':'')+(opPart(k)?'<span class="tag">incl. '+gbp2.format(opPart(k))+' before Cab Books</span>':'')+'</span><span class="num">'+(v==null?'–':gbp2.format(v))+'</span></div>';
       if(md && md.parts){
         var det=Object.keys(PROV).map(function(p){ return md.parts[p]!=null ? '<div class="kv"><span class="k">'+PROV[p]+'</span><span class="v">'+gbp2.format(md.parts[p])+'</span></div>' : ''; }).join('');
-        h+='<details><summary>By provider'+(md.note?' · note':'')+'</summary>'+det+(md.note?'<p class="note">'+esc(md.note)+'</p>':'')+'</details>';
+        h+='<details><summary>'+(md.open?'Workbook part (to the dates below)':'By provider')+(md.note&&!md.open?' · note':'')+'</summary>'+det+(md.note&&!md.open?'<p class="note">'+esc(md.note)+'</p>':'')+'</details>';
       }
       if(C.ind[j]>0) h+='<div class="note">Includes '+gbp2.format(C.ind[j])+' of manual indication, not yet in statements.</div>';
-      if(md && md.open && md.covered){ h+='<div class="note">Statements run to: '+Object.keys(md.covered).map(function(p){return (PROV[p]||p)+' '+md.covered[p].slice(8)+'/'+md.covered[p].slice(5,7)}).join(', ')+'.</div>'; }
+      if(md && md.open && md.covered){
+        /* Workbook figures stop at these dates; statements brought in since carry each provider further (Matt, 4 Nov). */
+        var stTo={}; (typeof stList==='function'?stList():[]).forEach(function(st){ var pk=pkey(st.prov)||(st.prov==='Curb'?'curb':null); if(pk&&st.to&&(!stTo[pk]||st.to>stTo[pk])) stTo[pk]=st.to; });
+        var dm=function(d){ return d.slice(8)+'/'+d.slice(5,7); }, mEnd=k+'-'+String(new Date(+k.slice(0,4),+k.slice(5,7),0).getDate());
+        h+='<div class="note">Records run to: '+Object.keys(md.covered).map(function(p){ var d=md.covered[p], t=stTo[p]&&stTo[p]>d?stTo[p]:d; return (PROV[p]||p)+' '+(t>=mEnd||t.slice(0,7)>k?'month end ✓':dm(t)); }).join(', ')+'.</div>';
+      }
       var tipAll=(md&&+md.tips||0)+(tipSum[k]||0); if(tipAll) h+='<div class="note">Tips: '+gbp2.format(tipAll)+(md&&+md.tips&&tipSum[k]?' ('+gbp2.format(+md.tips)+' from statements + '+gbp2.format(tipSum[k])+' private and logged jobs)':'')+'. Taxable income, not in VAT turnover.</div>';
       if(expSum[k]) h+='<div class="note">Expenses logged here: '+gbp2.format(expSum[k])+'</div>';
       if(!hasActual){
