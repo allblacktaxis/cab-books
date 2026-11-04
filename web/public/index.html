@@ -1073,9 +1073,9 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     });
     var used=[], planned=[], indArr=[];
     keys.forEach(function(k){
-      var base = S.months[k] ? +S.months[k].total : null;
+      var base = S.months[k] ? +S.months[k].total : null, pt=opPart(k);
       indArr.push(ind[k]||0);
-      if(base!=null || nFare[k]){ used.push((base||0)+(act[k]||0)+(ind[k]||0)); planned.push(false); }
+      if(base!=null || nFare[k] || pt){ used.push((base||0)+(act[k]||0)+(ind[k]||0)+pt); planned.push(false); }
       else if(S.plans[k] && S.plans[k].amount!=null){ used.push(+S.plans[k].amount); planned.push(true); }
       else { used.push(null); planned.push(false); }
     });
@@ -1359,7 +1359,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
       var md=S.months[k], hasActual=!!md || S.entries.some(function(e){return e.kind==='fare'&&e.m===k});
       var v=C.used[j];
       if(!hasActual && j>ci+12 && !S.plans[k]) return;
-      h+='<div class="mrow'+(j===ci?' now':'')+'"><div class="top"><span class="m">'+esc(mlabel(k))+(C.planned[j]?'<span class="tag">plan</span>':'')+(md&&md.opening?'<span class="tag">before Cab Books</span>':'')+'</span><span class="num">'+(v==null?'–':gbp2.format(v))+'</span></div>';
+      h+='<div class="mrow'+(j===ci?' now':'')+'"><div class="top"><span class="m">'+esc(mlabel(k))+(C.planned[j]?'<span class="tag">plan</span>':'')+(md&&md.opening?'<span class="tag">before Cab Books</span>':'')+(opPart(k)?'<span class="tag">incl. '+gbp2.format(opPart(k))+' before Cab Books</span>':'')+'</span><span class="num">'+(v==null?'–':gbp2.format(v))+'</span></div>';
       if(md && md.parts){
         var det=Object.keys(PROV).map(function(p){ return md.parts[p]!=null ? '<div class="kv"><span class="k">'+PROV[p]+'</span><span class="v">'+gbp2.format(md.parts[p])+'</span></div>' : ''; }).join('');
         h+='<details><summary>By provider'+(md.note?' · note':'')+'</summary>'+det+(md.note?'<p class="note">'+esc(md.note)+'</p>':'')+'</details>';
@@ -1422,7 +1422,8 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
       +'<button class="btn ghost" id="dv-save" type="button">Save drivers</button></div>';
     h+='<div class="card"><h2>VAT settings</h2><div class="two"><div class="field"><label for="s-th">Threshold (£)</label><input type="number" id="s-th" inputmode="numeric" value="'+st.threshold+'"></div><div class="field"><label for="s-start">First month</label><input type="text" id="s-start" value="'+esc(st.start)+'" disabled></div></div>'
       +'<div class="two"><div class="field"><label for="s-am">Amber from (% of threshold)</label><input type="number" id="s-am" inputmode="numeric" value="'+Math.round(st.amberPct*100)+'"></div><div class="field"><label for="s-rd">Red from (% of threshold)</label><input type="number" id="s-rd" inputmode="numeric" value="'+Math.round(st.redPct*100)+'"></div></div>'
-      +'<button class="btn ghost" id="s-save" type="button">Save settings</button><p class="note">Check the current threshold on GOV.UK before relying on it. Amber and red levels are your own early warnings.</p></div>'+taxSettingsCard()
+      +'<button class="btn ghost" id="s-save" type="button">Save settings</button><p class="note">Check the current threshold on GOV.UK before relying on it. Amber and red levels are your own early warnings.</p>'
+      +'<div style="border-top:1px solid var(--line,rgba(127,127,127,.25));margin-top:12px;padding-top:12px"><b>Takings before Cab Books</b><p class="note" style="margin:4px 0 10px">Earnings from before you started recording here, for the 12-month VAT check. Includes a part month if you started mid-month.</p><button class="btn ghost" type="button" data-op="open-set">Add or change earlier takings</button></div></div>'+taxSettingsCard()
       +'<div class="card"><h2>Fee defaults</h2><p class="help">Commission % plus an optional fixed fee per job. These fill in when you add a job, and you can change them on any job. Gett cash is always entered per job.</p>'
       +PROVS.filter(function(n){return provShown(n)||(S.settings.fees&&S.settings.fees[n.toLowerCase()])}).map(function(n){var k=n.toLowerCase(), d=feeDefault(n,'Account')||[0,0]; return '<div class="two" style="align-items:end;margin-bottom:8px"><div class="field" style="margin:0"><label for="fd-'+k+'-p">'+esc(pname(n))+' %</label><input type="number" id="fd-'+k+'-p" data-fd="'+k+'" inputmode="decimal" step="0.01" min="0" value="'+(d[0]||0)+'"></div><div class="field" style="margin:0"><label for="fd-'+k+'-f">Fixed £</label><input type="text" class="money" autocomplete="off" id="fd-'+k+'-f" data-fd="'+k+'" inputmode="numeric" value="'+((+d[1]||0)?(+d[1]).toFixed(2):'')+'" placeholder="0.00"></div></div>'}).join('')
       +'<button class="btn ghost" id="fd-save" type="button">Save fee defaults</button>'+renderRateChanges()+'</div>'+renderMoveJobs();
@@ -2998,7 +2999,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
       if(early && early<st.start){
         jobs.push(S.db.collection('settings').doc('main').set({threshold:st.threshold,amberPct:st.amberPct,redPct:st.redPct,start:early,fees:st.fees||{}}));
       }
-      if(early){ var rs0=recStart(); jobs.push(S.db.collection('settings').doc('opening').set({done:true,recStart:early<rs0?early:rs0,ts:Date.now()})); }
+      if(early){ var rs0=recStart(); jobs.push(S.db.collection('settings').doc('opening').set({done:true,recStart:early<rs0?early:rs0,ts:Date.now()},{merge:true})); }
       learn.forEach(function(k){ jobs.push(S.db.collection('bankrules').doc('p'+hash(k)).set({pattern:k,category:B.choice[k],ts:Date.now()})); });
       learnIn.forEach(function(k){ jobs.push(S.db.collection('bankrules').doc('pi'+hash(k)).set({pattern:'in:'+k,category:B.choiceIn[k],ts:Date.now()})); });
       privIn.concat(refIn).forEach(function(x){ var e=bkDecisionEntry('in',x,bkInEff(x)); if(e) jobs.push(S.db.collection('entries').doc(x.id).set(e)); });
@@ -3271,6 +3272,10 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     return '<div class="card"><h2>Takings before Cab Books</h2><p class="help" style="margin:0 0 12px">The VAT check looks back 12 months. If you were driving before '+esc(mlabel(recStart()))+', add what you took so your VAT position is right from day one.</p>'
       +'<div class="two"><button class="btn" type="button" data-op="open">Add my takings</button><button class="btn ghost" type="button" data-op="none">I wasn’t driving</button></div></div>';
   }
+  /* Part month: takings earned in a month before the driver started recording it in Cab Books
+     (e.g. 1–20 December at a previous job). Kept separately and added on top of that month's records. */
+  function opPart(k){ var p=S.opening&&S.opening.part; return p&&+p[k]>0?+p[k]:0; }
+  function opPartKeys(){ var p=(S.opening&&S.opening.part)||{}, rs=recStart(), k=Object.keys(p).filter(function(x){ return +p[x]>0; }); if(k.indexOf(rs)<0) k.push(rs); return k.sort(); }
   function opKeys(){ var rs=recStart(), from=addMonths(rs,-12), k=[]; for(var i=0;i<12;i++) k.push(addMonths(from,i)); return k; }
   function openOpening(){
     var rs=recStart(), rows='';
@@ -3284,13 +3289,17 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
       +'<div class="field" style="margin:8px 0 0"><label for="op-total">Only know the 12-month total?</label><div class="feeline"><input type="text" class="money" id="op-total" inputmode="numeric" autocomplete="off" placeholder="0.00"><button type="button" class="btn ghost small" data-op="split">Split evenly</button></div></div>'
       +'<div class="card" style="padding:12px;background:var(--surface2)"><b>Have your bank statements?</b><p class="note" style="margin:4px 0 10px">Upload them instead: the payments from FreeNow, Gett, Uber and Curb are picked out for you, along with your costs.</p><button type="button" class="btn ghost small" data-op="bank">Use my bank statement</button></div>'
       +'<p class="note" style="margin:0">Or type them in:</p>'
-      +'<div>'+rows+'</div><div class="kv"><span class="k">12-month total</span><span class="v" id="op-sum">£0.00</span></div>'
+      +'<div>'+rows+'</div>'
+      +'<div class="card" style="padding:12px;background:var(--surface2);margin-top:8px"><b>Started part-way through a month?</b><p class="note" style="margin:4px 0 10px">If you were working before you started recording in Cab Books, add what you took in that month up to your start. It is added on top of the jobs already recorded for the month, never instead of them.</p>'
+      +opPartKeys().map(function(k){ var v=opPart(k); return '<div class="feeline" style="margin-bottom:8px"><label for="opp-'+k+'" style="margin:0;flex:1">'+esc(mlabel(k))+' <span class="tag">before Cab Books</span></label><input type="text" class="money" id="opp-'+k+'" data-opp="'+k+'" inputmode="numeric" autocomplete="off" placeholder="0.00" value="'+(v?v.toFixed(2):'')+'" style="max-width:150px"></div>'; }).join('')
+      +'</div>'
+      +'<div class="kv"><span class="k">Total before Cab Books</span><span class="v" id="op-sum">£0.00</span></div>'
       +'<button type="button" class="btn" data-op="save">Save takings</button>';
     Array.prototype.forEach.call($('op-body').querySelectorAll('input.money'),function(i){ moneyInput(i); i.addEventListener('input',opSum); });
     opSum(); $('opening').hidden=false;
   }
   function opVal(id){ var v=parseAmt(($(id)||{}).value||''); return isNaN(v)?0:Math.round(Math.abs(v)*100)/100; }
-  function opSum(){ var t=0; opKeys().forEach(function(k){ t+=opVal('op-'+k); }); var e=$('op-sum'); if(e) e.textContent=gbp2.format(t); }
+  function opSum(){ var t=0; opKeys().forEach(function(k){ t+=opVal('op-'+k); }); opPartKeys().forEach(function(k){ t+=opVal('opp-'+k); }); var e=$('op-sum'); if(e) e.textContent=gbp2.format(t); }
   function opSplit(){
     var tot=opVal('op-total'); if(!(tot>0)){ toast('Type the 12-month total first.'); return; }
     var free=opKeys().filter(function(k){ return !$('op-'+k).disabled; }); if(!free.length) return;
@@ -3299,16 +3308,17 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   }
   function saveOpening(skip){
     if(!S.db) return;
-    var rs=recStart(), mc=S.db.collection('months'), ops=[], any=false;
+    var rs=recStart(), mc=S.db.collection('months'), ops=[], any=false, full=false;
     if(!skip) opKeys().forEach(function(k){
       var md=S.months[k]; if(md&&!md.opening) return; /* never touch a month that holds real records */
       var v=opVal('op-'+k);
-      if(v>0){ any=true; ops.push(function(){ return mc.doc(k).set({m:k,total:v,opening:true,ts:Date.now()}); }); }
+      if(v>0){ any=true; full=true; ops.push(function(){ return mc.doc(k).set({m:k,total:v,opening:true,ts:Date.now()}); }); }
       else if(md&&md.opening) ops.push(function(){ return mc.doc(k).delete(); });
     });
-    var st=S.settings, ns=any?opKeys()[0]:rs;
+    var st=S.settings, ns=full?opKeys()[0]:(st.start<rs?st.start:rs);
     if(ns!==st.start) ops.push(function(){ return S.db.collection('settings').doc('main').set({threshold:st.threshold,amberPct:st.amberPct,redPct:st.redPct,start:ns,fees:st.fees||{}}); });
-    ops.push(function(){ return S.db.collection('settings').doc('opening').set({done:true,recStart:rs,ts:Date.now()}); });
+    var part={}; if(skip){ part=(S.opening&&S.opening.part)||{}; } else opPartKeys().forEach(function(k){ var v=opVal('opp-'+k); if(v>0){ part[k]=v; any=true; } });
+    ops.push(function(){ return S.db.collection('settings').doc('opening').set({done:true,recStart:rs,part:part,ts:Date.now()}); });
     var b=document.querySelector('[data-op="save"]'); if(b) b.disabled=true;
     ops.reduce(function(p,f){ return p.then(f); },Promise.resolve()).then(function(){
       $('opening').hidden=true; toast(skip?'Noted. Your VAT check starts from '+mlabel(rs)+'.':(any?'Takings saved. Your VAT check now includes them.':'Saved.'));
@@ -3317,6 +3327,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   document.addEventListener('click',function(ev){
     var b=ev.target.closest&&ev.target.closest('[data-op]'); if(!b) return;
     var a=b.getAttribute('data-op');
+    if(a==='open-set'){ var so=$('setovl'); if(so) so.hidden=true; openOpening(); return; }
     if(a==='open') openOpening(); else if(a==='none') saveOpening(true); else if(a==='close') $('opening').hidden=true;
     else if(a==='split') opSplit(); else if(a==='save') saveOpening(false);
     else if(a==='bank'){ $('opening').hidden=true; S.forceImport=true; showTab('import'); setTimeout(function(){ var c=$('bk-card'); if(c) c.scrollIntoView({behavior:'smooth',block:'start'}); var f=$('bk-from'); if(f) f.value=addMonths(recStart(),-12)+'-01'; },60); }
@@ -3328,7 +3339,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   function tyAgg(y){ return agg(period({mode:'taxyear',off:y-curTaxYear()})); }
   /* Cab Books holds a figure for tax year y only from the month the driver started recording. */
   function tyCovered(y){ return recStart()<=(y+1)+'-03'; }
-  function tyFull(y){ return recStart()<=y+'-04' || !!(S.opening&&S.opening.done&&!opKeys().some(function(k){ var m=S.months[k]; return m&&m.opening; })); }
+  function tyFull(y){ return recStart()<=y+'-04' || !!(S.opening&&S.opening.done&&!opKeys().some(function(k){ var m=S.months[k]; return m&&m.opening; }) && !Object.keys((S.opening&&S.opening.part)||{}).some(function(k){ return opPart(k)&&k>=y+'-04'&&k<=(y+1)+'-04'; })); }
   function tyBill(y){ if(!tyCovered(y)) return null; var A=tyAgg(y); if(!(A.turn>0)) return null; return {A:A,E:taxEst(taxProfit(A)),full:tyFull(y)}; }
   function dkey(y,m,d){ return y+'-'+pad(m)+'-'+pad(d); }
   function daysTo(iso){ var p=iso.split('-'), t=todayISO().split('-'); return Math.round((Date.UTC(+p[0],+p[1]-1,+p[2])-Date.UTC(+t[0],+t[1]-1,+t[2]))/864e5); }
