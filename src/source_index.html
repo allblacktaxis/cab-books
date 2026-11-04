@@ -4924,7 +4924,10 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   }
   function stSheetRows(buf){
     return stNeed('xlsx').then(function(){
-      var wb=window.XLSX.read(new Uint8Array(buf),{type:'array',cellDates:true});
+      /* CSV text is read as plain text: otherwise "01/10/2026" turns into 10 January and approval codes
+         like "019252" lose their leading 0 (Matt's Curb export, 4 Nov). Real Excel files keep their dates. */
+      var u8=new Uint8Array(buf), txt=!((u8[0]===0x50&&u8[1]===0x4B)||(u8[0]===0xD0&&u8[1]===0xCF));
+      var wb=window.XLSX.read(u8,{type:'array',cellDates:true,raw:txt});
       var rows=[]; wb.SheetNames.forEach(function(n){ var ws=wb.Sheets[n];
         /* some files (ComCab's pay sheet) state a too-small range; work it out from the cells actually there */
         var R=null; Object.keys(ws).forEach(function(k){ if(k.charAt(0)==='!') return; var c=window.XLSX.utils.decode_cell(k); if(!R) R={s:{r:c.r,c:c.c},e:{r:c.r,c:c.c}}; else { R.s.r=Math.min(R.s.r,c.r); R.s.c=Math.min(R.s.c,c.c); R.e.r=Math.max(R.e.r,c.r); R.e.c=Math.max(R.e.c,c.c); } });
@@ -5039,7 +5042,38 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     S0.checks.push(chk(true,'Curb fee worked out as 2.75% of each payment + 20p (none on manual entries or refunds).'));
     return S0;
   }
+  /* ---- Curb portal's transaction export (Tran<date>.csv, Matt 4 Nov): TranDate, CRTYPE, amount, ApprovalCode,
+     Trips (fare), Extras, tips… One row per card payment, same auth codes as the card transaction report,
+     so the two never double up. Refunds come as minus amounts. A row with no approval code (Curb notes
+     such as "STFD TIMEOUT REPROCESS DECLINED") was not charged, so it's left out and listed. */
+  function curbTranSheet(rows,name){
+    var hi=-1, H=null;
+    for(var i=0;i<Math.min(rows.length,5);i++){ var low=rows[i].map(function(c){return String(c).toLowerCase().replace(/[^a-z]/g,'')});
+      if(low.indexOf('trandate')>=0&&low.indexOf('approvalcode')>=0&&low.indexOf('amount')>=0){ hi=i; H=low; break; } }
+    if(hi<0) return null;
+    var col=function(n){ return H.indexOf(n); }, cD=col('trandate'), cA=col('approvalcode'), cAmt=col('amount'), cTip=col('tips'), cEx=col('extras'), cN=col('note');
+    var S1={prov:'Curb',kind:'tours',label:'Curb transactions (spreadsheet)',jobs:[],extras:[],checks:[],file:name}, left=[], ex=0, refunds=0;
+    rows.slice(hi+1).forEach(function(r){
+      var raw=r[cD], d=stCell(raw); if(!d) return;
+      var amt=stMoney(r[cAmt]), auth=String(r[cA]==null?'':r[cA]).trim();
+      if(!auth){ if(amt) left.push(dlabel(d)+' '+gbp2.format(amt)+(/declined/i.test(String(r[cN]||''))?' (declined)':'')); return; }
+      var tm=raw instanceof Date?pad(raw.getHours())+':'+pad(raw.getMinutes()):(/(\d{1,2}:\d{2})/.exec(String(raw))||[])[1]||'';
+      var tip=cTip>=0?stMoney(r[cTip]):0; if(amt<0){ tip=0; refunds++; }
+      if(cEx>=0&&amt>0) ex+=stMoney(r[cEx]);
+      S1.jobs.push(curbJob(d,tm.length===4?'0'+tm:tm,auth,amt-tip,tip,amt));
+    });
+    if(!S1.jobs.length) return null;
+    var ds=S1.jobs.map(function(j){return j.date}).sort(); S1.from=ds[0]; S1.to=ds[ds.length-1]; S1.ref='curb-tx-'+S1.from+'-'+S1.to;
+    S1.total=r2(S1.jobs.reduce(function(s,j){return s+j.fare+j.tip},0));
+    var tips=r2(S1.jobs.reduce(function(s,j){return s+j.tip},0));
+    S1.checks.push(chk(true,S1.jobs.length+' card payments, '+gbp2.format(S1.total)+' in total (tips '+gbp2.format(tips)+(ex?', extras '+gbp2.format(ex)+' included in fares':'')+').'));
+    if(refunds) S1.checks.push(chk(true,refunds+' refund'+(refunds===1?'':'s')+' taken off.'));
+    if(left.length) S1.checks.push(chk(false,'Left out, Curb shows no approval (not charged): '+left.join(', ')+'. If you were paid it another way, add it as a job.'));
+    S1.checks.push(chk(true,'Curb fee worked out as 2.75% of each payment + 20p (none on manual entries or refunds).'));
+    return S1;
+  }
   function curbSheet(rows,name){
+    var tx=curbTranSheet(rows,name); if(tx) return tx;
     var hi=-1, H=null;
     for(var i=0;i<Math.min(rows.length,15);i++){ var low=rows[i].map(function(c){return String(c).toLowerCase().trim()});
       if(low.indexOf('receipt date')>=0||(low.indexOf('date')>=0&&(low.indexOf('auth code')>=0||low.indexOf('fare')>=0))){ hi=i; H=low; break; } }
@@ -5256,7 +5290,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
         return cbJson(js,nm);
       }
       if(/\.(xlsx|xls|csv|txt)$/.test(low)){
-        return stSheetRows(buf).then(function(rows){ return ccSheet(rows,nm)||curbSheet(rows,nm)||{err:'This spreadsheet is not a Curb or ComCab report Cab Books knows. For bank statements use the Bank statement box below.',file:nm}; });
+        return stSheetRows(buf).catch(function(e){ if(/numbers/i.test(String(e&&e.message||e))) throw new Error('This is an Apple Numbers file. Open it in Numbers, tap ⋯ → Export → Excel (or CSV), and choose that file here. Or download it again from Curb and save it straight to Files without opening it.'); throw e; }).then(function(rows){ return ccSheet(rows,nm)||curbSheet(rows,nm)||{err:'This spreadsheet is not a Curb or ComCab report Cab Books knows. For bank statements use the Bank statement box below.',file:nm}; });
       }
       return {err:'Choose a PDF, Excel, CSV or Cab Books (.json) file.',file:nm};
     }).catch(function(e){ return {err:(e&&e.message)||'Could not read this file.',file:nm}; });
