@@ -879,7 +879,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     <div class="card" id="st-card">
       <h2>Taxi app statements and Heathrow drop-offs</h2><p class="help" style="margin:-4px 0 8px"><b>FreeNow, Gett, Uber, Curb, ComCab, Taxiworld and Heathrow drop-offs.</b> Their files go here, not in the bank box further down.</p><details style="margin:-2px 0 10px"><summary style="cursor:pointer" class="note">Heathrow drop-offs paid by AutoPay from another card? Where to get the file</summary><p class="note" style="margin:6px 0 0">Go to <a href="https://www.heathrow.com/dropoff" target="_blank" rel="noopener noreferrer">heathrow.com/dropoff</a> → <b>Sign in</b> (personal or business account) → your trip / payment history → download it as CSV or Excel. Then choose that file here: each paid drop-off is added as a Parking / drop-off cost. Skip this if your drop-offs come out of the bank account you import.</p></details>
       <p class="help">Choose one or more statements: FreeNow's weekly PDFs, Gett's daily or weekly PDFs, Curb's reports (PDF, Excel or CSV), ComCab's driver statement and pay sheet, Uber's weekly statement, your Heathrow drop-off account download (CSV or Excel), or Taxiworld's payment PDF. You can pick several at once. Cab Books works out which is which, checks the totals add up, and adds each job once. Reading the same statement again is safe.</p>
-      <div class="field"><label for="st-file">Choose your taxi app statements (PDF, Excel or CSV)</label><input type="file" id="st-file" multiple></div>
+      <div class="field"><label for="st-file">Choose your files (PDF, Excel or CSV)</label><input type="file" id="st-file" multiple></div>
       <div class="field" style="margin-bottom:0"><label>When FreeNow or Gett say “cash”, the customer paid</label>
         <div class="seg" role="group" aria-label="Cash jobs were paid"><button type="button" data-stvia="card" aria-pressed="true">By card in my cab (Curb)</button><button type="button" data-stvia="cash" aria-pressed="false">In real cash</button></div></div>
       <div id="st-res"></div>
@@ -900,7 +900,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
       </div>
     </div>
     <div class="card" id="bk-card">
-      <h2>Bank statement (CSV or Excel)</h2>
+      <h2>Bank statement</h2>
       <p class="help" id="bk-help">Brings in what the taxi apps paid you and the money going out. Payments from FreeNow, Gett, Uber, Curb, ComCab, Taxiworld, Helix Pay and HIPS are recognised, with the commission added back to estimate your fares. Payees are sorted into categories, and anything unknown is left out as personal until you say otherwise. Bank figures replace the expenses you typed, up to the statement's last date.</p>
       <div id="bk-status" class="help" style="margin:-4px 0 10px"></div>
       <div id="bk-done" class="preview" style="border-left:4px solid var(--ok)" hidden></div>
