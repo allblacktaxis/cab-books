@@ -2814,7 +2814,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   var BK_RULES=[
     ['Electric charging',/NY[AX]\*|SQ \*MOTOR|NAYAX|EV POWER|POD ?POINT|BP PULSE|GRIDSERVE|CHARGEPLACE|CHARGEMASTER|SMART CHARGE|ESB EV/],
     ['Petrol',/\bBP\b|SHELL|ESSO|TEXACO|MURCO|\bJET\b|GULF|RONTEC|\bMFG\b|\bTGC\b|WANDSWORTH SF|\bSF\b\s*,?\s*CONNEC|\bFUEL\b|PETROL/],
-    ['Parking / drop-off',/DROP ?OFF|\bLCA\b|LONDON CITY AIRPORT|APCOA|HEATHROW|GATWICK AIRPORT/],
+    ['Parking / drop-off',/DROP ?OFF|\bLCA\b|LONDON CITY AIRPORT|APCOA|HEATHROW|GATWICK AIRPORT|STN AIRPORT|AIRPORT TARIFF/],
     ['Car rental',/\bCAB\s*,?\s*[A-Z]{2}\d{2}\s?[A-Z]{3}\b|ECLIPSE INTEGRATED|^\s*CAB\s*$|COMCAB|COMPUTER CAB/],   /* money out to ComCab = cab rent paid by card when the statement didn't cover it (Marcin 2 Nov) */
     ['Cleaning / admin supplies',/AMAZON|AMZN/],
     ['Car wash',/CAR ?WASH|LUXE SHINE|VM CAR|VALETING/],
@@ -2831,7 +2831,8 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   function bkMatch(desc){
     var key=normKey(desc), br=S.bankRules, ks=Object.keys(br);
     for(var i=0;i<ks.length;i++){ var r=br[ks[i]]; if(r&&r.pattern&&key&&(key===r.pattern||key.indexOf(r.pattern+' ')===0)) return r.category; }
-    var u=String(desc||'').toUpperCase();
+    /* NatWest's newer CSVs split names with commas ("LONDON CITY , AIRPORT"), so join them back up first (Matt, 4 Nov). */
+    var u=String(desc||'').toUpperCase().replace(/\s*,\s*/g,' ').replace(/\s+/g,' ');
     for(var j=0;j<BK_RULES.length;j++){ if(BK_RULES[j][1].test(u)) return BK_RULES[j][0]; }
     return null;
   }
