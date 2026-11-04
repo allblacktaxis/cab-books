@@ -3095,13 +3095,37 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
       '2027-01-01':{start:'00:00',end:'06:00',title:'New Year\u2019s Eve closures end \u2013 central London',notes:'Event areas due to reopen about 06:00. Some roads stay closed for the London Parade 2027 (date and route not yet confirmed here). Source: london.gov.uk'}
     };
     if(YD[iso]) L.unshift(YD[iso]);
+    // Christmas lights switch-ons (Visit London list, checked 4 Nov 2026; times from Time Out where given, otherwise an early-evening estimate)
+    var XL=[
+      ['2026-11-04','18:00','20:00','Carnaby Street','Carnaby Street is pedestrian; crowds spill onto Regent Street and Great Marlborough Street. Time not published.'],
+      ['2026-11-05','18:00','20:00','Regent Street','Regent Street closed to vehicles for the switch-on. Expect diversions around Oxford Circus and Piccadilly Circus. Time not published.'],
+      ['2026-11-05','18:00','20:00','St James\u2019s','Jermyn Street and Duke of York Street area. Busy alongside Regent Street the same night. Time not published.'],
+      ['2026-11-05','18:00','20:00','Battersea Power Station','No official event this year. Also Bonfire Night, so fireworks crowds across London.'],
+      ['2026-11-09','18:00','20:00','Oxford Street','Date from Time Out (not on the Visit London list). Expect heavy crowds along Oxford Street. Time not published.'],
+      ['2026-11-10','18:00','20:00','Knightsbridge','Brompton Road and Sloane Street around Harrods. Time not published.'],
+      ['2026-11-11','18:00','20:00','Marylebone Village','Event centred on Devonshire Street, switch-on about 18:00. Marylebone High Street busy.'],
+      ['2026-11-11','18:00','20:00','Old Spitalfields Market','Commercial Street and Bishopsgate side busy. Time not published.'],
+      ['2026-11-12','18:00','20:00','Covent Garden','Piazza and surrounding streets very busy. Time not published.'],
+      ['2026-11-12','19:00','21:00','Bond Street','Switch-on about 19:00. New and Old Bond Street busy, possible closures.'],
+      ['2026-11-12','18:00','20:00','King\u2019s Road, Chelsea','Around Sloane Square and Duke of York Square. Time not published.'],
+      ['2026-11-12','18:00','20:00','Fulham Pier','Fulham riverside. Time not published.'],
+      ['2026-11-12','18:00','20:00','Fitzrovia Quarter','Charlotte Street area. Time not published.'],
+      ['2026-11-12','18:00','20:00','Churchill Arms','Kensington Church Street pub, crowds on the pavement. Time not published.'],
+      ['2026-11-18','18:00','20:00','Fleet Street Quarter','Fleet Street area. Time not published.'],
+      ['2026-11-19','18:00','20:00','Leadenhall Market','City, Gracechurch Street side. Time not published.'],
+      ['2026-11-19','18:00','20:00','St Katharine Docks','By Tower Bridge. Same night Winter Wonderland opens in Hyde Park. Time not published.'],
+      ['2026-11-25','18:00','20:00','Chelsea Winter Village','Chelsea. Time not published.'],
+      ['2026-11-26','18:00','20:00','King\u2019s Cross','Granary Square and Coal Drops Yard. Time not published.'],
+      ['2026-12-03','18:00','20:00','Trafalgar Square','Norwegian Christmas tree lighting. Square and surrounding roads busy, possible closures. Time not published.']
+    ];
+    XL.forEach(function(x){ if(x[0]===iso) L.push({start:x[1],end:x[2],title:'Christmas lights switch-on \u2013 '+x[3],notes:x[4]+' Expect it busier that evening. Sources: Visit London, Time Out.'}); });
     var have=dayEvents(iso); return L.filter(function(n){ var base=n.title.split(' \u2013 ')[0]; return !have.some(function(e){ return e.start===n.start && e.title===base; }); });
   }
   function renderEvents(){
     var el=$('ev-list'); if(!el) return;
     if(!S.db){ el.innerHTML=''; return; }
     var L=dayEvents(S.day), h='';
-    var hd=$('ev-head'); if(hd) hd.textContent = L.length ? 'Schedule \u00b7 '+L.length+(L.length>1?' events':' event')+' \u00b7 '+(L[0].start?L[0].start+' ':'')+(L[0].title||'Event') : 'Schedule \u00b7 nothing on'; if(hd){ var nn=dayNotices(S.day).filter(function(n){return n.title.indexOf('Captain')<0&&n.title.indexOf('Mall')<0}).length; if(nn) hd.textContent+=' \u00b7 \u26a0 Guard'; }
+    var hd=$('ev-head'); if(hd) hd.textContent = L.length ? 'Schedule \u00b7 '+L.length+(L.length>1?' events':' event')+' \u00b7 '+(L[0].start?L[0].start+' ':'')+(L[0].title||'Event') : 'Schedule \u00b7 nothing on'; if(hd){ var nl=dayNotices(S.day).filter(function(n){return n.title.indexOf('Captain')<0&&n.title.indexOf('Mall')<0}); if(nl.length){ var tg=[]; if(nl.some(function(n){return n.title.indexOf('Guard')>=0})) tg.push('Guard'); if(nl.some(function(n){return n.title.indexOf('Christmas lights')>=0})) tg.push('Lights'); if(nl.some(function(n){return n.title.indexOf('Guard')<0&&n.title.indexOf('Christmas lights')<0})) tg.push('Notice'); hd.textContent+=' \u00b7 \u26a0 '+tg.join(', '); } }
     if(!L.length) h='<p class="note" style="margin:0">Nothing scheduled for this day.</p>';
     L.forEach(function(e){
       h+='<div class="evrow"><div style="min-width:0"><div>'+esc(e.title||'Event')+'</div>'+(e.notes?'<div class="d" style="font-size:12px;color:var(--muted)">'+esc(e.notes)+'</div>':'')
