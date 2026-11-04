@@ -1313,7 +1313,8 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
         +'<div class="need">'+esc(x.need)+'</div><div class="chk">Check: '+esc(x.chk)+'</div>'+clRead(x.k,k)
         +'<div class="cl-seg" role="group" aria-label="'+esc(x.n)+' status">'
         +['waiting','received','checked'].map(function(o){return '<button type="button" class="'+o.charAt(0).replace('w','w')+'" data-cs="'+x.k+'|'+o+'" aria-pressed="'+(s===o)+'"'+(c.closed?' disabled':'')+'>'+CL_ST[o]+'</button>'}).join('')
-        +'</div><input type="text" id="cn-'+k+'-'+x.k+'" data-cn="'+x.k+'" maxlength="200" placeholder="Note (e.g. runs to 23 Oct)" value="'+esc(v.note||'')+'"'+(c.closed?' disabled':'')+'></div>';
+        +'</div><div style="display:flex;gap:8px;align-items:center"><input type="text" id="cn-'+k+'-'+x.k+'" data-cn="'+x.k+'" maxlength="200" placeholder="Note (e.g. runs to 23 Oct)" value="'+esc(v.note||'')+'"'+(c.closed?' disabled':'')+' style="flex:1;min-width:0">'
+        +(v.note&&!c.closed?'<button type="button" class="iconbtn" data-cnclear="'+x.k+'" aria-label="Clear this note" title="Clear note" style="flex:none;min-width:40px;min-height:40px">✕</button>':'')+'</div></div>';
     });
     h+=c.closed?'<button class="btn ghost" id="cl-reopen" type="button">Reopen '+esc(mlabel(k))+'</button>'
       :'<button class="btn" id="cl-close" type="button"'+(done<all?' disabled':'')+'>'+(done<all?'Check every source to close':'Close '+esc(mlabel(k)))+'</button>';
@@ -1337,6 +1338,9 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     Array.prototype.forEach.call(document.querySelectorAll('[data-cn]'),function(inp){ inp.addEventListener('change',function(){
       var s=inp.getAttribute('data-cn');
       saveClose(k,function(c){ c.src[s]=Object.assign({},c.src[s]||{},{note:inp.value.trim()}); });
+    }); });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-cnclear]'),function(btn){ btn.addEventListener('click',function(){
+      var s=btn.getAttribute('data-cnclear'); saveClose(k,function(c){ c.src[s]=Object.assign({},c.src[s]||{},{note:''}); }); toast('Note cleared');
     }); });
     var cb=$('cl-close'); if(cb) cb.addEventListener('click',function(){ saveClose(k,function(c){c.closed=true;c.closedAt=todayISO()}); toast(mlabel(k)+' closed'); });
     var rb=$('cl-reopen'); if(rb) rb.addEventListener('click',function(){ saveClose(k,function(c){c.closed=false;c.closedAt=''}); toast(mlabel(k)+' reopened'); });
