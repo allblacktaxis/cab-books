@@ -938,6 +938,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
       <h2>What you've imported</h2>
       <p class="help">Every statement, card report and bank file you've brought in, newest first. If one went in by mistake, remove it here: the jobs, payments and costs that came from it come out with it, and any bank estimates it had replaced come back.</p>
       <div id="ih-list"></div>
+      <div id="ih-bankall" hidden style="margin-top:12px;padding-top:12px;border-top:1px solid var(--line)"></div>
     </div>
   </section>
 </div>
@@ -5340,8 +5341,33 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
       if(e.kind==='expense'){ g.costs++; } else { g.fares++; g.money+=(+e.amount||0)+(+e.extras||0)+(+e.tips||0); } }
     return out.sort(function(a,b){return b.ts-a.ts});
   }
+  /* ---- Remove all bank imports in one go (Matt for Marcin, 4 Nov 2026): every record that came from a bank
+     statement (file or pasted rows) – money in, costs, lines sorted as private jobs or refunds – plus the
+     To sort out list, and "bank lines up to" goes back to the start. Statements, typed jobs and learned
+     payee rules stay. */
+  function ihBankIds(){ return (S.entriesRaw||[]).filter(function(e){ return e.src==='import'&&!e.stmt&&(e.est==='bank'||(e.kind==='expense'&&!e.provider)||/^From bank:/.test(e.note||'')); }).map(function(e){return e.id}); }
+  function ihBankAllRender(){
+    var el=$('ih-bankall'); if(!el) return;
+    var n=ihBankIds().length, t=Object.keys(S.tosort||{}).length;
+    if(!n&&!t&&!S.bankCov){ el.hidden=true; el.innerHTML=''; return; }
+    el.hidden=false;
+    el.innerHTML='<b>Start the bank again</b><p class="help" style="margin:4px 0 8px">Takes out everything that came from your bank statements ('+n+' record'+(n===1?'':'s')+(t?' and '+t+' to sort out':'')+'), however you brought them in. Your taxi app statements, typed-in jobs and the payees Cab Books has learned stay. Then bring in your bank statement again.</p>'
+      +'<button class="btn ghost small" type="button" id="ih-bankall-go">Remove all bank imports</button>';
+  }
+  function ihRemoveAllBank(){
+    var ids=ihBankIds(), ts=Object.keys(S.tosort||{});
+    prRun(ids,function(id){ return S.db.collection('entries').doc(id).delete(); },function(n){
+      Promise.all(ts.map(function(k){ return S.db.collection('tosort').doc(k).delete(); }))
+        .then(function(){ S.bankCov=''; return S.db.collection('settings').doc('bank').set({covered:''}); })
+        .then(function(){ var bf=$('bk-from'); if(bf) bf.value=''; if(typeof bkStatus==='function') bkStatus(); toast('Removed all bank imports: '+n+' record'+(n===1?'':'s')+(ts.length?' and '+ts.length+' to sort out':'')+'. You can bring your bank statement in again now.'); ihRender(); })
+        .catch(function(e){ fail(e); ihRender(); });
+    });
+  }
+  document.addEventListener('click',function(ev){ var b=ev.target; if(!b||b.id!=='ih-bankall-go') return;
+    if(!b.classList.contains('arm')){ b.classList.add('arm'); b.textContent='Tap again to remove all bank imports'; setTimeout(function(){ if(b.isConnected){ b.classList.remove('arm'); b.textContent='Remove all bank imports'; } },5000); return; }
+    b.disabled=true; b.textContent='Removing…'; ihRemoveAllBank(); });
   function ihRender(){
-    var box=$('ih-list'); if(!box) return; var L=ihGroups();
+    var box=$('ih-list'); if(!box) return; var L=ihGroups(); ihBankAllRender();
     if(!L.length){ box.innerHTML='<p class="note" style="margin:0">Nothing imported yet.</p>'; return; }
     box.innerHTML=L.map(function(g,i){
       var bits=[]; if(g.fares) bits.push(g.fares+' job'+(g.fares===1?'':'s')+' or payment'+(g.fares===1?'':'s')+' ('+gbp2.format(g.money)+')'); if(g.costs) bits.push(g.costs+' cost'+(g.costs===1?'':'s')); if(!bits.length) bits.push('no records');
