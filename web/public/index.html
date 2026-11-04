@@ -936,11 +936,12 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
       <button class="btn" id="bk-save" type="button">Import</button>
     </div>
     <div class="card">
-      <h2>Import a statement</h2>
-      <p class="help">Choose a CSV from your bank or a provider, or paste its rows. Rows already imported are skipped, so you can safely import the same file twice.</p>
+      <details><summary style="cursor:pointer;font-weight:700">Other spreadsheet (advanced)</summary>
+      <p class="help" style="margin-top:8px">Only for a list Cab Books doesn't read by itself, such as your own list of private-client fares, where you match the columns yourself. Taxi app statements go in the box at the top, and bank statements in the Bank statement box. Rows already imported are skipped.</p>
       <div class="field"><label for="i-file">CSV file</label><input type="file" id="i-file" accept=".csv,.txt,text/csv,text/plain"></div>
-      <div class="field"><label for="i-text">…or paste the rows (with the header line)</label><textarea id="i-text" spellcheck="false" placeholder="Date,Description,Amount&#10;26/10/2026,CURB MOBILITY,45.20"></textarea></div>
+      <div class="field"><label for="i-text">…or paste the rows (with the header line)</label><textarea id="i-text" spellcheck="false" placeholder="Date,Description,Amount&#10;26/10/2026,Private client,45.20"></textarea></div>
       <button class="btn ghost" id="i-read" type="button">Read it</button>
+      </details>
     </div>
     <div class="card" id="i-map" hidden>
       <h2>Match the columns</h2>
