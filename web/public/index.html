@@ -900,11 +900,11 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
       </div>
     </div>
     <div class="card" id="bk-card">
-      <h2>Bank statement (CSV only)</h2>
+      <h2>Bank statement (CSV or Excel)</h2>
       <p class="help" id="bk-help">Brings in what the taxi apps paid you and the money going out. Payments from FreeNow, Gett, Uber, Curb, ComCab, Taxiworld, Helix Pay and HIPS are recognised, with the commission added back to estimate your fares. Payees are sorted into categories, and anything unknown is left out as personal until you say otherwise. Bank figures replace the expenses you typed, up to the statement's last date.</p>
       <div id="bk-status" class="help" style="margin:-4px 0 10px"></div>
       <div id="bk-done" class="preview" style="border-left:4px solid var(--ok)" hidden></div>
-      <div class="field"><label for="bk-file">Choose your bank CSV file</label><p class="help" style="margin:2px 0 6px">PDFs from FreeNow, Gett or Uber go in <b>Taxi app statements</b> at the top of this page.</p><input type="file" id="bk-file" accept=".csv,.txt,text/csv,text/plain"></div>
+      <div class="field"><label for="bk-file">Choose your bank statement file (CSV or Excel)</label><p class="help" style="margin:2px 0 6px">PDFs from FreeNow, Gett or Uber go in <b>Taxi app statements</b> at the top of this page.</p><input type="file" id="bk-file"></div>
       <div class="field"><label for="bk-text">…or paste the rows (with the header line)</label><textarea id="bk-text" spellcheck="false" placeholder="Date,Description,Paid out,Paid in"></textarea></div>
       <button class="btn ghost" id="bk-read" type="button">Read it</button>
     </div>
@@ -3046,7 +3046,21 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     }
     nextIn();
   }
-  $('bk-file').addEventListener('change',function(){ var bd=$('bk-done'); if(bd) bd.hidden=true; var f=this.files&&this.files[0]; if(!f) return; var rd=new FileReader(); rd.onload=function(){ $('bk-text').value=String(rd.result).slice(0,3000000); bkRead(String(rd.result)); }; rd.readAsText(f); });
+  /* Bank file: CSV as before; an Excel download (.xlsx/.xls) is turned into CSV rows first; an Apple Numbers file
+     gets a plain message (Matt, 4 Nov). Checked by what's inside, not the file name. */
+  $('bk-file').addEventListener('change',function(){ var bd=$('bk-done'); if(bd) bd.hidden=true; var f=this.files&&this.files[0]; if(!f) return;
+    stBuf(f).then(function(buf){
+      var u8=new Uint8Array(buf), isZip=u8[0]===0x50&&u8[1]===0x4B, isOle=u8[0]===0xD0&&u8[1]===0xCF;
+      if(u8[0]===0x25&&u8[1]===0x50&&u8[2]===0x44&&u8[3]===0x46){ toast('That is a PDF. For the bank, download the statement as CSV (or Excel) from NatWest: Statements & transactions → View transactions → download.'); return; }
+      if(!isZip&&!isOle){ var t=new TextDecoder('utf-8').decode(u8); $('bk-text').value=t.slice(0,3000000); bkRead(t); return; }
+      return stSheetRows(buf).then(function(rows){
+        var csv=rows.filter(function(r){ return r.some(function(c){ return String(c).trim()!==''; }); }).map(function(r){ return r.map(function(c){
+          if(c instanceof Date) c=pad(c.getDate())+'/'+pad(c.getMonth()+1)+'/'+c.getFullYear();
+          c=String(c==null?'':c); return /[",\n]/.test(c)?'"'+c.replace(/"/g,'""')+'"':c; }).join(','); }).join('\n');
+        $('bk-text').value=csv.slice(0,3000000); bkRead(csv);
+      }).catch(function(e){ toast(/numbers/i.test(String(e&&e.message||e))?'That is an Apple Numbers file. In Numbers tap ⋯ → Export → CSV (or Excel), or download the statement again from NatWest as CSV, and choose that file.':'Could not read that file. Download the statement from NatWest as CSV and try again.'); });
+    }).catch(function(){ toast('Could not read that file.'); });
+  });
   $('bk-read').addEventListener('click',function(){ var t=$('bk-text').value.trim(); if(!t){toast('Choose a file or paste some rows first.');return} bkRead(t); });
   ['bk-date','bk-desc','bk-out','bk-from','bk-neg','bk-in','bk-inc'].forEach(function(id){ $(id).addEventListener('change',bkBuild); });
   $('bk-save').addEventListener('click',bkSave);
