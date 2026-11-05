@@ -133,6 +133,18 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .badge.ind{background:var(--warn-soft);color:var(--warn)} .badge.rec{background:var(--ok-soft);color:var(--ok)}
 .help{font-size:13px;color:var(--muted);margin:0 0 12px}
 .warnbox{border-left:3px solid var(--warn);padding:2px 0 2px 10px;font-size:13px;color:var(--muted);margin:0 0 12px}
+/* Bank import: open a category to check each line (Matt, 5 Nov) */
+.bkc{border-top:1px solid var(--line)} .bkc:first-of-type{border-top:0}
+.bkc>summary{list-style:none;display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;cursor:pointer;min-height:48px}
+.bkc>summary::-webkit-details-marker{display:none}
+.bkc>summary .k{color:var(--ink)} .bkc>summary .k::before{content:'\25B8';display:inline-block;width:16px;color:var(--muted);transition:transform .15s}
+.bkc[open]>summary .k::before{transform:rotate(90deg)}
+.bkc>summary .v{font-family:var(--font-num);font-weight:500;text-align:right;white-space:nowrap}
+.bkc .st{display:block;font-size:12px;margin-left:16px;font-weight:600} .bkc .st.ok{color:var(--ok)} .bkc .st.todo{color:var(--warn)}
+.bkbody{padding:0 0 12px 16px}
+.bkgrp .gname{background:none;border:0;padding:0;color:var(--ink);font:inherit;text-align:left;cursor:pointer;min-height:32px}
+.bkrow{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:6px 0 6px 12px;border-left:2px solid var(--line);font-size:13px}
+.bkrow .d{color:var(--muted);font-size:12px} .bkrow select{width:auto;max-width:46%;font-size:13px}
 .chips.tight button{padding:6px 10px;min-height:40px;font-size:13px}
 .xchips{margin-top:8px}
 .exrow{display:flex;gap:8px;align-items:stretch}
@@ -2915,7 +2927,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   function bkRead(text){
     var rows=parseCSV(text); if(rows.length<2){ toast('I could not find a header line and rows.'); return; }
     var head=rows[0].map(function(x){return x.trim()});
-    S.bk={head:head,raw:rows.slice(1),choice:{},choiceIn:{}};
+    S.bk={head:head,raw:rows.slice(1),choice:{},choiceIn:{},rowCat:{},ok:{},open:{},openG:{}};
     var opts=head.map(function(h,i){return '<option value="'+i+'">'+esc(h||('Column '+(i+1)))+'</option>'}).join('');
     ['bk-date','bk-desc','bk-out','bk-in'].forEach(function(id){ $(id).innerHTML=opts; });
     function guess(re,id,def){ var ix=head.findIndex(function(h){return re.test(h)}); $(id).value=String(ix>=0?ix:def); }
@@ -2956,7 +2968,55 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     });
     S.bk.rows=rows; S.bk.inc=inc; S.bk.oth=oth; S.bk.maxDate=maxDate; S.bk.skipped=skipped; S.bk.early=early; S.bk.earliest=earliest; bkRender();
   }
-  function bkEff(r){ return r.auto||S.bk.choice[r.key||('#'+r.id)]||'ignore'; }
+  function bkEff(r){ var B=S.bk; return (B.rowCat&&B.rowCat[r.id])||B.choice[r.key||('#'+r.id)]||r.auto||'ignore'; }
+  /* First bank statement: every business category must be opened and approved before importing, because a personal
+     account mixes in personal spending the payee rules can't tell apart (Amazon, coffee machines) (Matt, 5 Nov). */
+  function bkFirst(){ return !S.bankCov; }
+  function bkNeedOk(){ var B=S.bk, c={}; (B.rows||[]).forEach(function(r){ var e=bkEff(r); if(e!=='ignore'&&e!=='later') c[e]=1; }); return Object.keys(c).filter(function(k){ return !B.ok[k]; }); }
+  function bkCatsHtml(rows){
+    var B=S.bk, by={};
+    rows.forEach(function(r){ var c=bkEff(r); if(!by[c]) by[c]={n:0,t:0,g:{}}; var C=by[c]; C.n++; C.t+=r.amt; var k=r.key||('#'+r.id); if(!C.g[k]) C.g[k]={key:k,n:0,t:0,s:r.desc,rows:[]}; var G=C.g[k]; G.n++; G.t+=r.amt; G.rows.push(r); });
+    var first=bkFirst(), h='';
+    if(rows.length) h+='<p class="help" style="margin:4px 0 6px">'+(first?'This is your first bank statement, so check each business category before importing: tap it, look down the list, move anything that’s personal, then tap <b>Looks right</b>.':'Tap a category to check the lines in it and move any to a different category.')+' Moving a whole payee is remembered next time; moving a single line is just for that line.</p>';
+    Object.keys(by).sort(function(a,b){return by[b].t-by[a].t}).forEach(function(c){
+      var C=by[c], biz=c!=='ignore'&&c!=='later', ok=!!B.ok[c];
+      var st=biz?(ok?'<span class="st ok">✓ Checked</span>':(first?'<span class="st todo">Needs checking</span>':'')):'';
+      h+='<details class="bkc" data-bkc="'+esc(c)+'"'+(B.open[c]?' open':'')+'><summary><span class="k">'+esc(bkLabel(c))+' ('+C.n+')'+st+'</span><span class="v">'+gbp2.format(C.t)+'</span></summary>';
+      if(B.open[c]){
+        h+='<div class="bkbody">';
+        Object.keys(C.g).map(function(k){return C.g[k]}).sort(function(a,b){return b.t-a.t}).forEach(function(G){
+          var gk=c+'|'+G.key, name=G.key.charAt(0)==='#'?G.s.slice(0,40):G.key, op=!!B.openG[gk];
+          h+='<div class="bkgrp"><div class="logitem"><div style="min-width:0"><button type="button" class="gname" data-bkx="'+esc(gk)+'">'+(op?'▾ ':'▸ ')+esc(name)+'</button><div class="d">'+G.n+' line'+(G.n>1?'s':'')+' · '+gbp2.format(G.t)+'</div></div>'
+            +'<select data-bkmv="'+esc(gk)+'" aria-label="Move all '+esc(name)+'" style="width:auto;max-width:48%">'+bkCats().map(function(o){return '<option value="'+esc(o)+'"'+(o===c?' selected':'')+'>'+esc(o===c?bkLabel(o):'Move all to: '+bkLabel(o))+'</option>'}).join('')+'</select></div>';
+          if(op) G.rows.slice().sort(function(a,b){return a.d<b.d?-1:a.d>b.d?1:0}).forEach(function(r){
+            h+='<div class="bkrow"><div style="min-width:0"><div>'+esc(r.desc.slice(0,60))+'</div><div class="d">'+esc(dlabel(r.d))+' · '+gbp2.format(r.amt)+'</div></div>'
+              +'<select data-bkrow="'+esc(r.id)+'" aria-label="Category for this line">'+bkCats().map(function(o){return '<option value="'+esc(o)+'"'+(o===c?' selected':'')+'>'+esc(bkLabel(o))+'</option>'}).join('')+'</select></div>';
+          });
+          h+='</div>';
+        });
+        if(biz) h+='<button type="button" class="btn small" data-bkok="'+esc(c)+'" style="margin-top:10px">'+(ok?'✓ Checked':'Looks right')+'</button>';
+        h+='</div>';
+      }
+      h+='</details>';
+    });
+    return h;
+  }
+  /* One set of listeners for the category lists; they are redrawn on every change. */
+  (function(){
+    var box=$('bk-cats'); if(!box) return;
+    box.addEventListener('toggle',function(ev){ var d=ev.target; if(!d||!d.getAttribute||!d.hasAttribute('data-bkc')||!S.bk) return; var c=d.getAttribute('data-bkc'), was=!!S.bk.open[c]; S.bk.open[c]=d.open; if(was!==d.open) bkRender(); },true);
+    box.addEventListener('click',function(ev){ if(!S.bk) return; var t=ev.target.closest('[data-bkx],[data-bkok]'); if(!t) return;
+      if(t.hasAttribute('data-bkx')){ var g=t.getAttribute('data-bkx'); S.bk.openG[g]=!S.bk.openG[g]; bkRender(); }
+      else { var c=t.getAttribute('data-bkok'); S.bk.ok[c]=!S.bk.ok[c]; if(S.bk.ok[c]) S.bk.open[c]=false; bkRender(); var d=box.querySelector('[data-bkc="'+c.replace(/"/g,'\\"')+'"]'); if(d) d.scrollIntoView({block:'nearest'}); } });
+    box.addEventListener('change',function(ev){ if(!S.bk) return; var t=ev.target, B=S.bk;
+      if(t.hasAttribute('data-bkrow')){ B.rowCat[t.getAttribute('data-bkrow')]=t.value; bkRender(); }
+      else if(t.hasAttribute('data-bkmv')){ var p=t.getAttribute('data-bkmv'), i=p.indexOf('|'), from=p.slice(0,i), key=p.slice(i+1);
+        /* Lines sitting here by the payee's own category move the whole payee (and it's remembered); lines moved here one at a time just move back as lines. */
+        var g=B.rows.filter(function(r){ return (r.key||('#'+r.id))===key&&bkEff(r)===from; }), def=g.length?(B.choice[key]||g[0].auto||'ignore'):from;
+        if(def===from){ g.forEach(function(r){ delete B.rowCat[r.id]; }); B.choice[key]=t.value; }
+        else g.forEach(function(r){ B.rowCat[r.id]=t.value; });
+        bkRender(); } });
+  })();
   function bkRender(){
     var B=S.bk, rows=B.rows, existing={}; S.entries.forEach(function(e){existing[e.id]=1});
     var tot={}, n={}, all=0, imp=0, ign=0, dup=0, groups={};
@@ -2966,8 +3026,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
       if(!r.auto){ var k=r.key||('#'+r.id); if(!groups[k]) groups[k]={key:k,n:0,t:0,s:r.desc}; groups[k].n++; groups[k].t+=r.amt; }
     });
     $('bk-prev').innerHTML=rows.length?('<span class="num">'+rows.length+'</span> money-out rows, '+gbp2.format(all)+(B.maxDate?' to '+esc(dlabel(B.maxDate)):'')+'.<br><span class="num">'+gbp2.format(imp)+'</span> will be imported as business expenses, <span class="num">'+gbp2.format(ign)+'</span> is personal and left out'+(dup?' · '+dup+' already imported':'')+(B.skipped?' · '+B.skipped+' rows had no date':'')+'.'):'No money-out rows found. Check the columns, and the “money out is negative” box.';
-    var h=''; Object.keys(tot).sort(function(a,b){return tot[b]-tot[a]}).forEach(function(c){ h+='<div class="kv"><span class="k">'+esc(bkLabel(c))+' ('+n[c]+')</span><span class="v">'+gbp2.format(tot[c])+'</span></div>'; });
-    $('bk-cats').innerHTML=h;
+    $('bk-cats').innerHTML=bkCatsHtml(rows);
     var gs=Object.keys(groups).map(function(k){return groups[k]}).sort(function(a,b){return b.t-a.t}), gh='';
     gs.slice(0,40).forEach(function(g){
       var cur=S.bk.choice[g.key]||'ignore';
@@ -2993,6 +3052,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     var inAdd=IN.add.length, parts=[];
     if(inAdd+inOth) parts.push((inAdd+inOth)+' payment'+((inAdd+inOth)>1?'s':'')+' in'); if(toAdd) parts.push(toAdd+' expense'+(toAdd>1?'s':'')); if(later) parts.push(later+' to sort out');
     $('bk-save').disabled=(!rows.length&&!inAdd&&!oth.length)||(!toAdd&&!inAdd&&!inOth&&!later&&!(B.maxDate>S.bankCov)); $('bk-save').textContent=parts.length?('Import '+parts.join(' and ')):(B.maxDate>S.bankCov?'Mark statement as covered':'Nothing new to import');
+    var need=bkFirst()?bkNeedOk():[]; if(need.length){ $('bk-save').disabled=true; $('bk-save').textContent='Check '+need.length+' more categor'+(need.length>1?'ies':'y')+' above before importing'; }
     /* Rows dated before "Only rows on or after" are left out; say so, so an older statement doesn't look empty (Matt, 4 Nov). */
     var fn=$('bk-fromnote'); if(!fn){ fn=document.createElement('p'); fn.id='bk-fromnote'; fn.className='warnbox'; var fb=$('bk-from'); if(fb&&fb.parentNode) fb.parentNode.parentNode.insertBefore(fn,fb.parentNode.nextSibling); }
     if(fn){ if(B.early){ fn.hidden=false; fn.textContent=B.early+' row'+(B.early===1?' is':'s are')+' dated before '+dlabel($('bk-from').value)+' (from '+dlabel(B.earliest)+'), so '+(B.early===1?'it is':'they are')+' left out. To bring '+(B.early===1?'it':'them')+' in, change "Only rows on or after" to '+dlabel(B.earliest)+'. Lines already in your books are never added twice.'; } else fn.hidden=true; }
