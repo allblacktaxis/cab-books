@@ -4907,7 +4907,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   /* ---------- Tools: Tonight – big London events and when they should finish (Matt, 10 Nov 2026) ----------
      From the website's server function (/.netlify/functions/events): football (football-data.org) and the big
      venues on Ticketmaster (The O2, Wembley, Royal Albert Hall …), cached 30 minutes for every driver. */
-  var TN_V='5';
+  var TN_V='6';
   S.tn={off:0,data:{},err:{},busy:{},view:lsGet('cb-tn-view')||'board'};
   function tnShort(v){ return String(v||'').replace(/^Theatre Royal /,'').replace(/ Theatre$/,''); }
   function tnDay(){ return dayAdd(todayISO(),S.tn.off); }
@@ -4945,6 +4945,15 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     h+='<div class="card"><div class="cardhead"><h2>'+(T.off===0?'Still to let out today':'Tomorrow')+'</h2><button class="btn ghost small" type="button" id="tn-retry">'+(T.busy[d]?'Updating…':'Refresh')+'</button></div>'
       +(later.length?later.map(draw).join(''):'<p class="note" style="margin:0">'+(ev.length?'Everything today has let out.':'No big events found at these venues.')+'</p>')+'</div>';
     if(gone.length) h+='<details class="card"><summary style="cursor:pointer">Let out earlier today ('+gone.length+')</summary>'+gone.map(draw).join('')+'</details>';
+    /* Sources: which feeds are working tonight, one line each (also how we check a new venue reader). */
+    var SV={rah:'Royal Albert Hall',barbican:'Barbican',roh:'Royal Opera House',o2:'The O2 (own site)'}, srcs=x.sources||{}, sl=[];
+    function cnt(src){ return ev.filter(function(e){ return e.src===src; }).length; }
+    sl.push(['Football (football-data.org)',srcs.football==='ok'?cnt('football')+' tonight':srcs.football==='not_set_up'?'key not added':'not responding']);
+    sl.push(['Ticketmaster venues',srcs.ticketmaster==='ok'?cnt('ticketmaster')+' tonight':srcs.ticketmaster==='not_set_up'?'key not added':'not responding']);
+    sl.push(['West End show list',cnt('westend')+' performances']);
+    if(srcs.venues&&typeof srcs.venues==='object') Object.keys(srcs.venues).forEach(function(k){ var r=srcs.venues[k]||{};
+      sl.push([SV[k]||k, r.error?'could not reach the site ('+r.error+')':r.status!==200?'site answered '+r.status:(r.eventsOnPage?r.eventsOnPage+' listings on the page, '+(r.today||0)+' tonight':'page read ('+Math.round((r.bytes||0)/1024)+' KB) but no listings found'+(r.startDates?' ('+r.startDates+' dates seen)':''))]); });
+    h+='<details class="card" id="tn-src"><summary style="cursor:pointer">Sources</summary>'+sl.map(function(r){ return '<div class="kv"><span class="k">'+esc(r[0])+'</span><span class="v" style="text-align:right;font-size:13px">'+esc(r[1])+'</span></div>'; }).join('')+'</details>';
     var off=[]; if(x.sources){ if(x.sources.football!=='ok') off.push('football'); if(x.sources.ticketmaster!=='ok') off.push('concerts and shows'); }
     h+='<p class="note" style="margin:0 4px 12px">Times are estimates of when people come out: kick-off plus about 2 hours for football; start time plus 2½–3½ hours for concerts; for theatres, each show’s regular start time plus its running time'+(x.checked?' (show list checked '+esc(dlabel(x.checked))+')':'')+'. A “?” means the programme changes, so the time is a guess. Holiday weeks can differ.'
       +(off.length?' <b>Not showing just now: '+esc(off.join(' and '))+'.</b>':'')+' Updated '+esc(hm(x.updated))+'. Football data provided by the Football-Data.org API. Event listings from Ticketmaster.</p>';
