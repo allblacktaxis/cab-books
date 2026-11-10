@@ -5371,6 +5371,8 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   }
   function ubBonTxt(B){ return ['Quest','Promotion','Referral'].filter(function(k){return B[k]}).map(function(k){return k+' '+gbp2.format(B[k])}).join(' · '); }
   function uberStmt(L,name){
+    /* Uber's PDFs store the colon in times as a null character ("19\u000011"): read it as ":" (Matt's statements, 10 Nov 2026) */
+    L=L.map(function(l){ return String(l).replace(/\u0000/g,':'); });
     var txt=L.join('\n'), per=/(\d{1,2}\s+[A-Za-z]{3,4}\s+\d{4})\s+\d{1,2}(?::\d\d)?\s*[ap]m\s*[-–]\s*(\d{1,2}\s+[A-Za-z]{3,4}\s+\d{4})/.exec(txt);
     var from=per?stLong(per[1]):'', to=per?addDays(stLong(per[2]),-1):'', yr=+(to||todayISO()).slice(0,4), endM=+(to||todayISO()).slice(5,7);
     var S0={prov:'Uber',kind:'payment',label:'Uber weekly statement',ref:'uber-'+from+'-'+to,from:from,to:to,jobs:[],extras:[],costs:[],checks:[],file:name,payouts:[],weeks:from&&to?[{f:from,t:to}]:[]};
@@ -5653,7 +5655,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   function stLoadedTo(prov,m){ var md=S.months[m]; if(!md) return ''; var p=pkey(prov), c=md.covered&&p&&md.covered[p]; if(!c&&!md.open) c=m+'-31'; return c||''; }
 
   /* Uber: every money line already in the books, by its key (fares, tips, bonuses), from any Uber file */
-  function ubKeys(){ var o={}; (S.entriesRaw||[]).forEach(function(e){ if(e.ubk) e.ubk.forEach(function(k){ o[k]=1; }); else if(/^ub[a-z]-/.test(e.id)) o[e.id]=1; }); return o; }
+  function ubKeys(skip){ var o={}; (S.entriesRaw||[]).forEach(function(e){ if(skip&&e.stmt&&skip[e.stmt]) return; if(e.ubk) e.ubk.forEach(function(k){ o[k]=1; }); else if(/^ub[a-z]-/.test(e.id)) o[e.id]=1; }); return o; }
   /* Drop Uber lines already counted; a tip whose trip is already in the books comes in on its own. Marks the keys as taken. */
   function ubSplit(jobs,have,plan){
     var out=[];
@@ -5683,7 +5685,14 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   function stPlan(){
     var R=ST.res||[], existing={}, have=S.entries.reduce(function(o,e){o[e.id]=e;return o},{});
     var plan={add:[],dup:0,loaded:0,extras:[],costs:[],stmts:[],bankRepl:[],cashFares:0,cashN:0,byProv:{}};
-    var seenStmt={}, viaCard=stViaCard(), ubHave=ubKeys();
+    /* An Uber statement read again whose saved lines it would no longer produce (read before trip times were understood)
+       is refreshed: its old lines are taken out and it comes in again, so nothing is counted twice. */
+    var ubRef={}; plan.del=[];
+    R.forEach(function(s){ if(s.err||s.prov!=='Uber') return; var sid='st-'+hash(s.ref), keys={};
+      s.jobs.forEach(function(j){ (j.ubk||[j.id]).forEach(function(k){ keys[k]=1; }); });
+      var old=(S.entriesRaw||[]).filter(function(e){ return e.stmt===sid&&!e.est; });
+      if(old.some(function(e){ return !keys[e.id]; })){ ubRef[sid]=1; old.forEach(function(e){ plan.del.push(e.id); delete have[e.id]; }); } });
+    var seenStmt={}, viaCard=stViaCard(), ubHave=ubKeys(ubRef);
     var dailyGett=R.filter(function(s){return s.prov==='Gett'&&s.kind==='payment'}).concat(stList().filter(function(s){return s.prov==='Gett'&&s.kind==='payment'}));
     R.forEach(function(s){
       if(s.err||seenStmt[s.ref]) return; seenStmt[s.ref]=1;
@@ -5750,6 +5759,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
       if(xs.length){ var xt=xs.reduce(function(s,x){return s+x.data.amount},0); h+='<div class="kv"><span class="k">Credits and extra payments ('+xs.length+')<br><span style="font-size:12px">'+esc(xs.slice(0,4).map(function(x){return x.data.note}).join(', '))+'</span></span><span class="v">'+gbp2.format(xt)+'</span></div>'; }
       if(plan.costs.length){ var ct=plan.costs.reduce(function(s,x){return s+x.data.amount},0); h+='<div class="kv"><span class="k">Costs taken off the statement ('+plan.costs.length+')<br><span style="font-size:12px">'+esc(plan.costs.slice(0,3).map(function(x){return x.data.category}).join(', '))+'</span></span><span class="v">'+gbp2.format(ct)+' cost</span></div>'; }
       if(pfs.length){ var pft=pfs.reduce(function(s,x){return s+x.data.feeFixed},0); h+='<div class="kv"><span class="k">Curb payout fees, 25p a payout ('+pfs.length+' month'+(pfs.length>1?'s':'')+')</span><span class="v">'+gbp2.format(pft)+' cost</span></div>'; }
+      if(plan.del&&plan.del.length) h+='<p class="note"><b>Refreshes '+plan.del.length+' Uber line'+(plan.del.length===1?'':'s')+'</b> brought in earlier without their trip dates: they are replaced by the lines above, dated by trip.</p>';
       if(!plan.add.length&&!plan.extras.length&&!plan.costs.length) h+='<p class="note" style="margin:0">Nothing new: '+(plan.dup?'these jobs are already in your books.':'no jobs in these files.')+'</p>';
       if(plan.cashN) h+='<p class="note">'+plan.cashN+' job'+(plan.cashN>1?'s':'')+' marked “cash” ('+gbp2.format(plan.cashFares)+') were paid by card in the cab, so the money is counted once, in Curb’s report. The app fees on them still count as a cost.</p>';
       if(plan.bankRepl.length){ var bt=plan.bankRepl.reduce(function(s,e){return s+eAmt(e)},0); h+='<p class="note">Replaces '+plan.bankRepl.length+' estimate'+(plan.bankRepl.length>1?'s':'')+' from your bank statement ('+gbp2.format(bt)+') with the exact figures.</p>'; }
@@ -5763,7 +5773,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     }
     box.innerHTML=h;
     var n=plan.add.length+plan.extras.length+plan.costs.length, sb=$('st-save');
-    sb.hidden=!ok.length||(!n&&!plan.bankRepl.length); sb.disabled=false;
+    sb.hidden=!ok.length||(!n&&!plan.bankRepl.length&&!(plan.del&&plan.del.length)); sb.disabled=false;
     sb.textContent=n?'Add '+n+' to my books':'Use the exact figures';
     ST.plan=plan;
   }
@@ -5799,6 +5809,8 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   function stSave(){
     var plan=ST.plan; if(!plan||!S.db) return;
     var ops=[];
+    var reAdd={}; plan.add.concat(plan.extras).forEach(function(x){ reAdd[x.id]=1; });
+    (plan.del||[]).forEach(function(id){ if(!reAdd[id]) ops.push(['entries',id,null]); });
     plan.add.concat(plan.extras,plan.costs).forEach(function(x){ ops.push(['entries',x.id,x.data]); });
     plan.stmts.forEach(function(s){ var d=Object.assign({},s); delete d.id; ops.push(['stmts',s.id,d]); });
     plan.bankRepl.forEach(function(e){ var d=Object.assign({},e); delete d.id; d.superseded=true; ops.push(['entries',e.id,d]); });
@@ -5807,8 +5819,8 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
       if(i>=ops.length){ toast('Added '+(plan.add.length+plan.extras.length+plan.costs.length)+' from '+plan.stmts.length+' statement'+(plan.stmts.length>1?'s':'')+'.'); ST.res=null; $('st-file').value=''; stRender(); return; }
       var chunk=ops.slice(i,i+(S.fs&&S.fs.batch?400:20)); i+=chunk.length; sb.textContent='Saving '+Math.min(i,ops.length)+' of '+ops.length+'…';
       var w;
-      if(S.fs&&S.uid&&S.fs.batch){ var bt=S.fs.batch(), home=S.fs.collection('users').doc(S.uid); chunk.forEach(function(o){ bt.set(home.collection(o[0]).doc(o[1]),o[2]); }); w=bt.commit(); }
-      else w=Promise.all(chunk.map(function(o){ return S.db.collection(o[0]).doc(o[1]).set(o[2]); }));
+      if(S.fs&&S.uid&&S.fs.batch){ var bt=S.fs.batch(), home=S.fs.collection('users').doc(S.uid); chunk.forEach(function(o){ var rf=home.collection(o[0]).doc(o[1]); if(o[2]===null) bt.delete(rf); else bt.set(rf,o[2]); }); w=bt.commit(); }
+      else w=Promise.all(chunk.map(function(o){ var d=S.db.collection(o[0]).doc(o[1]); return o[2]===null?d.delete():d.set(o[2]); }));
       w.then(function(){ done+=chunk.length; step(); })
         .catch(function(e){ fail(e); sb.disabled=false; sb.textContent='Try again'; });
     }
