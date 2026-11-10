@@ -5610,7 +5610,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
         return cbJson(js,nm);
       }
       if(/\.(xlsx|xls|csv|txt)$/.test(low)){
-        return stSheetRows(buf).catch(function(e){ if(/numbers/i.test(String(e&&e.message||e))) throw new Error('This is an Apple Numbers file. Open it in Numbers, tap ⋯ → Export → Excel (or CSV), and choose that file here. Or download it again from Curb and save it straight to Files without opening it.'); throw e; }).then(function(rows){ return ccSheet(rows,nm)||uberCsv(rows,nm)||curbSheet(rows,nm)||lhrSheet(rows,nm)||{err:'This spreadsheet is not a Curb, ComCab, Uber or Heathrow file Cab Books knows. For bank statements use the Bank statement box below.',file:nm}; });
+        return stSheetRows(buf).catch(function(e){ if(/numbers/i.test(String(e&&e.message||e))) throw new Error('This is an Apple Numbers file. Open it in Numbers, tap ⋯ → Export → Excel (or CSV), and choose that file here. Or download it again and save it straight to Files without opening it.'); throw e; }).then(function(rows){ return ccSheet(rows,nm)||uberCsv(rows,nm)||curbSheet(rows,nm)||lhrSheet(rows,nm)||{err:'Cab Books didn’t recognise this spreadsheet. The spreadsheets it reads here are: Curb card transactions (or settlement) report, Uber earnings CSV, ComCab pay sheet and Heathrow drop-off download. FreeNow, Gett, Uber, ComCab and Taxiworld statements are PDFs. For your bank statement, use the Bank statement box below.',file:nm}; });
       }
       return {err:'Choose a PDF, Excel, CSV or Cab Books (.json) file.',file:nm};
     }).catch(function(e){ return {err:(e&&e.message)||'Could not read this file.',file:nm}; });
