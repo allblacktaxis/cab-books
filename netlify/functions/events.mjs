@@ -105,6 +105,6 @@ export default async (req) => {
   const bad = !events.length && sources.football !== 'ok' && sources.ticketmaster !== 'ok';
   return new Response(JSON.stringify({ day, updated: new Date().toISOString(), sources, checked: CHECKED, events }), {
     status: bad ? 502 : 200,
-    headers: { ...JSON_HEAD, 'cache-control': bad ? 'no-store' : 'public, max-age=300', ...(bad ? {} : { 'netlify-cdn-cache-control': 'public, durable, s-maxage=1800, stale-while-revalidate=300' }) },
+    headers: { ...JSON_HEAD, 'cache-control': bad ? 'no-store' : 'public, max-age=60', ...(bad ? {} : { 'netlify-cdn-cache-control': 'public, durable, s-maxage=1800, stale-while-revalidate=300' }) },
   });
 };

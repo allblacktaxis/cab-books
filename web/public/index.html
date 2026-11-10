@@ -4961,6 +4961,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   /* ---------- Tools: Tonight – big London events and when they should finish (Matt, 10 Nov 2026) ----------
      From the website's server function (/.netlify/functions/events): football (football-data.org) and the big
      venues on Ticketmaster (The O2, Wembley, Royal Albert Hall …), cached 30 minutes for every driver. */
+  var TN_V='3';
   S.tn={off:0,data:{},err:{},busy:{},view:lsGet('cb-tn-view')||'board'};
   function tnShort(v){ return String(v||'').replace(/^Theatre Royal /,'').replace(/ Theatre$/,''); }
   function tnDay(){ return dayAdd(todayISO(),S.tn.off); }
@@ -4969,7 +4970,8 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     if(T.busy[d]) return; if(!force&&x&&Date.now()-x._at<10*60000) return;
     if(typeof firebase==='undefined'){ T.err[d]='claude'; renderTools(); return; }
     T.busy[d]=true; T.err[d]='';
-    fetch('/.netlify/functions/events?day='+d,{headers:{accept:'application/json'}}).then(function(r){ return r.json().then(function(j){ return {ok:r.ok,j:j}; }); })
+    /* v= changes whenever the events list changes, so a new version never gets an old copy; Refresh skips the phone's copy too. */
+    fetch('/.netlify/functions/events?day='+d+'&v='+TN_V,{headers:{accept:'application/json'},cache:force?'no-store':'default'}).then(function(r){ return r.json().then(function(j){ return {ok:r.ok,j:j}; }); })
       .then(function(r){ if(!r.ok||!r.j||r.j.error){ T.err[d]=(r.j&&r.j.error)||'error'; } else { r.j._at=Date.now(); T.data[d]=r.j; } })
       .catch(function(){ T.err[d]='offline'; })
       .then(function(){ T.busy[d]=false; if(S.tab==='tools'&&S.tool==='tonight') renderTools(); });
