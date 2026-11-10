@@ -222,8 +222,8 @@ BOOT = r"""  /* ---------- website plumbing: Firebase sign-in + each driver's pr
   }
   document.addEventListener('click',function(ev){ if(ev.target&&ev.target.id==='acct-out'&&S.auth){ S.auth.signOut(); $('setovl').hidden=true; } });
   /* ---------- Your account: email, password, sign out, copy of my data, delete ---------- */
-  var ACCT_ALL=['settings','months','plans','events','bankrules','rules','closes','history','bills','receipts','entries','rphotos','rphotoimg','stmts','push','meta'];
-  var ACCT_COPY=['settings','months','plans','events','bankrules','rules','closes','history','bills','receipts','entries','rphotos','rphotoimg','stmts'];
+  var ACCT_ALL=['settings','months','plans','events','bankrules','rules','closes','history','bills','receipts','entries','rphotos','rphotoimg','stmts','tosort','push','meta']; /* every collection a driver has: delete must leave nothing (UK GDPR) */
+  var ACCT_COPY=['settings','months','plans','events','bankrules','rules','closes','history','bills','receipts','entries','rphotos','rphotoimg','stmts','tosort'];
   S.acctOpen=S.acctOpen||{};
   function acctSec(id,title,body){ return '<details class="rulex" data-acct="'+id+'"'+(S.acctOpen[id]?' open':'')+'><summary>'+title+'</summary><div style="padding:0 0 12px">'+body+'</div></details>'; }
   function acctField(id,label,type,ac){ return '<div class="field" style="margin:0 0 8px"><label for="'+id+'">'+label+'</label><input type="'+type+'" id="'+id+'" autocomplete="'+ac+'"'+(type==='email'?' inputmode="email" autocapitalize="off"':'')+'></div>'; }
