@@ -1478,7 +1478,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     var el=$('set-body'); if(!el || $('setovl').hidden) return;
     if(!S.db){ el.innerHTML='<p class="help">Open this page while signed in to change settings.</p>'; return; }
     var ae=document.activeElement; if(ae && el.contains(ae) && /INPUT|TEXTAREA|SELECT/.test(ae.tagName)) return;
-    var st=S.settings, z=S.biz||{}, h=renderModeCard()+renderLookCard()+(S.isOwner?renderBackupCard():'')+renderPracticeCard()+renderSuggest()+renderProvPick()+renderBarPick()+renderAlertPick()+renderRemindPick()+renderAdminCard()
+    var st=S.settings, z=S.biz||{}, h=renderModeCard()+renderLookCard()+(S.isOwner?renderBackupCard():'')+renderPracticeCard()+renderSuggest()+renderProvPick()+renderBarPick()+renderAlertPick()+renderRemindPick()+renderChargeCard()+renderAdminCard()
       +'<div class="card"><h2>Your details on receipts</h2><p class="help">Printed at the bottom of every receipt and PDF.</p>'
       +'<div class="field"><label for="bz-trade">Name on your receipts</label><input type="text" id="bz-trade" maxlength="60" value="'+esc(z.trade!=null?z.trade:BIZNAME)+'"><p class="note" style="margin-top:4px">Shown at the top of every receipt. Leave as '+BIZNAME+' if you drive under our brand, or use your own trading name.</p></div>'
       +'<div class="field"><label for="bz-name">Your name</label><input type="text" id="bz-name" maxlength="60" value="'+esc(z.name||'')+'" placeholder="e.g. your full name"></div>'
@@ -2120,6 +2120,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
       if(!P.monthly) h+='<div class="kv"><span class="k">Jobs</span><span class="v">'+A.jobs+'</span></div>';
       if(A.indic>0) h+='<div class="kv"><span class="k">Not yet confirmed by statements</span><span class="v">'+gbp2.format(A.indic)+'</span></div>';
       h+='<p class="note">'+(vat?'Profit = turnover + tips − commission and fees − expenses.':'Profit = taken (including tips) − commission and fees − expenses.')+'</p></div>';
+      h+=daysCard(P);
       if(P.monthly && P.keys.length>1) h+=repBars(P)+profitBars(P);
       var pk=Object.keys(A.prov).filter(function(k){return A.prov[k].turn||A.prov[k].jobs}).sort(function(a,b){return A.prov[b].turn-A.prov[a].turn});
       var tot=pk.reduce(function(s,k){return s+A.prov[k].turn},0)||1;
@@ -2395,7 +2396,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
       else if(e.kind==='expense'){ if(expSuperseded(e,EI,false)) return; D.exp.push(e); D.expTotal+=+e.amount||0; if(e.src!=='import') D.expEst+=+e.amount||0; }
     });
     D.rows.sort(function(a,b){return (a.e.ts||0)-(b.e.ts||0)});
-    virtualExp(iso,iso,true).forEach(function(v){ D.exp.push({id:'v-'+v.rid+'-'+iso,category:v.category,amount:v.amount,virtual:true,note:'Rule: '+gbp2.format((S.rules[v.rid]&&+S.rules[v.rid].amount)||0)+' a week'}); D.expTotal+=v.amount; D.expEst+=v.amount; });
+    virtualExp(iso,iso,true).forEach(function(v){ D.exp.push({id:'v-'+v.rid+'-'+iso,category:v.category,amount:v.amount,virtual:true,note:v.rid==='homecharge'?'Home charging (a working day)':'Rule: '+gbp2.format((S.rules[v.rid]&&+S.rules[v.rid].amount)||0)+' a week'}); D.expTotal+=v.amount; D.expEst+=v.amount; });
     return D;
   }
   function taxRate(){ var A=agg(period({mode:'taxyear',off:0})), p=taxProfit(A); if(!(p>0)) return 0; return taxEst(p).total/p; }
@@ -2941,8 +2942,33 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   }
   function expCov(k){ var md=S.months[k]; if(!md) return ''; return md.expCovered||(md.open?'':k+'-31'); }
   function weekActual(r,d){ var m=mondayOf(d), e=dayAdd(m,6); return S.entries.some(function(x){return x.kind==='expense'&&x.category===r.category&&x.date>=m&&x.date<=e}); }
+  /* ---------- Days worked and home charging (Matt, 10 Nov 2026) ----------
+     A working day is a date with at least one real job (typed in, or from a statement), not practice and not a
+     bank estimate (those are payment dates). Jobs before 5am count towards the day before, so a night shift is one day.
+     Drivers with a charger at home set what a night's charge costs (Settings → Home charging); each working day from
+     their start date then adds that much as an Electric charging expense. Workbook months have no daily jobs, so
+     nothing is added there. Settings: settings/charging {perDay, from}. */
+  S.charge=null; var WD_CACHE={ref:null,set:null};
+  function workDay(e){ var d=e.date; if(!d) return ''; var t=String(e.time||''); if(/^\d{1,2}:\d{2}/.test(t)&&+t.split(':')[0]<5) d=dayAdd(d,-1); return d; }
+  function workedDays(){
+    if(WD_CACHE.ref===S.entries&&WD_CACHE.set) return WD_CACHE.set;
+    var set={}; (S.entries||[]).forEach(function(e){ if(e.kind!=='fare'||e.demo||e.est||e.bonus||e.tipOnly||e.adj) return; var d=workDay(e); if(d) set[d]=1; });
+    WD_CACHE={ref:S.entries,set:set}; return set;
+  }
+  function workedIn(from,to){ var set=workedDays(); return Object.keys(set).filter(function(d){ return d>=from&&d<=to; }).sort(); }
+  function chargeOn(){ var c=S.charge; return !!(c&&+c.perDay>0&&c.from); }
+  function daysCard(P){
+    var t=todayISO(), to=P.to<t?P.to:t, all=Object.keys(workedDays()).sort(), first=all[0]; if(!first||P.from>to) return '';
+    var from=P.from>first?P.from:first; if(from>to) return '';
+    var w=workedIn(from,to).length, span=Math.round((Date.parse(to)-Date.parse(from))/864e5)+1, off=Math.max(0,span-w);
+    var h='<div class="card" id="days-card"><h2>Days worked</h2><div class="sgrid3"><div class="s3 hi"><div class="l">Days worked</div><div class="n num">'+w+'</div></div><div class="s3"><div class="l">Days off</div><div class="n num">'+off+'</div></div><div class="s3"><div class="l">Days counted</div><div class="n num">'+span+'</div></div></div>';
+    if(chargeOn()){ var cf=from>S.charge.from?from:S.charge.from, cw=cf<=to?workedIn(cf,to).length:0; h+='<div class="kv"><span class="k">Home charging</span><span class="v">'+cw+' × '+gbp2.format(+S.charge.perDay)+' = <b>'+gbp2.format(cw*S.charge.perDay)+'</b></span></div>'; }
+    h+='<p class="note">A working day is a day with at least one job (typed in or from a statement). Jobs before 5am count towards the day before.'+(P.from<first?' Counted from '+esc(dlabel(first))+', the first day with job-by-job records.':'')+(to<P.to?' Up to today.':'')+(chargeOn()?' Home charging is in your expenses as Electric charging.':' Charge your car at home? Set a night’s cost in Settings → Home charging.')+'</p></div>';
+    return h;
+  }
   function virtualExp(from,to,ignoreCov){
     var out=[];
+    if(chargeOn()){ var cf=from>S.charge.from?from:S.charge.from; if(cf<=to) workedIn(cf,to).forEach(function(d){ out.push({date:d,category:'Electric charging',amount:+S.charge.perDay,rid:'homecharge',virtual:true}); }); }
     Object.keys(S.rules).forEach(function(id){
       var r=S.rules[id]; if(!r||r.active===false) return; var amt=+r.amount||0; if(!(amt>0)||!r.start) return;
       var a=from>r.start?from:r.start, z=(r.end&&r.end<to)?r.end:to, d=a, g=0;
@@ -4598,6 +4624,19 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   function remSync(){ if(S.db&&S.push&&S.push.state==='on') S.db.collection('push').doc(pushDev()).set({remind:remRules(),ts:Date.now()},{merge:true}).catch(function(){}); }
   function remSave(ch){ S.rem=Object.assign({},S.rem,ch); renderSettings();
     if(S.db) S.db.collection('settings').doc('remind').set({on:S.rem.on!==false,dow:+S.rem.dow,hour:+S.rem.hour,ts:Date.now()}).catch(fail); remSync(); }
+  function renderChargeCard(){
+    var c=S.charge||{}, on=chargeOn();
+    return '<div class="card" id="ch-card"><h2>Home charging</h2><p class="help">Only if you charge your cab at home. Put what a night’s charge costs you, and on every day you work Cab Books adds that much as an Electric charging expense. Leave it empty if you don’t charge at home. If your home electricity bill also comes in from your bank import, mark that payee as personal so it isn’t counted twice.</p>'
+      +'<div class="two"><div class="field" style="margin:0"><label for="ch-amt">A night’s charge (£)</label><input type="text" class="money" id="ch-amt" inputmode="numeric" autocomplete="off" placeholder="0.00" value="'+(+c.perDay>0?(+c.perDay).toFixed(2):'')+'"></div>'
+      +'<div class="field" style="margin:0"><label for="ch-from">Count from</label><input type="date" id="ch-from" value="'+esc(c.from||(curTaxYear()+'-04-06'))+'"></div></div>'
+      +'<div class="two" style="margin-top:10px"><button class="btn" type="button" id="ch-save">Save</button>'+(on?'<button class="btn ghost" type="button" id="ch-off">Turn off</button>':'')+'</div>'
+      +(on?'<p class="note" style="color:var(--ok)">✓ '+gbp2.format(+c.perDay)+' for each working day from '+esc(dlabel(c.from))+'.</p>':'')+'</div>';
+  }
+  document.addEventListener('focusin',function(ev){ if(ev.target&&ev.target.id==='ch-amt'&&!ev.target._m){ ev.target._m=1; moneyInput(ev.target); } });
+  document.addEventListener('click',function(ev){ var id=ev.target&&ev.target.id; if(id!=='ch-save'&&id!=='ch-off') return; if(!S.db) return;
+    var v=id==='ch-off'?{perDay:0,from:(S.charge&&S.charge.from)||''}:{perDay:Math.round((+$('ch-amt').value||0)*100)/100,from:$('ch-from').value||(curTaxYear()+'-04-06')};
+    if(id==='ch-save'&&!(v.perDay>0)){ toast('Type what a night’s charge costs, or leave it off.'); return; }
+    S.charge=v; S.db.collection('settings').doc('charging').set(Object.assign({ts:Date.now()},v)).then(function(){ toast(v.perDay>0?'Home charging saved: '+gbp2.format(v.perDay)+' a working day':'Home charging off'); renderSettings(); renderAll(); }).catch(fail); });
   function renderRemindPick(){
     var R=S.rem, apps=remApps(), w=apps.filter(function(a){return a!=='Curb'});
     var h='<div class="card" id="rem-card"><h2>Statement reminder</h2><p class="help">One reminder a week on your phone to bring in your statements'+(w.length?' ('+esc(w.join(', '))+(S.mode!=='track'?' and your bank CSV':'')+')':'')+(apps.indexOf('Curb')>=0?', and once a month last month’s Curb report':'')+'. It names the apps you use (Settings → Providers I use).</p>';
@@ -6351,7 +6390,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     function onErr(name){return function(e){ $('sync').textContent='Could not load '+name; }}
     db.collection('settings').onSnapshot(function(snap){
       snap.docs.forEach(function(d){ if(d.id==='stopts'&&d.exists){ S.stopts=d.data()||{}; stSyncVia(); } if(d.id==='tipstats'&&d.exists){ S.tipstats=d.data(); } if(d.id==='business'&&d.exists){ S.biz=d.data()||{}; } if(d.id==='practice'){ S.practice=!!(d.exists&&d.data().on); } if(d.id==='drivers'&&d.exists){ var nm=d.data().names; if(Array.isArray(nm)&&nm.length) S.drivers=nm; } if(d.id==='providers'&&d.exists){ var sv=d.data().shown, kn=d.data().known; S.shown=Array.isArray(sv)&&sv.length?sv:null; S.provKnown=Array.isArray(kn)?kn:null; if(S.shown&&S.shown.indexOf(S.prov)<0&&!S.editId){ S.prov=S.shown[0]; if(typeof applyFeeDefaults==='function') applyFeeDefaults(); } if(typeof buildChips==='function') buildChips(); } if(d.id==='bank'&&d.exists){ S.bankCov=d.data().covered||''; if(typeof bkStatus==='function') bkStatus(); } if(d.id==='main'&&d.exists){ var v=d.data(); S.settings=Object.assign({},DEF,{threshold:+v.threshold||DEF.threshold,amberPct:+v.amberPct||DEF.amberPct,redPct:+v.redPct||DEF.redPct,start:v.start||DEF.start,fees:v.fees||{}}); } });
-      var md=null; snap.docs.forEach(function(d){ if(d.id==='look'&&d.exists){ var lk=(d.data()||{}).theme; if(lk&&lk!==S.look) applyLook(lk); } if(d.id==='opening'&&d.exists) S.opening=d.data()||{}; if(d.id==='tax'&&d.exists) S.tax=d.data()||{}; if(d.id==='mode'&&d.exists){ var mv=(d.data()||{}).mode; if(mv==='full'||mv==='track') md=mv; } if(d.id==='extras'&&d.exists){ var xl=(d.data()||{}).list; S.exList=Array.isArray(xl)?xl:null; if(typeof exRender==='function') exRender(); } if(d.id==='tabs'&&d.exists){ var tv=(d.data()||{}).shown, to=(d.data()||{}).order; S.bar=barFix(tv); S.barOrder=Array.isArray(to)&&to.length?to:null; } if(d.id==='remind'&&d.exists){ S.rem=Object.assign({},REM_DEF,d.data()||{}); if(typeof remSync==='function') remSync(); } if(d.id==='alerts'&&d.exists){ var av=d.data()||{}; S.al={on:av.on!==false,min:+av.min||4,express:av.express!==false,off:Array.isArray(av.off)?av.off:[],tube:av.tube!==false,tlines:Array.isArray(av.tlines)?av.tlines:AL_TLINES.slice()}; if(typeof alRender==='function') alRender(); } }); S.mode=md||(S.isOwner?'full':null); S.loaded.settings=true; applyMode(); renderAll();
+      var md=null; snap.docs.forEach(function(d){ if(d.id==='look'&&d.exists){ var lk=(d.data()||{}).theme; if(lk&&lk!==S.look) applyLook(lk); } if(d.id==='opening'&&d.exists) S.opening=d.data()||{}; if(d.id==='tax'&&d.exists) S.tax=d.data()||{}; if(d.id==='mode'&&d.exists){ var mv=(d.data()||{}).mode; if(mv==='full'||mv==='track') md=mv; } if(d.id==='extras'&&d.exists){ var xl=(d.data()||{}).list; S.exList=Array.isArray(xl)?xl:null; if(typeof exRender==='function') exRender(); } if(d.id==='tabs'&&d.exists){ var tv=(d.data()||{}).shown, to=(d.data()||{}).order; S.bar=barFix(tv); S.barOrder=Array.isArray(to)&&to.length?to:null; } if(d.id==='charging'&&d.exists){ S.charge=d.data()||null; if(typeof renderAll==='function') setTimeout(renderAll,0); } if(d.id==='remind'&&d.exists){ S.rem=Object.assign({},REM_DEF,d.data()||{}); if(typeof remSync==='function') remSync(); } if(d.id==='alerts'&&d.exists){ var av=d.data()||{}; S.al={on:av.on!==false,min:+av.min||4,express:av.express!==false,off:Array.isArray(av.off)?av.off:[],tube:av.tube!==false,tlines:Array.isArray(av.tlines)?av.tlines:AL_TLINES.slice()}; if(typeof alRender==='function') alRender(); } }); S.mode=md||(S.isOwner?'full':null); S.loaded.settings=true; applyMode(); renderAll();
     },onErr('settings'));
     db.collection('months').onSnapshot(function(snap){
       var o={}; snap.docs.forEach(function(d){ if(d.exists) o[d.id]=d.data(); }); S.months=o; S.loaded.months=true; renderAll(); $('sync').textContent=S.syncLabel||'Saved to your account';
