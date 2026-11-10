@@ -4961,7 +4961,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   /* ---------- Tools: Tonight – big London events and when they should finish (Matt, 10 Nov 2026) ----------
      From the website's server function (/.netlify/functions/events): football (football-data.org) and the big
      venues on Ticketmaster (The O2, Wembley, Royal Albert Hall …), cached 30 minutes for every driver. */
-  var TN_V='3';
+  var TN_V='4';
   S.tn={off:0,data:{},err:{},busy:{},view:lsGet('cb-tn-view')||'board'};
   function tnShort(v){ return String(v||'').replace(/^Theatre Royal /,'').replace(/ Theatre$/,''); }
   function tnDay(){ return dayAdd(todayISO(),S.tn.off); }

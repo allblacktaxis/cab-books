@@ -34,6 +34,16 @@ const VENUES = [
   [/o2 academy brixton/i, 'O2 Academy Brixton', 'Brixton', 180],
   [/london stadium/i, 'London Stadium', 'Stratford', 210],
   [/tottenham hotspur stadium/i, 'Tottenham Hotspur Stadium', 'Tottenham', 210],
+  // Late music venues (Matt, 10 Nov 2026). Club nights publish no end time: shown with a "?".
+  [/^koko\b|koko camden/i, 'KOKO', 'Camden', 240, true],
+  [/drumsheds/i, 'Drumsheds', 'Meridian Water', 360, true],
+  [/tobacco dock/i, 'Tobacco Dock', 'Wapping', 360, true],
+  [/roundhouse/i, 'Roundhouse', 'Chalk Farm', 165],
+  [/^troxy/i, 'Troxy', 'Limehouse', 180],
+  [/electric brixton/i, 'Electric Brixton', 'Brixton', 240, true],
+  [/shepherd'?s bush empire/i, "O2 Shepherd's Bush Empire", "Shepherd's Bush", 165],
+  [/o2 forum kentish town|kentish town forum/i, 'O2 Forum Kentish Town', 'Kentish Town', 165],
+  [/^printworks/i, 'Printworks', 'Canada Water', 360, true],
 ];
 // Ticketmaster also lists add-ons for the same night: not events in their own right.
 const NOT_AN_EVENT = /parking|car park|upgrade|vip|package|hospitality|lounge|merch|locker|cloakroom|tour of|experience|fast lane|premium seat/i;
@@ -75,7 +85,7 @@ export function ticketmasterEvents(data, day) {
     const seg = (e.classifications && e.classifications[0] && e.classifications[0].segment && e.classifications[0].segment.name) || '';
     out.push({
       kind: /sport/i.test(seg) ? 'sport' : /arts|theatre/i.test(seg) ? 'show' : 'concert', title: e.name,
-      venue: venue[1], area: venue[2], start: st.dateTime, finish: plus(st.dateTime, venue[3]), note: '', src: 'ticketmaster',
+      venue: venue[1], area: venue[2], start: st.dateTime, finish: plus(st.dateTime, venue[3]), note: '', guess: !!venue[4], src: 'ticketmaster',
     });
   }
   return out;
