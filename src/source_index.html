@@ -457,6 +457,9 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent)}
 .chips button.bchip{box-shadow:inset 0 1px 0 #FFFFFF26,0 2px 4px #00000080}
 .chips button.bchip[aria-pressed=true]{outline:2.5px solid var(--accent)}
 .gear{color:var(--accent)}
+/* Account and Settings buttons: smaller, they don't need to stand out (Matt, 10 Nov 2026) */
+.gear{min-height:34px;padding:3px 10px;gap:4px;font-size:12px}
+.gear span{font-size:12px}
 .rucard[open] .rusum .rubtn{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)!important}
 input[type=text],input[type=number],input[type=date],select,textarea{background:#0A0A0B;border:1px solid var(--line)}
 
