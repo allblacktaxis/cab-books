@@ -76,9 +76,16 @@ export function parseVenuePage(html, v, day) {
       out.push({ kind: 'concert', title, venue: v.venue, area: v.area, start, finish: new Date(Date.parse(start) + v.mins * 60000).toISOString(), note: '', guess: true, src: 'venue:' + v.key });
     }
   }
+  // While a venue gives nothing, a short extract of the page around its first start date (or first date)
+  // goes into the report, so the reader can be fitted to that site. Tags removed; nothing personal is on these pages.
+  let sample = '';
+  if (!out.length) {
+    const i = html.search(/startDate|start_date|startTime|performanceDate/i), j = i >= 0 ? i : html.search(/\b(Mon|Tue|Wed|Thu|Fri|Sat|Sun)[a-z]*,? \d{1,2} (Nov|November)\b|\b\d{1,2} Nov(ember)? 2026\b|2026-11-1\d/);
+    if (j >= 0) sample = html.slice(Math.max(0, j - 120), j + 220).replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').slice(0, 300);
+  }
   const topKeys = Object.entries(keys).sort((a, b) => b[1] - a[1]).slice(0, 5).map(x => x[0]);
   return { events: out, report: { blocks: blocks.length, jsonScripts: jsonScripts.length, badJson: bad, eventsOnPage: found + loose, fromPageData: other, loose, today: out.length,
-    startDates: (html.match(/startDate/g) || []).length, times: (html.match(/\b(1[2-9]|2[0-3])[:.][0-5]\d\b/g) || []).length, keys: topKeys } };
+    startDates: (html.match(/startDate/g) || []).length, times: (html.match(/\b(1[2-9]|2[0-3])[:.][0-5]\d\b/g) || []).length, keys: topKeys, sample } };
 }
 
 export async function venueEvents(day) {
