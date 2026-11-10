@@ -1119,6 +1119,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     h+=thisMonth(C,ci);
     h+='<div class="card"><h2>Earnings and rolling total</h2>'+earnChart(C,ci)+'<div class="legend"><span><i class="lg-bar"></i>Each month\u2019s earnings</span><span><i class="lg-line"></i>Rolling 12 months</span><span><i class="lg-vat"></i>VAT line</span></div></div>';
     h+=twelve(C,ci);
+    h+=dropsOut(C,ci);
     h+=taxCard()+taxDatesCard();
     // plan table
     var rows='';
@@ -1180,6 +1181,24 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     return s;
   }
 
+  /* Rolling VAT headroom, month by month ahead (Matt, 10 Nov 2026): each coming month the month a year
+     earlier drops out of the 12, which frees that much room. If in the months between you earn what you
+     earned a year before, the total stays level, so a month's room = what is left now + what drops out then. */
+  function dropsOut(C,ci){
+    var st=S.settings, r=C.rolling[ci]; if(r==null) return '';
+    var left=st.threshold-r, rows='', any=false, cur=monthOf(todayISO()), live=C.keys[ci]===cur, cm=mlabel(C.keys[ci]).replace(/\s\d{4}$/,'');
+    for(var j=(live?ci:ci+1);j<=ci+6&&j<C.keys.length;j++){
+      var q=j-12, d=(q>=0&&C.used[q]!=null)?C.used[q]:0, room=j===ci?left:left+d; if(d>0) any=true;
+      rows+='<tr'+(j===ci?' class="now12"':'')+'><td>'+esc(mshort(C.keys[j]))+(j===ci?'<span class="tag">rest of it</span>':'')+'</td><td class="num">'+(d>0?esc(mshort(C.keys[q]))+' '+gbp0.format(d):'<span class="note">nothing</span>')+'</td>'
+        +'<td class="r num"'+(room<=0?' style="color:var(--bad)"':'')+'>'+(room>0?gbp0.format(room):'£0')+'</td></tr>';
+    }
+    if(!rows) return '';
+    return '<div class="card" id="drops-card"><h2>Room in the coming months</h2>'
+      +'<p class="help" style="margin:0 0 8px">Your 12-month total'+(live?' (with '+esc(cm)+' so far)':'')+' is <b class="num">'+gbp0.format(r)+'</b>, leaving <b class="num">'+(left>=0?gbp0.format(left):'−'+gbp0.format(-left))+'</b> before the '+gbp0.format(st.threshold)+' VAT line. Each month, the same month a year earlier drops out of the 12 and frees that much room.</p>'
+      +(any?'':'<p class="help" style="margin:0 0 8px">Your first takings are less than a year ago, so nothing drops out in these months yet.</p>')
+      +'<div class="scroll"><table><tr><th>Month</th><th>Drops out</th><th class="r">You can earn</th></tr>'+rows+'</table></div>'
+      +'<p class="note">“You can earn” is the most you can take in that month and stay under the VAT line, if in the months before it you earn about what you did a year earlier.'+(live?' Whatever you earn in the rest of '+esc(cm)+' comes off every month below it.':'')+' Earn more than a year ago and later months have less room; earn less and they have more.</p></div>';
+  }
   /* Last 12 months on one card: each month, running total oldest to newest, then next month's allowance. */
   function twelve(C,ci){
     var st=S.settings, lo=Math.max(0,ci-11), full=(ci-lo===11), run=0, rows='', cur=monthOf(todayISO());
