@@ -1503,7 +1503,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     if(S.lg.kind==='fare'){
       Object.keys(S.hist).forEach(function(id){ var d=S.hist[id]; (d.jobs||[]).forEach(function(j,i){ var nt=String(j.n||'').replace(/(\s*-\s*)+$/,'').replace(/^\s*£?[\d.,]+\s*$/,'').trim(); R.push({src:'hist',id:id+':'+i,date:j.d,tm:j.tm||'',prov:provName(j.p),pay:j.pay||'',fare:+j.f||0,tip:+j.t||0,fee:+j.x||0,ref:j.r||'',note:nt,st:j.s||j.st||j.status||'',jobs:j.jobs||1}); }); });
       S.entriesAll.forEach(function(e){ if(e.kind!=='fare') return; var sv=CL.stat[e.id];
-        R.push({src:'app',e:e,id:e.id,date:e.date,tm:e.time||'',prov:provName(e.provider||'Job'),pay:e.pay||'',fare:eAmt(e),tip:+e.tips||0,fee:lineFee(e),ref:e.bill?('Receipt '+e.bill):(e.ref||''),note:e.note||'',status:sv,jobs:(e.bonus||e.tipOnly)?0:1}); });
+        R.push({src:'app',e:e,id:e.id,date:e.date,tm:e.time||'',prov:provName(e.provider||'Job'),pay:e.pay||'',fare:eAmt(e),tip:+e.tips||0,fee:lineFee(e),ref:e.bill?('Receipt '+e.bill):(e.ref||''),note:e.note||'',status:sv,jobs:(e.bonus||e.tipOnly||e.adj)?0:1}); });
     } else {
       S.entriesAll.forEach(function(e){ if(e.kind!=='expense') return; R.push({src:'app',e:e,id:e.id,date:e.date,tm:'',prov:e.category||'Expense',pay:e.cash?'Cash':'',fare:+e.amount||0,tip:0,fee:0,ref:'',note:e.note||'',exp:true,est:e.src!=='import'&&!e.cash&&!expSuperseded(e,EIL,false),jobs:1}); });
     }
@@ -1724,7 +1724,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     var C=compute(S.entries), EI=expImpMap(), A={turn:0,tips:0,fees:0,exp:{},expTotal:0,expEst:0,jobs:0,prov:{},indic:0,loaded:0};
     function bp(name){var k=pkey(name)||String(name||'Other'); if(!A.prov[k]) A.prov[k]={label:PROV[k]||String(name||'Other'),jobs:0,turn:0,hist:0,fees:0,tips:0,bon:0,bonus:{},pay:{}}; return A.prov[k]}
     /* Uber Quest / Promotion / Referral (e.bonus) is income but not a fare, and a tip-only line is not a job (Matt, 10 Nov 2026) */
-    function isJob(e){ return !e.bonus&&!e.tipOnly; }
+    function isJob(e){ return !e.bonus&&!e.tipOnly&&!e.adj; }
     function bbon(b,e){ if(e.bonus){ b.bon+=eAmt(e); b.bonus[e.bonus]=(b.bonus[e.bonus]||0)+eAmt(e); } }
     function bpay(b,e){ var q=e.pay||'Other'; if(!b.pay[q]) b.pay[q]={jobs:0,turn:0,fees:0,tips:0}; var x=b.pay[q]; if(isJob(e)) x.jobs++; x.turn+=eAmt(e); x.fees+=lineFee(e); x.tips+=+e.tips||0; }
     function addExp(c,v){c=c||'Other'; A.exp[c]=(A.exp[c]||0)+v}
@@ -5387,11 +5387,23 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     }
     var T=ubJobs(ev,S0);
     var money=function(re){ var x=re.exec(txt); return x?stMoney(x[1].replace(/\s/g,'')):null; };
-    var earn=money(/Your earnings and entitlements\s+(-?\s?£\s?-?[\d,]+\.\d\d)/)||0, prev=money(/Events from previous weeks\s+(-?\s?£\s?-?[\d,]+\.\d\d)/)||0;
+    /* this week's earnings come from the weekly summary only: a week whose only money is a late tip has no such line there,
+       and the "from previous weeks" breakdown repeats the same words (Matt's 2-9 Mar statement) */
+    var summ=txt.split(/Breakdown of Your earnings/)[0];
+    var earn=stMoney(((/Your earnings and entitlements\s+(-?\s?£\s?-?[\d,]+\.\d\d)/.exec(summ)||[])[1]||'').replace(/\s/g,'')), prev=money(/Events from previous weeks\s+(-?\s?£\s?-?[\d,]+\.\d\d)/)||0;
     S0.total=r2(earn+prev);
-    var nt=S0.jobs.filter(function(j){return !j.tipOnly&&!j.bonus}).length;
+    var nt=S0.jobs.filter(function(j){return !j.tipOnly&&!j.bonus&&!j.adj}).length;
     S0.checks.push(chk(near(sum,S0.total),T.nf+' fare'+(T.nf===1?'':'s')+' '+gbp2.format(T.fare)+', tips '+gbp2.format(T.tip-T.tipEarly)+(T.tipEarly?' + '+gbp2.format(T.tipEarly)+' for trips in earlier weeks':'')+(ubBonTxt(T.bon)?', '+ubBonTxt(T.bon):'')+' = '+gbp2.format(sum)+(near(sum,S0.total)?'':' (statement says '+gbp2.format(S0.total)+')')));
     var tp=money(/Trip payment\s+(-?\s?£\s?-?[\d,]+\.\d\d)/);
+    /* Uber sometimes takes a service fee (and tax on it) out of a trip's payment: the trips then add up to less than the
+       breakdown's trip payment. Bring the trips up to the full payment and count the difference as a fee (Matt's 19-26 Jan statement). */
+    var svc=Math.abs(money(/Service fee\s+(-?\s?£\s?-?[\d,]+\.\d\d)/)||0), stax=Math.abs(money(/Tax on Service Fee\s+(-?\s?£\s?-?[\d,]+\.\d\d)/i)||money(/\nTaxes\s+(-?\s?£\s?-?[\d,]+\.\d\d)/)||0), sf=r2(svc+stax);
+    if(tp!=null&&sf>0&&near(T.fare+sf,tp)){
+      var aid='ubs-'+(from||'x').replace(/-/g,'')+'-'+Math.round(sf*100);
+      S0.jobs.push({id:aid,ubk:[aid],ref:'',date:to||from,time:'',type:'Uber service fee',method:'service fee '+gbp2.format(svc)+(stax?' + tax '+gbp2.format(stax):'')+', taken off a trip',pay:'Account',cash:false,fare:sf,tip:0,fee:sf,adj:true});
+      T.fare=r2(T.fare+sf);
+      S0.checks.push(chk(true,'Uber took a service fee of '+gbp2.format(svc)+(stax?' + tax '+gbp2.format(stax):'')+' out of a trip: counted as a fee, so fares show the full '+gbp2.format(tp)+'.'));
+    }
     if(tp!=null) S0.checks.push(chk(near(tp,T.fare),'Fares match the statement’s trip payments of '+gbp2.format(tp)+' (cancellation fees included)'));
     var st=money(/Starting balance[^£\n]*(-?\s?£\s?-?[\d,]+\.\d\d)/), en=money(/Ending balance[^£\n]*(-?\s?£\s?-?[\d,]+\.\d\d)/);
     if(st!=null&&en!=null) S0.checks.push(chk(near(st+S0.total-out,en),'Balance '+gbp2.format(st)+' + earnings '+gbp2.format(S0.total)+' − paid to bank '+gbp2.format(out)+' = '+gbp2.format(en)));
@@ -5712,10 +5724,10 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
           pay:j.pay||(s.prov==='Curb'?'Card':(j.cash?'Cash':'Account')),amount:j.fare,extras:j.extras||0,tips:j.tip,commission:0,feeFixed:Math.abs(+j.fee||0),
           note:(j.type&&j.type!=='Tour'&&j.type!=='Ride'&&j.type!=='Card payment'?j.type+' · ':'')+(s.prov==='Curb'?'':j.method),ts:Date.now()};
         if(j.card) e.card=j.card;
-        if(j.ubk){ e.ubk=j.ubk; if(j.bonus) e.bonus=j.bonus; if(j.tipOnly) e.tipOnly=true; }
+        if(j.ubk){ e.ubk=j.ubk; if(j.bonus) e.bonus=j.bonus; if(j.tipOnly) e.tipOnly=true; if(j.adj) e.adj=true; }
         if(j.cash&&(s.prov==='Freenow'||s.prov==='Gett')&&viaCard){ e.cashFare=j.fare; e.amount=0; e.viaCard=true; e.note='Paid by card in the cab: '+gbp2.format(j.fare)+' counted in Curb’s report'; plan.cashFares+=j.fare; plan.cashN++; }
         plan.add.push({id:j.id,data:e});
-        if(j.bonus){ P.bon[j.bonus]=(P.bon[j.bonus]||0)+e.amount; } else { if(!j.tipOnly) P.n++; P.fare+=e.amount; } P.tip+=e.tips; P.fee+=j.fee;
+        if(j.bonus){ P.bon[j.bonus]=(P.bon[j.bonus]||0)+e.amount; } else { if(!j.tipOnly&&!j.adj) P.n++; P.fare+=e.amount; } P.tip+=e.tips; P.fee+=j.fee;
       });
       s.extras.forEach(function(x){
         if(existing[x.id]||have[x.id]){ plan.dup++; return; } existing[x.id]=1;
@@ -5748,7 +5760,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
       h+='<div class="st-file"><div class="st-top">'+(s.err?'<b>'+esc(s.file)+'</b>':pdot(s.prov)+'<b>'+esc(s.label)+'</b>')+'</div>';
       if(s.err){ h+='<p class="note" style="color:var(--warn);margin:4px 0 0">'+esc(s.err)+'</p></div>'; return; }
       var bits=[]; if(s.from) bits.push(s.from===s.to?dlabel(s.from):dlabel(s.from)+' to '+dlabel(s.to));
-      var nj=s.jobs.filter(function(j){return !j.bonus&&!j.tipOnly}).length; if(nj) bits.push(nj+' '+(s.prov==='Curb'?'payment':s.prov==='Uber'?'trip':'job')+(nj>1?'s':''));
+      var nj=s.jobs.filter(function(j){return !j.bonus&&!j.tipOnly&&!j.adj}).length; if(nj) bits.push(nj+' '+(s.prov==='Curb'?'payment':s.prov==='Uber'?'trip':'job')+(nj>1?'s':''));
       if(s.payout!=null&&s.payDate) bits.push('pays '+gbp2.format(s.payout));
       h+='<div class="d">'+esc(bits.join(' · '))+'</div>';
       s.checks.forEach(function(c){ h+='<div class="st-chk '+(c.ok?'ok':'bad')+'">'+(c.ok?'\u2713 ':'\u26A0 ')+esc(c.msg)+'</div>'; });
