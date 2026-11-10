@@ -433,6 +433,15 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 #vj-mic[aria-pressed=true]{color:var(--bad);border-color:var(--bad)!important}
 /* Tapping Provider or Paid by brings the Add job card to the top of the screen (Matt, 10 Nov 2026). */
 #j-card{scroll-margin-top:calc(12px + env(safe-area-inset-top,0px))}
+/* Add job a little more compact so Save job clears the iPhone keypad (Matt, 10 Nov 2026) */
+#d-form #c-prov button,#d-form #c-pay button{min-height:42px;padding:6px 6px}
+#d-form #c-prov,#d-form #c-pay{gap:6px}
+#d-form .field{margin-bottom:8px}
+#d-form .two + .help{margin:-4px 0 6px}
+#d-form .jnote{margin:0 0 2px}
+#d-form .jnote summary{min-height:30px}
+#d-form .feeline{margin:0 0 6px}
+#d-form #j-save{min-height:42px;padding:8px 16px}
 #c-prov,#c-pay{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 #c-prov button,#c-pay button{width:100%;min-height:48px;padding:8px 6px;display:flex;align-items:center;justify-content:center;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
@@ -5109,19 +5118,10 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   $('ru-save').addEventListener('click',saveRule); $('ru-cancel').addEventListener('click',function(){ resetRuleForm(); $('ru-form').open=false; });
   $('j-save').addEventListener('click',saveJob); $('e-add').addEventListener('click',saveExpense);
   /* Tapping Fare (or Tip) brings that row to the top of the screen, so Save job shows above the keyboard (Matt, 3 Nov 2026). */
-  /* Once the keypad is up, nudge the page so Save job sits just above it (Matt, 10 Nov 2026: it was slightly hidden).
-     Scrolls only as far as needed, so Paid by and Fare stay in view. */
-  function saveAboveKeys(){
-    var vk=window.visualViewport, b=$('j-save'); if(!vk||!b) return;
-    var lim=vk.offsetTop+vk.height, tb=document.querySelector('.tabs'), tt=tb?tb.getBoundingClientRect().top:0;
-    if(tt>0&&tt<lim) lim=tt; /* the tab bar, if it shows above the keypad */
-    var over=b.getBoundingClientRect().bottom-lim+10;
-    if(over>0) window.scrollBy({top:over,behavior:'smooth'});
-  }
   function fareToTop(){
     var row=$('j-amt').closest('.field'); row=row&&row.parentElement||row; if(!row) return;
     if(S.jobFocus){ /* focused from a Paid by tap: keep Add job at the top, also once the keyboard has opened */
-      var vk=window.visualViewport; if(vk){ var once=function(){ vk.removeEventListener('resize',once); setTimeout(saveAboveKeys,60); }; vk.addEventListener('resize',once); setTimeout(function(){ vk.removeEventListener('resize',once); },800); }
+      var vk=window.visualViewport; if(vk){ var once=function(){ vk.removeEventListener('resize',once); setTimeout(jobToTop,30); }; vk.addEventListener('resize',once); setTimeout(function(){ vk.removeEventListener('resize',once); },800); }
       return; }
     function go(){ var y=row.getBoundingClientRect().top+(window.pageYOffset||document.documentElement.scrollTop)-8; window.scrollTo({top:Math.max(0,y),behavior:'smooth'}); }
     setTimeout(go,60);
