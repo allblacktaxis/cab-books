@@ -253,10 +253,10 @@ BOOT = r"""  /* ---------- website plumbing: Firebase sign-in + each driver's pr
          +'<label style="display:flex;gap:8px;align-items:center;margin:0 0 8px;font-weight:400"><input type="checkbox" id="acct-rep"> Start fresh: clear what is already here first (use this on switch-over day)</label>'
          +'<input type="file" id="acct-imp" accept=".json,application/json">')
       +acctSec('del','Delete my account',
-          '<p class="help" style="margin:0 0 8px">This permanently deletes your account and all your books: jobs, expenses, receipts, photos and settings. It cannot be undone. Download a copy of your data first if you might need it (HMRC expects records to be kept for 5 years after the tax return deadline).</p>'
+          '<p class="warnbox" style="margin:0 0 8px"><b>All of your data will be deleted 7 days after you confirm</b>: your account and all your books (jobs, expenses, receipts, photos and settings). Until then you can sign back in and keep your account. After 7 days it cannot be undone.</p><p class="help" style="margin:0 0 8px">Download a copy of your data first if you might need it (HMRC expects records to be kept for 5 years after the tax return deadline).</p>'
          +acctField('acct-del-word','Type DELETE to confirm','text','off')
          +acctField('acct-del-pw','Your password','password','current-password')
-         +'<button class="btn ghost" type="button" id="acct-del-go" style="color:var(--bad,#E5484D);border-color:var(--bad,#E5484D)!important">Delete my account and data</button>')
+         +'<button class="btn ghost" type="button" id="acct-del-go" style="color:var(--bad,#E5484D);border-color:var(--bad,#E5484D)!important">Delete my account and data in 7 days</button>')
       +'<p class="help" style="margin:12px 0 0"><a href="/help.html" style="color:var(--accent)">Getting-started guide</a> &middot; <a href="/privacy.html" style="color:var(--accent)">Privacy notice</a></p></div>';
   }
   function acctMsg(e){
@@ -300,23 +300,33 @@ BOOT = r"""  /* ---------- website plumbing: Firebase sign-in + each driver's pr
       .catch(function(){ toast('Could not collect your data. Check your connection and try again.'); })
       .then(function(){ acctBusy('acct-dl',false); });
   }
+  /* Delete my account: a 7-day grace period (Matt, 10 Nov 2026). Confirming records users/<uid>/meta/deletion with the
+     date; the daily job netlify/functions/deletions.mjs then deletes the books and the sign-in account. Signing in
+     before then shows a warning with "Keep my account", which removes the record. */
+  var DEL_DAYS=7;
+  function delDate(ms){ return new Date(ms).toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'}); }
   function acctDelete(){
     if(($('acct-del-word').value||'').trim().toUpperCase()!=='DELETE'){ toast('Type DELETE in the box to confirm.'); return; }
     var pw=$('acct-del-pw').value; if(!pw){ toast('Type your password.'); return; }
-    if(!confirm('Delete your Cab Books account and all your books for good? This cannot be undone.')) return;
-    acctBusy('acct-del-go',true,'Deleting…');
-    var uid=S.uid, fs=S.fs, home=fs.collection('users').doc(uid), user;
-    acctReauth(pw).then(function(u){
-      user=u; stopAll();
-      return Promise.all(ACCT_ALL.map(function(c){ return home.collection(c).get(); }));
-    }).then(function(snaps){
-      var refs=[]; snaps.forEach(function(sn){ sn.docs.forEach(function(d){ refs.push(d.ref); }); }); refs.push(home);
-      var k=0;
-      return (function del(){ if(k>=refs.length) return Promise.resolve(); var b=fs.batch(), n=0; while(k<refs.length&&n<400){ b.delete(refs[k++]); n++; } return b.commit().then(del); })();
-    }).then(function(){ return user.delete(); })
-      .then(function(){ $('setovl').hidden=true; toast('Your account and books have been deleted.'); })
-      .catch(function(e){ acctBusy('acct-del-go',false); if(user&&S.uid===uid) subscribe(S.db); toast(e&&e.code?acctMsg(e):'Could not finish deleting. Try again, or email marcin@allblacktaxis.co.uk.'); });
+    var when=Date.now()+DEL_DAYS*864e5;
+    if(!confirm('All of your data will be deleted in 7 days, on '+delDate(when)+': your account and all your books. Until then you can sign back in and keep your account. Carry on?')) return;
+    acctBusy('acct-del-go',true,'Working…');
+    var uid=S.uid;
+    acctReauth(pw).then(function(){
+      return S.fs.collection('users').doc(uid).collection('meta').doc('deletion').set({requested:true,at:Date.now(),deleteAfter:when});
+    }).then(function(){ $('setovl').hidden=true; toast('Your account and data will be deleted on '+delDate(when)+'. Sign in before then to keep it.'); setTimeout(function(){ if(S.auth) S.auth.signOut(); },1500); })
+      .catch(function(e){ acctBusy('acct-del-go',false); toast(e&&e.code?acctMsg(e):'Could not do that. Try again, or email marcin@allblacktaxis.co.uk.'); });
   }
+  function delBanner(at){
+    var b=$('del-banner'); if(b) b.remove(); if(!at) return;
+    document.body.insertAdjacentHTML('afterbegin','<div id="del-banner" class="warnbox" role="alert" style="position:sticky;top:0;z-index:50;margin:0;border-radius:0;padding:12px 16px"><b>Your account and all of your data will be deleted on '+esc(delDate(at))+'.</b> You asked for this. To keep your account, tap Keep my account. <div style="display:flex;gap:8px;margin-top:8px"><button class="btn small" type="button" id="del-keep">Keep my account</button><button class="btn ghost small" type="button" id="del-out">Sign out</button></div></div>');
+  }
+  function delCheck(uid){
+    S.fs.collection('users').doc(uid).collection('meta').doc('deletion').get().then(function(d){ var v=d.exists&&d.data(); delBanner(v&&v.requested?v.deleteAfter:0); }).catch(function(){});
+  }
+  document.addEventListener('click',function(ev){ var id=ev.target&&ev.target.id; if(id==='del-keep'&&S.uid){ var b=ev.target; b.disabled=true;
+      S.fs.collection('users').doc(S.uid).collection('meta').doc('deletion').delete().then(function(){ delBanner(0); toast('Your account will be kept.'); }).catch(function(){ b.disabled=false; toast('Could not do that. Check your connection and try again.'); }); }
+    else if(id==='del-out'&&S.auth){ S.auth.signOut(); } });
   function openAccount(){ S.acctOpen={}; openSettings(); setTimeout(function(){ var c=$('acct-card'); if(c) c.scrollIntoView({block:'start'}); },30); }
   document.addEventListener('toggle',function(ev){ var d=ev.target; if(d&&d.getAttribute&&d.getAttribute('data-acct')) S.acctOpen[d.getAttribute('data-acct')]=d.open; },true);
   document.addEventListener('click',function(ev){
@@ -348,13 +358,13 @@ BOOT = r"""  /* ---------- website plumbing: Firebase sign-in + each driver's pr
     auth.onAuthStateChanged(function(u){
       resetState();
       if($('acctbtn')) $('acctbtn').hidden=!u;
-      if(!u){ S.authUser=null; $('signin').hidden=false; siMode('in'); $('sync').textContent='Signed out'; renderAll(); return; }
+      if(!u){ if(typeof delBanner==='function') delBanner(0); S.authUser=null; $('signin').hidden=false; siMode('in'); $('sync').textContent='Signed out'; renderAll(); return; }
       /* New accounts must confirm their email before the books open (Matt 2 Nov). Accounts made before this went live are not blocked. */
       if(!u.emailVerified && Date.parse((u.metadata&&u.metadata.creationTime)||0)>=VERIFY_FROM){ showVerify(u); return; }
       $('vf-box').hidden=true; $('si-form').hidden=false;
       S.authUser=u; S.uid=u.uid; $('signin').hidden=true;
       S.syncLabel='Private to you'; $('sync').textContent='Loading…';
-      S.db=driverDb(fs,u.uid); subscribe(S.db);
+      S.db=driverDb(fs,u.uid); subscribe(S.db); delCheck(u.uid);
     });
   } else {
     $('sync').textContent='Not set up';
