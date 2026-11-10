@@ -2533,10 +2533,11 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
      Each provider name starts a job, each cost word starts an expense. Everything read is shown as rows to check and correct before Save all. */
   var VJ_PROV=[[/^(freenow|free-now|freeno)$/,'Freenow'],[/^(gett|get)$/,'Gett'],[/^uber$/,'Uber'],[/^comcab$/,'ComCab'],[/^jump$/,'Jump'],[/^blackcab$/,'Blackcab'],[/^curbflow$/,'CurbFlow'],[/^(hand|street|hail|rank)$/,'Hand'],[/^private$/,'Private'],[/^taxiworld$/,'Taxiworld'],[/^helix$/,'Helix']];
   var VJ_EXP=[[/^(petrol|fuel|diesel)$/,'Petrol'],[/^(charging|charge|electric)$/,'Electric charging'],[/^(parking|dropoff)$/,'Parking / drop-off'],[/^(wash|carwash|valet)$/,'Car wash'],[/^(rent|rental)$/,'Car rental'],[/^(repair|repairs|parts|tyre|tyres|service)$/,'Cab repairs / parts'],[/^(cleaning|supplies)$/,'Cleaning / admin supplies'],[/^union$/,'Union'],[/^(phone|broadband)$/,'Phone / broadband']];
+  var VJ_AIR={heathrow:'Heathrow',gatwick:'Gatwick',stansted:'Stansted',luton:'Luton',cityairport:'City Airport'};
   var VJ_NUM={zero:0,one:1,two:2,three:3,four:4,five:5,six:6,seven:7,eight:8,nine:9,ten:10,eleven:11,twelve:12,thirteen:13,fourteen:14,fifteen:15,sixteen:16,seventeen:17,eighteen:18,nineteen:19,twenty:20,thirty:30,forty:40,fifty:50,sixty:60,seventy:70,eighty:80,ninety:90,hundred:100};
   function vjParse(text){
     var t=' '+String(text||'').toLowerCase()+' ';
-    t=t.replace(/free now/g,'freenow').replace(/black cab/g,'blackcab').replace(/com cab/g,'comcab').replace(/curb flow/g,'curbflow').replace(/taxi world/g,'taxiworld').replace(/drop[ -]off/g,'dropoff').replace(/car wash/g,'carwash').replace(/car rent(al)?/g,'rent')
+    t=t.replace(/free now/g,'freenow').replace(/black cab/g,'blackcab').replace(/com cab/g,'comcab').replace(/curb flow/g,'curbflow').replace(/taxi world/g,'taxiworld').replace(/city airport|london city/g,'cityairport').replace(/drop[ -]off/g,'dropoff').replace(/car wash/g,'carwash').replace(/car rent(al)?/g,'rent')
       .replace(/(\d)\s*pounds?\s*(and\s*)?(\d{1,2})\s*(p|pence)?\b/g,'$1.$3').replace(/(\d)\s*(pounds?|quid)/g,'$1').replace(/£\s*/g,'£')
       .replace(/\b(twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety)[ -](one|two|three|four|five|six|seven|eight|nine)\b/g,function(m,a,b){ return String(VJ_NUM[a]+VJ_NUM[b]); })
       .replace(/\b(zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred)\b(?=\s*(pounds?|quid|tip|£|,|\.|$|\s))/g,function(m){ return String(VJ_NUM[m]); });
@@ -2548,6 +2549,14 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
       VJ_PROV.forEach(function(r){ if(!p&&r[0].test(x)) p=r[1]; });
       if(p==='Gett'&&x==='get'&&!(i+1<w.length&&(/^(account|card|cash|app)$/.test(w[i+1])||amt(w[i+1])!=null))) p=null;
       if(!p) VJ_EXP.forEach(function(r){ if(!e&&r[0].test(x)) e=r[1]; });
+      var air=VJ_AIR[x]||null;
+      /* "Heathrow drop off": the airport's drop-off charge, on the job as an extra, or on its own as a cost (Matt, 10 Nov 2026) */
+      if(air||(e==='Parking / drop-off'&&x==='dropoff'&&i>0&&VJ_AIR[w[i-1]])){
+        var an=air||VJ_AIR[w[i-1]], fee=(AIRFEES.filter(function(f){return f[0]===an})[0]||[])[1]||0;
+        if(cur&&cur.kind==='fare'){ if(air&&!cur.airDone){ cur.airDone=an; if(!cur.exAmt) cur.extras+=fee; cur.said.push(x); } continue; }
+        if(air){ cur={at:i,kind:'expense',cat:'Parking / drop-off',amount:fee||null,cash:false,air:an,said:[x]}; items.push(cur); continue; }
+        if(cur&&cur.air) continue;
+      }
       if(p){ cur={at:i,kind:'fare',prov:p,pay:null,fare:null,tip:null,extras:0,said:[]}; items.push(cur); }
       else if(e&&!(cur&&cur.kind==='fare'&&e==='Parking / drop-off'&&near(i,/^(plus|and|extra|extras)$/,2,0))){ cur={at:i,kind:'expense',cat:e,amount:null,cash:true,said:[]}; items.push(cur); }
       else if(!cur) continue;
@@ -2559,13 +2568,13 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
           var tipAfter=w[i+1]&&/^tips?$/.test(w[i+1]), tipBefore=(i-1>=cur.at&&/^tips?$/.test(w[i-1]))||(i-2>=cur.at&&/^tips?$/.test(w[i-2])&&/^(of|was)$/.test(w[i-1]));
           if(tipAfter&&cur.fare==null&&w[i+2]&&amt(w[i+2])!=null) cur.fare=a; /* "£32 tip £3": the first is the fare */
           else if(tipAfter||tipBefore) cur.tip=a;
-          else if(near(i,/^(extra|extras|dropoff|parking)$/,0,2)) cur.extras+=a;
+          else if(cur.fare!=null&&near(i,/^(extra|extras|dropoff|parking|heathrow|gatwick|stansted|luton|cityairport)$/,0,2)){ cur.extras+=a; cur.exAmt=true; } /* the fare comes first: "£50 Heathrow drop off" is a £50 fare */
           else if(cur.fare==null) cur.fare=a;
           else if(cur.tip==null&&near(i,/^plus$/,1,0)) cur.tip=a;
         }
       } else {
-        if(/^card$/.test(x)) cur.cash=false; else if(/^cash$/.test(x)) cur.cash=true;
-        if((a=amt(x))!=null&&cur.amount==null) cur.amount=a;
+        if(/^card$/.test(x)) cur.cash=false; else if(/^cash$/.test(x)&&cur.cat!=='Parking / drop-off') cur.cash=true; /* drop-offs are never cash (Matt, 10 Nov 2026) */
+        if((a=amt(x))!=null&&(cur.amount==null||(cur.air&&!cur.amtSaid))){ cur.amount=a; cur.amtSaid=true; }
       }
     }
     items.forEach(function(it){ if(it.kind==='fare'){ var ok=paysFor(it.prov); if(!it.pay||ok.indexOf(it.pay)<0){ it.payGuess=ok.length>1; it.pay=ok[0]; } if(it.tip==null) it.tip=0; } });
@@ -2588,12 +2597,11 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
             +'<select data-vf="pay" aria-label="Paid by">'+po.map(function(o){ var v=o.c?'Card|'+o.c:o.v; return '<option value="'+esc(v)+'"'+(v===cur?' selected':'')+'>'+esc(o.l)+'</option>'; }).join('')+'</select>'
             +'<input type="text" class="money" inputmode="numeric" data-vf="fare" aria-label="Fare" placeholder="Fare" value="'+(it.fare!=null?(+it.fare).toFixed(2):'')+'">'
             +'<input type="text" class="money" inputmode="numeric" data-vf="tip" aria-label="Tip" placeholder="Tip" value="'+(it.tip?(+it.tip).toFixed(2):'')+'">'
-            +'<div class="vjx"><span'+(it.payGuess||it.fare==null?' class="warn"':'')+'>Job'+(it.extras?' · extras '+gbp2.format(it.extras):'')+(it.fare==null?' · no fare heard':it.payGuess?' · check Paid by':'')+'</span><button class="linkbtn" type="button" data-vdel="'+i+'">Remove</button></div></div>';
+            +'<div class="vjx"><span'+(it.payGuess||it.fare==null?' class="warn"':'')+'>Job'+(it.extras?' · '+(it.airDone?esc(it.airDone)+' drop-off ':'extras ')+gbp2.format(it.extras):'')+(it.fare==null?' · no fare heard':it.payGuess?' · check Paid by':'')+'</span><button class="linkbtn" type="button" data-vdel="'+i+'">Remove</button></div></div>';
         } else {
           h+='<div class="vjrow" data-vi="'+i+'"><select data-vf="cat" aria-label="Expense">'+EXPCATS.map(function(c){ return '<option'+(c===it.cat?' selected':'')+'>'+esc(c)+'</option>'; }).join('')+'</select>'
-            +'<select data-vf="cash" aria-label="Paid by"><option value="1"'+(it.cash?' selected':'')+'>Cash</option><option value="0"'+(!it.cash?' selected':'')+'>Card / bank</option></select>'
-            +'<input type="text" class="money" inputmode="numeric" data-vf="amount" aria-label="Amount" placeholder="Amount" value="'+(it.amount!=null?(+it.amount).toFixed(2):'')+'" style="grid-column:1/-1">'
-            +'<div class="vjx"><span'+(it.amount==null?' class="warn"':'')+'>Expense'+(it.amount==null?' · no amount heard':'')+'</span><button class="linkbtn" type="button" data-vdel="'+i+'">Remove</button></div></div>';
+            +'<input type="text" class="money" inputmode="numeric" data-vf="amount" aria-label="Amount" placeholder="Amount" value="'+(it.amount!=null?(+it.amount).toFixed(2):'')+'">'
+            +'<div class="vjx"><span'+(it.amount==null?' class="warn"':'')+'>Expense'+(it.air?' · '+esc(it.air)+' drop-off':'')+(it.amount==null?' · no amount heard':'')+'</span><button class="linkbtn" type="button" data-vdel="'+i+'">Remove</button></div></div>';
         }
       });
       var nj=S.vj.items.filter(function(x){return x.kind==='fare'}).length, ne=S.vj.items.length-nj;
@@ -2632,7 +2640,10 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
       }
       var x={kind:'expense',date:S.day,m:monthOf(S.day),category:it.cat,amount:Math.round(it.amount*100)/100,cash:!!it.cash,note:'',src:'manual',voice:true,ts:Date.now()}; if(S.practice) x.demo=true; return x;
     });
-    Promise.all(ws.map(function(d){ return S.db.collection('entries').doc().set(d); })).then(function(){
+    /* As on the job form: an extra on a job (drop-off, parking) is also a cost you paid, saved as not-cash so the bank's own line replaces it. */
+    var wr=[]; ws.forEach(function(d,k){ var ref=S.db.collection('entries').doc(); wr.push(ref.set(d)); var it=its[k];
+      if(d.kind==='fare'&&d.extras>0){ var x={kind:'expense',date:S.day,m:monthOf(S.day),category:'Parking / drop-off',amount:d.extras,cash:false,note:(it.airDone?it.airDone+' drop-off':'Extra')+' (from job)',fromJob:ref.id,src:'manual',voice:true,ts:Date.now()}; if(d.demo) x.demo=true; wr.push(S.db.collection('entries').doc().set(x)); } });
+    Promise.all(wr).then(function(){
       var gc=ws.some(function(d){ return d.provider==='Gett'&&d.pay==='Cash'&&!d.commission&&!d.feeFixed; });
       toast('Saved '+ws.length+(ws.length===1?' entry':' entries')+(gc?' (no Gett cash fee: edit those jobs to add it)':''));
       S.vj={open:false,text:'',items:[]}; vjRender();
