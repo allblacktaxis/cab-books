@@ -36,14 +36,26 @@ function* walk(x) {
 function isEvent(o) { const t = o['@type']; return (Array.isArray(t) ? t : [t]).some(v => /Event$/i.test(String(v || ''))); }
 function clean(s) { return String(s || '').replace(/&amp;/g, '&').replace(/&#0?39;|&apos;/g, "'").replace(/&quot;/g, '"').replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim(); }
 
+// Besides schema.org JSON-LD, many sites keep their listings as JSON inside the page for their own
+// scripts (e.g. Next.js __NEXT_DATA__). Any object there with a start date/time and a name or title counts.
+const START_KEYS = ['startDate', 'start_date', 'startDateTime', 'start', 'startTime', 'performanceDate', 'dateTime', 'date'];
+function startOf(o) { for (const k of START_KEYS) { const v = o[k]; if (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}/.test(v)) return v; } return null; }
+function nameOf(o) { for (const k of ['name', 'title', 'eventName', 'productionTitle', 'displayName']) { const v = o[k]; if (typeof v === 'string' && v.trim()) return v; if (v && typeof v === 'object' && typeof v.value === 'string') return v.value; } return ''; }
 export function parseVenuePage(html, v, day) {
-  const blocks = [...String(html).matchAll(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)].map(m => m[1]);
-  const out = [], seen = new Set(); let found = 0, bad = 0;
-  for (const b of blocks) {
-    let j; try { j = JSON.parse(b.trim()); } catch (e) { bad++; continue; }
-    for (const o of walk(j)) {
-      if (!isEvent(o) || !o.startDate) continue; found++;
-      const start = toIso(o.startDate); if (!start || londonDate(start) !== day) continue;
+  html = String(html);
+  const blocks = [...html.matchAll(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)].map(m => m[1]);
+  const jsonScripts = [...html.matchAll(/<script[^>]*(?:type=["']application\/json["']|id=["']__NEXT_DATA__["'])[^>]*>([\s\S]*?)<\/script>/gi)].map(m => m[1]);
+  const out = [], seen = new Set(); let found = 0, bad = 0, other = 0; const keys = {};
+  const docs = [];
+  for (const b of blocks) { try { docs.push({ ld: true, j: JSON.parse(b.trim()) }); } catch (e) { bad++; } }
+  for (const b of jsonScripts) { try { docs.push({ ld: false, j: JSON.parse(b.trim()) }); } catch (e) { bad++; } }
+  for (const d of docs) {
+    for (const o of walk(d.j)) {
+      if (!d.ld) for (const k of Object.keys(o)) if (/date|time|start/i.test(k)) keys[k] = (keys[k] || 0) + 1;
+      const sd = d.ld ? (isEvent(o) && o.startDate) : startOf(o);
+      if (!sd || (!d.ld && !nameOf(o))) continue; found++; if (!d.ld) other++;
+      if (d.ld) o.name = o.name; else { o.name = nameOf(o); o.endDate = o.endDate || o.end_date || o.endDateTime || o.end || null; }
+      const start = toIso(sd); if (!start || londonDate(start) !== day) continue;
       if (o.eventStatus && /Cancelled|Postponed/i.test(String(o.eventStatus))) continue;
       const end = toIso(o.endDate);
       const finish = end && londonDate(end) === day && Date.parse(end) > Date.parse(start) && Date.parse(end) - Date.parse(start) < 8 * 3600e3 ? end : new Date(Date.parse(start) + v.mins * 60000).toISOString();
@@ -51,7 +63,22 @@ export function parseVenuePage(html, v, day) {
       out.push({ kind: 'concert', title, venue: v.venue, area: v.area, start, finish, note: '', guess: !(end && finish === end), src: 'venue:' + v.key });
     }
   }
-  return { events: out, report: { blocks: blocks.length, badJson: bad, eventsOnPage: found, today: out.length, startDates: (String(html).match(/startDate/g) || []).length } };
+  // Last resort: listings inside the page's own scripts as escaped text (e.g. Next.js "self.__next_f.push"):
+  // a title/name and a startDate close together in the same object.
+  let loose = 0;
+  if (!out.length) {
+    const flat = html.replace(/\\\\"/g, '"').replace(/\\"/g, '"');
+    const re = /"(?:title|name)"\s*:\s*"([^"]{2,140})"[^{}]{0,600}?"start(?:Date|DateTime|_date)?"\s*:\s*"(\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}[^"]*)"|"start(?:Date|DateTime|_date)?"\s*:\s*"(\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}[^"]*)"[^{}]{0,600}?"(?:title|name)"\s*:\s*"([^"]{2,140})"/g;
+    for (const m of flat.matchAll(re)) {
+      const name = m[1] || m[4], sd = m[2] || m[3]; loose++;
+      const start = toIso(sd); if (!start || londonDate(start) !== day) continue;
+      const title = clean(name), k = title + '|' + start; if (seen.has(k)) continue; seen.add(k);
+      out.push({ kind: 'concert', title, venue: v.venue, area: v.area, start, finish: new Date(Date.parse(start) + v.mins * 60000).toISOString(), note: '', guess: true, src: 'venue:' + v.key });
+    }
+  }
+  const topKeys = Object.entries(keys).sort((a, b) => b[1] - a[1]).slice(0, 5).map(x => x[0]);
+  return { events: out, report: { blocks: blocks.length, jsonScripts: jsonScripts.length, badJson: bad, eventsOnPage: found + loose, fromPageData: other, loose, today: out.length,
+    startDates: (html.match(/startDate/g) || []).length, times: (html.match(/\b(1[2-9]|2[0-3])[:.][0-5]\d\b/g) || []).length, keys: topKeys } };
 }
 
 export async function venueEvents(day) {
