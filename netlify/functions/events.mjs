@@ -5,6 +5,8 @@
 // The keys stay here on the server. Answers are cached by Netlify for 30 minutes for every driver,
 // so the free limits (football-data 10 calls a minute, Ticketmaster 5,000 a day) are never near.
 // Finish times are our own estimate: kick-off or start time plus a usual length for that kind of event.
+// West End and other long-running shows come from our own list (lib/westend.mjs): regular weekly times + running time.
+import { westEndEvents, CHECKED } from './lib/westend.mjs';
 
 const LONDON_CLUBS = [
   [/^arsenal/i, 'Emirates Stadium', 'Holloway'],
@@ -84,9 +86,8 @@ export default async (req) => {
   const day = url.searchParams.get('day') || today;
   if (!/^\d{4}-\d{2}-\d{2}$/.test(day) || day < today || day > addDays(today, 6)) return new Response(JSON.stringify({ error: 'Use ?day=YYYY-MM-DD, today to 6 days ahead' }), { status: 400, headers: JSON_HEAD });
   const fk = process.env.FOOTBALL_DATA_KEY, tk = process.env.TICKETMASTER_KEY;
-  if (!fk && !tk) return new Response(JSON.stringify({ error: 'not_set_up' }), { status: 503, headers: JSON_HEAD });
-  const sources = { football: fk ? 'ok' : 'not_set_up', ticketmaster: tk ? 'ok' : 'not_set_up' };
-  let events = [];
+  const sources = { football: fk ? 'ok' : 'not_set_up', ticketmaster: tk ? 'ok' : 'not_set_up', westend: 'ok' };
+  let events = westEndEvents(day);
   const jobs = [];
   if (fk) jobs.push(fetch(`https://api.football-data.org/v4/matches?dateFrom=${addDays(day, -1)}&dateTo=${addDays(day, 1)}`, { headers: { 'X-Auth-Token': fk } })
     .then(r => r.ok ? r.json() : Promise.reject(r.status)).then(j => { events = events.concat(footballEvents(j, day)); })
@@ -101,8 +102,8 @@ export default async (req) => {
   const seen = new Set();
   events = events.filter(e => { const k = e.venue + '|' + e.start; if (seen.has(k)) return false; seen.add(k); return true; })
     .sort((a, b) => a.finish < b.finish ? -1 : 1);
-  const bad = Object.values(sources).every(s => s !== 'ok');
-  return new Response(JSON.stringify({ day, updated: new Date().toISOString(), sources, events }), {
+  const bad = !events.length && sources.football !== 'ok' && sources.ticketmaster !== 'ok';
+  return new Response(JSON.stringify({ day, updated: new Date().toISOString(), sources, checked: CHECKED, events }), {
     status: bad ? 502 : 200,
     headers: { ...JSON_HEAD, 'cache-control': bad ? 'no-store' : 'public, max-age=300', ...(bad ? {} : { 'netlify-cdn-cache-control': 'public, durable, s-maxage=1800, stale-while-revalidate=300' }) },
   });
