@@ -465,6 +465,9 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent)}
 :root[data-theme=light] .tabs button[aria-current=page]{color:#000!important;background:var(--accent)!important;border-radius:12px}
 /* Bottom bar order list in Settings */
 .barlist{list-style:none;margin:8px 0 0;padding:0}
+.tabs button{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+.tabs button.barlift{transform-origin:center;z-index:3;position:relative;box-shadow:0 6px 16px #000a!important;outline:2px solid var(--accent);outline-offset:-2px;transition:none}
+.tabs.barediting button:not(.barlift){transition:transform .12s}
 .barlist li{display:flex;align-items:center;gap:8px;padding:6px 0;border-top:1px solid var(--line);background:var(--surface)}
 .barlist li.drag{opacity:.85;box-shadow:0 6px 18px #0008;position:relative;z-index:2}
 .barlist .bh{touch-action:none;cursor:grab;font-size:20px;color:var(--muted);min-width:40px;min-height:40px;display:flex;align-items:center;justify-content:center;user-select:none;-webkit-user-select:none}
@@ -4957,7 +4960,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   function barVisible(k){ return barOn(k) && !(S.mode==='track'&&BAR_FULLONLY.indexOf(k)>=0); }
   function renderBarPick(){
     var track=S.mode==='track';
-    var h='<div class="card" id="bar-card"><h2>Bottom bar</h2><p class="help">Tick the buttons you want along the bottom of the screen. To change the order, drag ☰ up or down, or use the arrows. Tip: hold your finger on the bottom bar to come straight here.</p><ul class="barlist" id="barlist">';
+    var h='<div class="card" id="bar-card"><h2>Bottom bar</h2><p class="help">Tick the buttons you want along the bottom of the screen. To change the order, drag ☰ up or down, or use the arrows. You can also hold a button on the bottom bar and slide it left or right.</p><ul class="barlist" id="barlist">';
     var o=barOrder();
     o.forEach(function(k,i){ var dis=track&&BAR_FULLONLY.indexOf(k)>=0, on=barOn(k)&&!dis;
       h+='<li data-bk="'+k+'"><span class="bh" aria-hidden="true">☰</span><span class="bn'+(on?'':' off')+'">'+esc(barName(k))+(dis?' <span class="note">(Full books)</span>':'')+'</span>'
@@ -4998,13 +5001,38 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
       var o=Array.prototype.map.call(ul.children,function(x){return x.getAttribute('data-bk')}); if(o.join()!==barOrder().join()){ S.barOrder=o; barSortDom(); barSave(); } renderSettings(); }
     h.addEventListener('pointermove',mv); h.addEventListener('pointerup',up); h.addEventListener('pointercancel',up);
   });
-  /* Hold a finger on the bottom bar (about half a second, without sliding) to open the Bottom bar settings. */
-  (function(){ var nav=document.querySelector('nav.tabs'), t=null, x0=0, y0=0, fired=false; if(!nav) return;
-    function clear(){ clearTimeout(t); t=null; }
-    nav.addEventListener('pointerdown',function(e){ fired=false; x0=e.clientX; y0=e.clientY; clear(); t=setTimeout(function(){ fired=true; t=null; if(typeof openSettings==='function'){ openSettings(); setTimeout(function(){ var c=$('bar-card'); if(c) c.scrollIntoView({block:'start'}); },40); } },550); });
-    nav.addEventListener('pointermove',function(e){ if(t&&(Math.abs(e.clientX-x0)>10||Math.abs(e.clientY-y0)>10)) clear(); });
-    ['pointerup','pointercancel','pointerleave'].forEach(function(n){ nav.addEventListener(n,clear); });
-    nav.addEventListener('click',function(e){ if(fired){ e.stopPropagation(); e.preventDefault(); fired=false; } },true);
+  /* Hold a button on the bottom bar for about half a second, then slide it left or right to move it, like apps on a phone
+     (Matt, 10 Nov 2026). A quick swipe still scrolls the bar; only a hold picks a button up. Letting go saves the order. */
+  (function(){
+    var nav=document.querySelector('nav.tabs'); if(!nav) return;
+    var t=null, x0=0, y0=0, btn=null, drag=false, sup=false, lastX=0, raf=null, dx0=0;
+    function vis(){ return Array.prototype.filter.call(nav.querySelectorAll('button'),function(b){ return !b.hidden; }); }
+    function start(b,x,y){ btn=b; x0=x; y0=y; lastX=x; clearTimeout(t); t=setTimeout(lift,450); }
+    function lift(){ t=null; if(!btn) return; drag=true; sup=true; dx0=lastX; btn.classList.add('barlift'); nav.classList.add('barediting'); try{ if(navigator.vibrate) navigator.vibrate(12); }catch(e){} }
+    function place(x){
+      btn.style.transform='translateX('+(x-dx0)+'px)';
+      var others=vis().filter(function(b){ return b!==btn; });
+      for(var i=0;i<others.length;i++){ var r=others[i].getBoundingClientRect(), mid=r.left+r.width/2;
+        if(x<mid){ if(btn.nextElementSibling!==others[i]){ var a=btn.getBoundingClientRect().left; nav.insertBefore(btn,others[i]); dx0+=btn.getBoundingClientRect().left-a; btn.style.transform='translateX('+(x-dx0)+'px)'; } return; } }
+      var last=others[others.length-1]; if(last&&last.nextElementSibling!==btn){ var a2=btn.getBoundingClientRect().left; nav.insertBefore(btn,last.nextElementSibling); dx0+=btn.getBoundingClientRect().left-a2; btn.style.transform='translateX('+(x-dx0)+'px)'; }
+    }
+    function edge(){ raf=null; if(!drag) return; var r=nav.getBoundingClientRect(), d=lastX<r.left+44?-8:lastX>r.right-44?8:0;
+      if(d){ var s0=nav.scrollLeft; nav.scrollLeft+=d; dx0-=(nav.scrollLeft-s0); place(lastX); } raf=requestAnimationFrame(edge); }
+    function move(x,y){ lastX=x; if(!btn) return false; if(!drag){ if(Math.abs(x-x0)>10||Math.abs(y-y0)>10){ clearTimeout(t); t=null; btn=null; } return false; }
+      place(x); if(!raf) raf=requestAnimationFrame(edge); return true; }
+    function end(){ clearTimeout(t); t=null; if(raf){ cancelAnimationFrame(raf); raf=null; }
+      if(drag&&btn){ btn.classList.remove('barlift'); btn.style.transform=''; nav.classList.remove('barediting');
+        var o=[]; Array.prototype.forEach.call(nav.querySelectorAll('button'),function(b){ var k=barKey(b); if(k&&o.indexOf(k)<0) o.push(k); });
+        barOrder().forEach(function(k){ if(o.indexOf(k)<0) o.push(k); });
+        if(o.join()!==barOrder().join()){ S.barOrder=o; barSave('Bottom bar order saved'); if(!$('setovl').hidden) renderSettings(); } }
+      drag=false; btn=null; }
+    nav.addEventListener('touchstart',function(e){ var b=e.target.closest('button'); if(b&&e.touches.length===1) start(b,e.touches[0].clientX,e.touches[0].clientY); },{passive:true});
+    nav.addEventListener('touchmove',function(e){ if(move(e.touches[0].clientX,e.touches[0].clientY)) e.preventDefault(); },{passive:false});
+    nav.addEventListener('touchend',end); nav.addEventListener('touchcancel',end);
+    nav.addEventListener('mousedown',function(e){ var b=e.target.closest('button'); if(b&&e.button===0) start(b,e.clientX,e.clientY); });
+    document.addEventListener('mousemove',function(e){ if(btn&&move(e.clientX,e.clientY)) e.preventDefault(); });
+    document.addEventListener('mouseup',function(){ if(btn||drag) end(); });
+    nav.addEventListener('click',function(e){ if(sup){ e.stopPropagation(); e.preventDefault(); sup=false; } },true);
     nav.addEventListener('contextmenu',function(e){ e.preventDefault(); });
   })();
   function markCurrentTab(){
