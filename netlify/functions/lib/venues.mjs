@@ -3,10 +3,9 @@
 // engines (schema.org Event in JSON-LD). Where a page gives an end time, that is used; otherwise the
 // venue's usual length. Each venue is read at most once per 30 minutes for all drivers (the events
 // function is cached), and a short report per venue goes to the function log so it can be checked.
+// Tried 10 Nov 2026: the Royal Albert Hall refuses automated visits (403), so it is left alone; the Royal Opera
+// House and Barbican listing pages carry no nightly times (they are in the show list with usual times instead).
 export const VENUE_PAGES = [
-  { key: 'rah', venue: 'Royal Albert Hall', area: 'Kensington', mins: 150, url: 'https://www.royalalberthall.com/tickets/' },
-  { key: 'barbican', venue: 'Barbican', area: 'Barbican', mins: 135, url: 'https://www.barbican.org.uk/whats-on' },
-  { key: 'roh', venue: 'Royal Opera House', area: 'Covent Garden', mins: 180, url: 'https://www.rbo.org.uk/tickets-and-events' },
   { key: 'o2', venue: 'The O2', area: 'North Greenwich', mins: 180, url: 'https://www.theo2.co.uk/events' },
 ];
 const UA = 'CabBooks/1.0 (London taxi drivers\' event times; +https://cabbooks.allblacktaxis.co.uk)';

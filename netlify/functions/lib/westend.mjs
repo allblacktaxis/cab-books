@@ -39,7 +39,14 @@ export const SHOWS = [
   {"theatre": "Peacock Theatre", "area": "Holborn", "show": "Show varies (dance, The Snowman)", "perf": {"mon": ["19:30"], "tue": ["19:30"], "wed": ["19:30"], "thu": ["19:30"], "fri": ["19:30"], "sat": ["14:30", "19:30"], "sun": ["15:00"]}, "mins": 100, "varies": true, "from": "2026-11-15"},
   {"theatre": "The Old Vic", "area": "Waterloo", "show": "A Christmas Carol", "perf": {"mon": ["19:30"], "tue": ["19:30"], "wed": ["19:30"], "thu": ["19:30"], "fri": ["19:30"], "sat": ["14:30", "19:30"], "sun": []}, "mins": 120, "varies": true, "from": "2026-11-12", "until": "2027-01-09"},
   {"theatre": "London Coliseum", "area": "St Martin's Lane", "show": "English National Opera", "perf": {"mon": ["19:30"], "tue": ["19:30"], "wed": ["19:30"], "thu": ["19:30"], "fri": ["19:30"], "sat": ["18:00"], "sun": []}, "mins": 130, "varies": true},
-  {"theatre": "Sadler's Wells Theatre", "area": "Angel", "show": "Dance (varies)", "perf": {"mon": [], "tue": ["19:30"], "wed": ["19:30"], "thu": ["19:30"], "fri": ["19:30"], "sat": ["19:30"], "sun": []}, "mins": 120, "varies": true}
+  {"theatre": "Sadler's Wells Theatre", "area": "Angel", "show": "Dance (varies)", "perf": {"mon": [], "tue": ["19:30"], "wed": ["19:30"], "thu": ["19:30"], "fri": ["19:30"], "sat": ["19:30"], "sun": []}, "mins": 120, "varies": true},
+  // Concert halls (Matt, 10 Nov 2026): their own sites don't give nightly times in a readable form, so the usual
+  // evening times, marked "?". Some nights nothing is on. A reader for the Royal Opera House's own pages is on the to-do list.
+  {"theatre": "Royal Opera House", "area": "Covent Garden", "show": "Opera or ballet (programme varies)", "perf": {"mon": ["19:30"], "tue": ["19:30"], "wed": ["19:30"], "thu": ["19:30"], "fri": ["19:30"], "sat": ["19:30"], "sun": []}, "mins": 150, "varies": true},
+  {"theatre": "Barbican Hall", "area": "Barbican", "show": "Concert (programme varies)", "perf": {"mon": ["19:30"], "tue": ["19:30"], "wed": ["19:30"], "thu": ["19:30"], "fri": ["19:30"], "sat": ["19:30"], "sun": ["19:30"]}, "mins": 135, "varies": true},
+  {"theatre": "Royal Festival Hall", "area": "Southbank", "show": "Concert (programme varies)", "perf": {"mon": ["19:30"], "tue": ["19:30"], "wed": ["19:30"], "thu": ["19:30"], "fri": ["19:30"], "sat": ["19:30"], "sun": ["19:30"]}, "mins": 120, "varies": true},
+  {"theatre": "Wigmore Hall", "area": "Marylebone", "show": "Concert (programme varies)", "perf": {"mon": ["19:30"], "tue": ["19:30"], "wed": ["19:30"], "thu": ["19:30"], "fri": ["19:30"], "sat": ["19:30"], "sun": ["19:30"]}, "mins": 120, "varies": true},
+  {"theatre": "Cadogan Hall", "area": "Sloane Square", "show": "Concert (programme varies)", "perf": {"mon": ["19:30"], "tue": ["19:30"], "wed": ["19:30"], "thu": ["19:30"], "fri": ["19:30"], "sat": ["19:30"], "sun": ["19:30"]}, "mins": 135, "varies": true}
 ];
 
 const DAYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
