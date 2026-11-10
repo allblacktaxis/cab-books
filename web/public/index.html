@@ -1067,7 +1067,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
      (weeks run Monday to Sunday, counted by trip date), that month's Uber money comes from the statements instead:
      the workbook's Uber part and Uber's share of the workbook tips stop counting. A month only partly covered keeps
      the workbook figure and the statement lines in it don't count, so nothing is lost or doubled. */
-  function ubWeeks(list){ var W=[]; (list||(typeof stList==='function'?stList():[])).forEach(function(s){ if(pkey(s.prov)!=='uber'||!s.hasJobs) return; (s.weeks&&s.weeks.length?s.weeks:(s.from&&s.to?[{f:s.from,t:s.to}]:[])).forEach(function(w){ W.push(w); }); }); return W; }
+  function ubWeeks(list){ var W=[]; (list||(typeof stList==='function'?stList():[])).forEach(function(s){ if(pkey(s.prov)!=='uber') return; (s.weeks&&s.weeks.length?s.weeks:(s.from&&s.to?[{f:s.from,t:s.to}]:[])).forEach(function(w){ W.push(w); }); }); return W; }
   function ubFullMonth(k,W){
     var md=S.months[k]; if(!md||md.opening) return false; W=W||ubWeeks();
     if(!W.length) return false;
@@ -5453,8 +5453,8 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
        (The "Transferred to your bank account" line in this statement paid last week's money.) */
     var nextPay=en!=null?en:S0.total;
     if(to&&nextPay>0){ S0.payouts.push({d:addDays(to,1),amt:r2(nextPay)}); S0.payout=r2(nextPay); S0.payDate=addDays(to,1); }
-    if(!nt&&!S0.jobs.length) S0.checks.push(chk(false,'No trips found in this statement.'));
-    S0.checks.push(chk(true,'Counted by trip date. Uber takes no commission on black cab trips. Paid to your bank on '+(to?dlabel(addDays(to,1)):'the Monday')+': '+gbp2.format(nextPay)+'.'));
+    if(!S0.jobs.length) S0.checks.push(chk(!sum&&!S0.total,!sum&&!S0.total?'No trips this week.':'No trips could be read from this statement.'));
+    S0.checks.push(chk(true,'Counted by trip date. Uber takes no commission on black cab trips. '+(nextPay>0?'Paid to your bank on '+(to?dlabel(addDays(to,1)):'the Monday')+': '+gbp2.format(nextPay)+'.':'Nothing left to pay from this week.')));
     return S0;
   }
   function uberCsv(rows,name){
@@ -5565,7 +5565,10 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
           if(/GetTaxi|Gett, Inc/i.test(t)&&/Driver Statement/.test(t)) return gettStmt(L,nm);
           if(/Credit Card Transaction Report/i.test(t)) return curbPdf(L,nm);
           if(/ComCab owes you|You owe ComCab/i.test(t)&&/Driver Statement/i.test(t)) return ccStmt(L,nm);
-          if(/Weekly Statement/.test(t)&&/Your earnings and entitlements/.test(t)) return uberStmt(L,nm);
+          /* Uber weekly statement; a week with no trips has no earnings section, only balances and payouts (Matt, 10 Nov 2026) */
+          /* …and a week with no money at all is just the title and the dates, e.g. "29 Dec 2025 4 am - 5 Jan 2026 4 am" */
+          if(/Weekly Statement/i.test(t)&&(/Your earnings and entitlements|Starting balance|Ending balance|Transferred to your bank account|Transferred To Bank Account/i.test(t)||/\d{1,2}\s+[A-Za-z]{3,4}\s+\d{4}\s+\d{1,2}(?::\d\d)?\s*[ap]m\s*[-–]\s*\d{1,2}\s+[A-Za-z]{3,4}\s+\d{4}/.test(t))) return uberStmt(L,nm);
+          if(!t.replace(/\s/g,'')) return {err:'This PDF has no text in it (it may be a photo or a scan), so it can’t be read. Download the statement again from the app or website.',file:nm};
           if(/Taxiworld/i.test(t)&&/Net payment/i.test(t)&&/Card jobs|Card transaction fees/i.test(t)) return twStmt(L,nm);
           return {err:'Not a statement Cab Books knows yet (it reads FreeNow, Gett, Curb, ComCab, Uber, Taxiworld and Heathrow drop-offs). Send us a copy and we’ll add it.',file:nm};
         });
@@ -5826,9 +5829,10 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
       h+='</div>';
     }
     box.innerHTML=h;
-    var n=plan.add.length+plan.extras.length+plan.costs.length, sb=$('st-save');
-    sb.hidden=!ok.length||(!n&&!plan.bankRepl.length&&!(plan.del&&plan.del.length)); sb.disabled=false;
-    sb.textContent=n?'Add '+n+' to my books':'Use the exact figures';
+    var n=plan.add.length+plan.extras.length+plan.costs.length, sb=$('st-save'), nd=(plan.del||[]).length;
+    var ns=plan.stmts.filter(function(r){ return !(S.stmts||{})[r.id]; }).length;
+    sb.hidden=!ok.length||(!n&&!plan.bankRepl.length&&!nd&&!ns); sb.disabled=false;
+    sb.textContent=n?'Add '+n+' to my books':nd?'Refresh '+nd+' line'+(nd===1?'':'s'):plan.bankRepl.length?'Use the exact figures':'Save '+ns+' statement'+(ns===1?'':'s');
     ST.plan=plan;
   }
   function stHandle(files){
