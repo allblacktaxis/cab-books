@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Getting started with Cab Books</title>
-<meta name="description" content="How to sign up to Cab Books, put it on your home screen, turn on train alerts and bring in your bank statement.">
+<meta name="description" content="How to sign up to Cab Books, put it on your home screen, turn on train alerts and bring in your bank and taxi app statements.">
 <meta name="theme-color" content="#000000">
 <link rel="icon" type="image/png" href="/icon-192.png">
 <link rel="apple-touch-icon" href="/icon-180.png">
@@ -43,9 +43,10 @@ a{color:var(--accent)}
 <a href="#setup">3. Set it up</a>
 <a href="#alerts">4. Train alerts</a>
 <a href="#bank">5. Bank statement</a>
-<a href="#daily">6. Every day</a>
-<a href="#receipts">7. Receipt photos</a>
-<a href="#fix">8. Fixing mistakes</a>
+<a href="#statements">6. App statements</a>
+<a href="#daily">7. Every day</a>
+<a href="#receipts">8. Receipt photos</a>
+<a href="#fix">9. Fixing mistakes</a>
 <a href="#help">Help</a>
 </nav>
 
@@ -136,12 +137,77 @@ a{color:var(--accent)}
 <li>Tap <b>Import</b>.</li>
 </ol>
 <p class="tip">It's safe to bring in the same statement twice, or statements that overlap. Lines already in are skipped.</p>
-<h3>Statements from FreeNow, Gett and Curb</h3>
-<p>For exact figures, bring in the statements the apps send you (PDF, Excel or CSV) on the <b>Import</b> tab, under <b>Statements</b>. You can pick several files at once. They replace the estimates worked out from your bank, and each job is only ever counted once.</p>
+<p class="tip">Do this every week. Pick dates from your last download to today: overlapping is fine.</p>
+<p>For every job, tip and commission, also bring in the statements from your taxi apps. See <a href="#statements">6. App statements</a>.</p>
+</section>
+
+<section id="statements">
+<h2>6. Statements from your taxi apps</h2>
+<p>Your bank shows the money that reached you. The apps' statements add the detail: each job, the tip and the commission taken. They all go in one place: the <b>Import</b> tab, under <b>Taxi app statements</b>.</p>
+<ul>
+<li>You can choose several files at once, from different apps.</li>
+<li>Cab Books skips anything it has already read, so downloading the same week twice does no harm.</li>
+<li>Statements replace the bank estimates for the same weeks automatically. Nothing is counted twice.</li>
+</ul>
+
+<h3>What to get, and when</h3>
+<ul>
+<li><b>Bank</b>: CSV, every week (see <a href="#bank">5. Bank statement</a>).</li>
+<li><b>FreeNow</b>: 3 PDFs, every week after Tuesday's payment.</li>
+<li><b>Gett</b>: PDF, every week (or wait for the quarterly email).</li>
+<li><b>Uber</b>: PDF, every week (or at month end).</li>
+<li><b>Curb</b> (card payments in the cab): Excel, every month.</li>
+</ul>
+
+<h3>FreeNow</h3>
+<ol>
+<li>Log in to the <b>FreeNow driver portal</b> and go to <b>Invoices</b>.</li>
+<li>Find the week. Its <b>Select file</b> box has three separate files. Download each one: <b>Invoice summary.pdf</b>, <b>Tour overview.pdf</b> and <b>Invoice.pdf</b>.</li>
+<li>In Cab Books, go to <b>Import → Taxi app statements</b> and choose all three together.</li>
+</ol>
+
+<h3>Gett</h3>
+<ol>
+<li>In the <b>Gett driver app</b>, tap the <b>three bars</b> at the top, then <b>Driver portal</b>.</li>
+<li>Go to <b>Accounting</b> and choose <b>Daily</b>, <b>Weekly</b> or <b>Annual</b> statements.</li>
+<li>Tap the date and download the PDF (or have it emailed to you).</li>
+<li>In Cab Books, go to <b>Import → Taxi app statements</b> and choose the files.</li>
+</ol>
+<p class="tip">Gett also emails you statements every quarter. If you'd rather not download them each week, wait for those. Daily, weekly and quarterly statements can overlap: each job is only counted once.</p>
+
+<h3>Uber</h3>
+<ol>
+<li>Go to <a href="https://drivers.uber.com" target="_blank" rel="noopener noreferrer">drivers.uber.com</a> and sign in.</li>
+<li>Go to <b>Earnings → Statements</b>.</li>
+<li>Pick the week and tap <b>Download</b>.</li>
+<li>In Cab Books, go to <b>Import → Taxi app statements</b> and choose the files. You can do several weeks at once.</li>
+</ol>
+<p class="tip">An Uber week runs Monday 4am to Monday 4am, and the money reaches your bank about two days later. Cab Books also reads Uber's earnings CSV if you have that instead.</p>
+
+<h3>Curb (card payments in your cab)</h3>
+<ol>
+<li>Go to the Curb eFleet driver portal: <a href="https://efleet.gocurb.com/emeter/Login_Driver.aspx" target="_blank" rel="noopener noreferrer">efleet.gocurb.com</a>.</li>
+<li><b>Login ID</b>: your badge number. <b>Password</b>: your Curb portal password. <b>Select group</b>: <b>UK London</b>.</li>
+<li>Open <b>Credit card transactions</b>, choose last month's dates and <b>export to Excel</b>.</li>
+<li>In Cab Books, go to <b>Import → Taxi app statements</b> and choose the file.</li>
+</ol>
+<p class="tip">FreeNow or Gett jobs that the passenger paid by card through Curb are already sorted out for you, so they won't be counted twice.</p>
+
+<h3>Your weekly routine (about 10 minutes)</h3>
+<ol>
+<li>On Tuesday or Wednesday, download your bank CSV, FreeNow's 3 PDFs, Gett's statements and Uber's weekly statement.</li>
+<li><b>Import → Bank statement</b>, then <b>Import → Taxi app statements</b>.</li>
+<li>Have a look at <b>Position</b> to see where you are against the VAT limit.</li>
+</ol>
+<h3>At month end</h3>
+<ol>
+<li>Bring in last month's Curb report.</li>
+<li>Go to <b>Data → Monthly checks</b> and mark each source <b>Checked</b> once its statements are in.</li>
+</ol>
 </section>
 
 <section id="daily">
-<h2>6. Every day</h2>
+<h2>7. Every day</h2>
 <ul>
 <li><b>Today</b>: tap <b>Add job</b>, pick the app (or Hand for a street job, or Private), then <b>Paid by</b>: Account (paid in the app), your card machine (for example "Curb card") or Cash. Type the fare and any tip. Tap an extras button for drop-off fees or parking. The fee is worked out for you.</li>
 <li><b>Position</b>: how this month is going and where you are against the VAT limit. You'll get a warning well before you get close.</li>
@@ -152,7 +218,7 @@ a{color:var(--accent)}
 </section>
 
 <section id="receipts">
-<h2>7. Receipt photos</h2>
+<h2>8. Receipt photos</h2>
 <p>Keep a photo of every receipt for your accountant and HMRC.</p>
 <ol>
 <li>On <b>Today</b>, tap <b>Snap a receipt</b>, take the photo, check the amount and type, and tap <b>Save</b>.</li>
@@ -163,7 +229,7 @@ a{color:var(--accent)}
 </section>
 
 <section id="fix">
-<h2>8. Fixing mistakes</h2>
+<h2>9. Fixing mistakes</h2>
 <ul>
 <li><b>Wrong job?</b> Tap <b>Edit</b> on it in Today or the Log.</li>
 <li><b>Commission changed?</b> Settings → Fee defaults → <b>Rate changes</b>: add the new rate and the date it starts. Earlier jobs keep the old rate.</li>

@@ -389,6 +389,17 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .chips button .pdot{margin-right:6px}
 /* Job form: provider and 'Paid by' buttons all the same size, three to a row (Matt, 3 Nov 2026) */
 #j-title{font-size:20px;font-weight:700;color:var(--ink)}
+/* Voice entry (Matt, 10 Nov 2026) */
+#vj{margin:0 0 14px;padding:12px;border:1px solid var(--line);border-radius:12px}
+#vj textarea{width:100%;min-height:84px;font:inherit;font-size:16px}
+.vjrow{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:8px 0;border-top:1px solid var(--line)}
+.vjrow select,.vjrow input{width:100%;min-height:40px;font-size:15px}
+.vjrow .vjx{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--muted)}
+.vjrow .warn{color:var(--warn)}
+.vjrow .vjex{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:6px;align-items:center;margin:0;font-weight:400;font-size:14px;color:var(--muted)}
+#vj-mic[aria-pressed=true]{color:var(--bad);border-color:var(--bad)!important}
+/* Tapping Provider or Paid by brings the Add job card to the top of the screen (Matt, 10 Nov 2026). */
+#j-card{scroll-margin-top:calc(12px + env(safe-area-inset-top,0px))}
 #c-prov,#c-pay{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 #c-prov button,#c-pay button{width:100%;min-height:48px;padding:8px 6px;display:flex;align-items:center;justify-content:center;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
@@ -455,6 +466,9 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent)}
 .chips button.bchip{box-shadow:inset 0 1px 0 #FFFFFF26,0 2px 4px #00000080}
 .chips button.bchip[aria-pressed=true]{outline:2.5px solid var(--accent)}
 .gear{color:var(--accent)}
+/* Account and Settings buttons: smaller, they don't need to stand out (Matt, 10 Nov 2026) */
+.gear{min-height:34px;padding:3px 10px;gap:4px;font-size:12px}
+.gear span{font-size:12px}
 .rucard[open] .rusum .rubtn{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)!important}
 input[type=text],input[type=number],input[type=date],select,textarea{background:#0A0A0B;border:1px solid var(--line)}
 
@@ -724,8 +738,9 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
       </details>
       </div>
     </details>
-    <div class="card">
-      <div class="cardhead"><h2 id="j-title">Add job</h2><button class="btn ghost small" id="d-toggle" type="button" hidden>Hide</button></div>
+    <div class="card" id="j-card">
+      <div class="cardhead"><h2 id="j-title">Add job</h2><span style="display:flex;gap:8px"><button class="btn ghost small" id="vj-open" type="button" aria-expanded="false">🎤 Say jobs</button><button class="btn ghost small" id="d-toggle" type="button" hidden>Hide</button></span></div>
+      <div id="vj" hidden></div>
       <div id="d-form">
         <div class="field"><label id="l-prov">Provider</label><div class="chips" id="c-prov" role="group" aria-labelledby="l-prov"></div></div>
         <div class="field"><label id="l-pay">Paid by</label><div class="chips" id="c-pay" role="group" aria-labelledby="l-pay"></div></div>
@@ -855,7 +870,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
       <div id="ts-list"></div>
     </div>
     <div class="card" id="st-card">
-      <h2>Taxi app statements and Heathrow drop-offs</h2><p class="help" style="margin:-4px 0 8px"><b>FreeNow, Gett, Uber, Curb, ComCab, Taxiworld and Heathrow drop-offs.</b> Their files go here, not in the bank box further down.</p><details style="margin:-2px 0 10px"><summary style="cursor:pointer" class="note">Heathrow drop-offs paid by AutoPay from another card? Where to get the file</summary><p class="note" style="margin:6px 0 0">Go to <a href="https://www.heathrow.com/dropoff" target="_blank" rel="noopener noreferrer">heathrow.com/dropoff</a> → <b>Sign in</b> (personal or business account) → your trip / payment history → download it as CSV or Excel. Then choose that file here: each paid drop-off is added as a Parking / drop-off cost. Skip this if your drop-offs come out of the bank account you import.</p></details>
+      <h2>Taxi app statements and Heathrow drop-offs</h2><p class="help" style="margin:-4px 0 8px"><b>FreeNow, Gett, Uber, Curb, ComCab, Taxiworld and Heathrow drop-offs.</b> Their files go here, not in the bank box further down. <a href="/help.html#statements" target="_blank" rel="noopener">How to get each app's statements</a></p><details style="margin:-2px 0 10px"><summary style="cursor:pointer" class="note">Heathrow drop-offs paid by AutoPay from another card? Where to get the file</summary><p class="note" style="margin:6px 0 0">Go to <a href="https://www.heathrow.com/dropoff" target="_blank" rel="noopener noreferrer">heathrow.com/dropoff</a> → <b>Sign in</b> (personal or business account) → your trip / payment history → download it as CSV or Excel. Then choose that file here: each paid drop-off is added as a Parking / drop-off cost. Skip this if your drop-offs come out of the bank account you import.</p></details>
       <p class="help">Choose one or more statements: FreeNow's weekly PDFs, Gett's daily or weekly PDFs, Curb's reports (PDF, Excel or CSV), ComCab's driver statement and pay sheet, Uber's weekly statements (as many weeks as you like) or your Uber earnings CSV, your Heathrow drop-off account download (CSV or Excel), or Taxiworld's payment PDF. You can pick several at once. Cab Books works out which is which, checks the totals add up, and adds each job once. Reading the same statement again is safe.</p>
       <div class="field"><label for="st-file">Choose your files (PDF, Excel or CSV)</label><input type="file" id="st-file" multiple></div>
       <div class="field" style="margin-bottom:0"><label>When FreeNow or Gett say “cash”, the customer paid</label>
@@ -1114,6 +1129,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     h+=thisMonth(C,ci);
     h+='<div class="card"><h2>Earnings and rolling total</h2>'+earnChart(C,ci)+'<div class="legend"><span><i class="lg-bar"></i>Each month\u2019s earnings</span><span><i class="lg-line"></i>Rolling 12 months</span><span><i class="lg-vat"></i>VAT line</span></div></div>';
     h+=twelve(C,ci);
+    h+=dropsOut(C,ci);
     h+=taxCard()+taxDatesCard();
     // plan table
     var rows='';
@@ -1175,6 +1191,24 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     return s;
   }
 
+  /* Rolling VAT headroom, month by month ahead (Matt, 10 Nov 2026): each coming month the month a year
+     earlier drops out of the 12, which frees that much room. If in the months between you earn what you
+     earned a year before, the total stays level, so a month's room = what is left now + what drops out then. */
+  function dropsOut(C,ci){
+    var st=S.settings, r=C.rolling[ci]; if(r==null) return '';
+    var left=st.threshold-r, rows='', any=false, cur=monthOf(todayISO()), live=C.keys[ci]===cur, cm=mlabel(C.keys[ci]).replace(/\s\d{4}$/,'');
+    for(var j=(live?ci:ci+1);j<=ci+6&&j<C.keys.length;j++){
+      var q=j-12, d=(q>=0&&C.used[q]!=null)?C.used[q]:0, room=j===ci?left:left+d; if(d>0) any=true;
+      rows+='<tr'+(j===ci?' class="now12"':'')+'><td>'+esc(mshort(C.keys[j]))+(j===ci?'<span class="tag">rest of it</span>':'')+'</td><td class="num">'+(d>0?esc(mshort(C.keys[q]))+' '+gbp0.format(d):'<span class="note">nothing</span>')+'</td>'
+        +'<td class="r num"'+(room<=0?' style="color:var(--bad)"':'')+'>'+(room>0?gbp0.format(room):'£0')+'</td></tr>';
+    }
+    if(!rows) return '';
+    return '<div class="card" id="drops-card"><h2>Room in the coming months</h2>'
+      +'<p class="help" style="margin:0 0 8px">Your 12-month total'+(live?' (with '+esc(cm)+' so far)':'')+' is <b class="num">'+gbp0.format(r)+'</b>, leaving <b class="num">'+(left>=0?gbp0.format(left):'−'+gbp0.format(-left))+'</b> before the '+gbp0.format(st.threshold)+' VAT line. Each month, the same month a year earlier drops out of the 12 and frees that much room.</p>'
+      +(any?'':'<p class="help" style="margin:0 0 8px">Your first takings are less than a year ago, so nothing drops out in these months yet.</p>')
+      +'<div class="scroll"><table><tr><th>Month</th><th>Drops out</th><th class="r">You can earn</th></tr>'+rows+'</table></div>'
+      +'<p class="note">“You can earn” is the most you can take in that month and stay under the VAT line, if in the months before it you earn about what you did a year earlier.'+(live?' Whatever you earn in the rest of '+esc(cm)+' comes off every month below it.':'')+' Earn more than a year ago and later months have less room; earn less and they have more.</p></div>';
+  }
   /* Last 12 months on one card: each month, running total oldest to newest, then next month's allowance. */
   function twelve(C,ci){
     var st=S.settings, lo=Math.max(0,ci-11), full=(ci-lo===11), run=0, rows='', cur=monthOf(todayISO());
@@ -1376,7 +1410,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     renderSettings();
   }
   /* ---------- backup for the move to the website ---------- */
-  var BACKUP_COLS=['settings','months','plans','events','bankrules','rules','closes','history','bills','receipts','entries','rphotos','rphotoimg'];
+  var BACKUP_COLS=['settings','months','plans','events','bankrules','rules','closes','history','bills','receipts','entries','rphotos','rphotoimg','stmts','tosort'];
   function renderBackupCard(){
     return '<div class="card"><h2>Moving to the website</h2><p class="help">Saves a copy of all your books (jobs, expenses, months, receipts, calendar, settings) as one file. On the Cab Books website, open Settings and choose Bring in data from the old Cab Books.</p>'
       +'<button class="btn ghost" type="button" id="bk-backup">Save a backup of all my books</button></div>';
@@ -1591,7 +1625,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
         +'</div><div class="amt num">'+(r.exp?'−':'')+gbp2.format(r.fare)+(r.tip?'<div class="d">+ tip '+gbp2.format(r.tip)+'</div>':'')+(r.fee>0.005?'<div class="d" style="color:var(--bad)">fee '+gbp2.format(r.fee)+'</div>':'')+'</div></div>';
     });
     if(R.length>shown.length) h+='<button class="btn ghost small" id="lg-more" type="button" style="width:100%;margin-top:10px">Show '+Math.min(150,R.length-shown.length)+' more</button>';
-    h+='<p class="note">Statement jobs come from the provider statements already reconciled (FreeNow, Gett, Curb card payments, Helix, Taxiworld daily settlements). Uber does not provide job-level reports, so Uber appears only for jobs entered here.</p></div>';
+    h+='<p class="note">Statement jobs come from the provider statements already reconciled (FreeNow, Gett, Uber weekly statements, Curb card payments, Helix, Taxiworld daily settlements).</p></div>';
     out.innerHTML=h;
     bindLogCsv(out,R);
     Array.prototype.forEach.call(out.querySelectorAll('[data-del]'),function(b){ b.addEventListener('click',function(){ delEntry(b.getAttribute('data-del')); }); });
@@ -1685,17 +1719,34 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
 
   /* ---------- reports ---------- */
   S.rp={mode:'month',off:0,from:'',to:''};
-  var RMODES=[['today','Today'],['week','Week'],['month','Month'],['taxyear','Tax year'],['rolling','12 months'],['custom','Custom'],['best','Best fares']];
+  var RMODES=[['today','Today'],['week','Week'],['month','Month'],['quarter','Quarter'],['taxyear','Tax year'],['rolling','12 months'],['custom','Custom'],['best','Best fares']];
   function dayAdd(iso,n){var p=iso.split('-'),d=new Date(Date.UTC(+p[0],+p[1]-1,+p[2]+n));return d.getUTCFullYear()+'-'+pad(d.getUTCMonth()+1)+'-'+pad(d.getUTCDate())}
   function dowOf(iso){var p=iso.split('-');return new Date(Date.UTC(+p[0],+p[1]-1,+p[2])).getUTCDay()}
   function mondayOf(iso){return dayAdd(iso,-((dowOf(iso)+6)%7))}
   function dlabel(iso){var p=iso.split('-');return (+p[2])+' '+MN[+p[1]-1]+' '+p[0]}
   function eom(k){return dayAdd(addMonths(k,1)+'-01',-1)}
+  /* Making Tax Digital quarters (Matt, 10 Nov 2026). Standard update periods run 6 Apr–5 Jul, 6 Jul–5 Oct, 6 Oct–5 Jan, 6 Jan–5 Apr;
+     a driver can choose calendar quarters instead (1 Apr–30 Jun …). Either way the update is due on the 7th of the month after. */
+  function mtdCal(){ return !(S.tax&&S.tax.mtdStd); }
+  function qPeriod(t,o){
+    var cal=mtdCal(), d0=cal?1:6, y=+t.slice(0,4), mo=+t.slice(5,7), qs=[4,7,10,1];
+    if(+t.slice(8,10)<d0){ mo--; if(mo<1){ mo=12; y--; } }
+    var ty=mo>=4?y:y-1, n=Math.floor(((mo-4+12)%12)/3), tot=ty*4+n+(o||0);
+    ty=Math.floor(tot/4); n=tot-ty*4;
+    var M=qs[n], Y=n===3?ty+1:ty, eM=M+3>12?M-9:M+3, eY=M+3>12?Y+1:Y;
+    var dM=M+4>12?M-8:M+4, dY=M+4>12?Y+1:Y; /* due 7 Aug, 7 Nov, 7 Feb, 7 May for both kinds of quarter */
+    var from=dkey(Y,M,d0), to=dayAdd(dkey(eY,eM,d0),-1), due=dkey(dY,dM,7);
+    var P={from:from,to:to,ty:false,mtdY:ty,mtdQ:n+1,due:due,cal:cal,monthly:cal,keys:[],std:!cal};
+    if(cal) for(var i=0;i<3;i++) P.keys.push(addMonths(dkey(Y,M,1).slice(0,7),i));
+    P.label='Q'+(n+1)+' '+tyLabel(ty)+': '+(from.slice(0,4)===to.slice(0,4)?dlabel(from).replace(/ \d{4}$/,''):dlabel(from))+' – '+dlabel(to);
+    return P;
+  }
   function period(rr){
     var r=rr||S.rp, t=todayISO(), m=monthOf(t), o=r.off||0, P={mode:r.mode,monthly:false,keys:[],nav:true}, i;
     if(r.mode==='today'){ P.from=P.to=dayAdd(t,o); P.label=o===0?'Today, '+dlabel(P.from):dlabel(P.from); }
     else if(r.mode==='week'){ var mo=dayAdd(mondayOf(t),o*7); P.from=mo; P.to=dayAdd(mo,6); P.label='Week ending '+dlabel(P.to); }
     else if(r.mode==='month'){ var k=addMonths(m,o); P.monthly=true; P.keys=[k]; P.from=k+'-01'; P.to=eom(k); P.label=mlabel(k); }
+    else if(r.mode==='quarter'){ var Q=qPeriod(t,o); for(var qk in Q) P[qk]=Q[qk]; }
     else if(r.mode==='taxyear'){ var y=+m.slice(0,4); if(t<y+'-04-06') y--; y+=o; for(i=0;i<12;i++) P.keys.push(addMonths(y+'-04',i)); P.monthly=true; P.from=y+'-04-06'; P.to=(y+1)+'-04-05'; P.label='Tax year '+y+'–'+String(y+1).slice(2); P.ty=true; }
     else if(r.mode==='rolling'||r.mode==='best'){ for(i=11;i>=0;i--) P.keys.push(addMonths(m,-i)); P.monthly=true; P.from=P.keys[0]+'-01'; P.to=eom(m); P.label='12 months to '+mlabel(m); P.nav=false; }
     else { P.from=r.from||dayAdd(t,-6); P.to=r.to||t; if(P.to<P.from){var x=P.from;P.from=P.to;P.to=x} P.label=dlabel(P.from)+' – '+dlabel(P.to); P.nav=false; }
@@ -1720,7 +1771,24 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     return {app:Math.round(app*100)/100, card:Math.round(card*100)/100};
   }
   function lineFee(e){ var p=feeParts(e); return Math.round((p.app+p.card)*100)/100; }
+  /* A 6th-to-5th quarter cuts through calendar months. Whole months are added as they are; the days at each end come from
+     the jobs and expenses on those days, or, for a month that only has a workbook total, that month's share by days (an estimate). */
+  function aggStd(P){
+    var R={turn:0,tips:0,fees:0,exp:{},expTotal:0,expEst:0,jobs:0,prov:{},indic:0,loaded:0,apport:0};
+    function addN(t,s,f){ Object.keys(s).forEach(function(x){ var v=s[x]; if(typeof v==='number'){ t[x]=(t[x]||0)+v*f; } else if(v&&typeof v==='object'){ if(!t[x]||typeof t[x]!=='object') t[x]={}; addN(t[x],v,f); } else if(t[x]==null) t[x]=v; }); }
+    function add(A,f){ ['turn','tips','fees','expEst','indic','loaded'].forEach(function(x){ R[x]+=(+A[x]||0)*f; }); R.jobs+=Math.round((A.jobs||0)*f); addN(R.exp,A.exp||{},f); addN(R.prov,A.prov||{},f); }
+    for(var k=P.from.slice(0,7);k<=P.to.slice(0,7);k=addMonths(k,1)){
+      var a=P.from>k+'-01'?P.from:k+'-01', b=P.to<eom(k)?P.to:eom(k), md=S.months[k];
+      if(a===k+'-01'&&b===eom(k)) add(agg({monthly:true,keys:[k]}),1);
+      else if(md&&!md.opening){ var dim=+eom(k).slice(8), f=(+b.slice(8)-(+a.slice(8))+1)/dim; R.apport+=1; add(agg({monthly:true,keys:[k]}),f); }
+      else add(agg({from:a,to:b}),1);
+    }
+    Object.keys(R.exp).forEach(function(c){ R.expTotal+=R.exp[c]; });
+    R.profit=R.turn+R.tips-R.fees-R.expTotal;
+    return R;
+  }
   function agg(P){
+    if(P.std) return aggStd(P);
     var C=compute(S.entries), EI=expImpMap(), A={turn:0,tips:0,fees:0,exp:{},expTotal:0,expEst:0,jobs:0,prov:{},indic:0,loaded:0};
     function bp(name){var k=pkey(name)||String(name||'Other'); if(!A.prov[k]) A.prov[k]={label:PROV[k]||String(name||'Other'),jobs:0,turn:0,hist:0,fees:0,tips:0,bon:0,bonus:{},pay:{}}; return A.prov[k]}
     /* Uber Quest / Promotion / Referral (e.bonus) is income but not a fare, and a tip-only line is not a job (Matt, 10 Nov 2026) */
@@ -1989,6 +2057,8 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     var empty = !A.jobs && !A.turn && !A.tips && !A.expTotal;
     if(r.mode==='best'){
       h+=colsHTML()+perfHTML(A,P);
+    } else if(empty&&r.mode==='quarter'){
+      h+=mtdQHTML(P);
     } else if(empty){
       h+='<div class="card empty"><b>Nothing here yet</b>'+(P.monthly?'No loaded figures or entries for this period.':'No jobs or expenses entered or imported for these dates. Add them on the Today tab or import a statement.')+'</div>';
     } else {
@@ -2022,6 +2092,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
           +'<p class="note">A rough guide on profit so far this tax year, using calendar months April to March (HMRC accepts accounts made up to 31 March). Only the allowable share of a union fee is counted. It ignores any other income, pension, allowances and payments on account. Confirm the figures with your accountant or HMRC.</p></div>';
         h+=taxDatesCard()+accPackHTML(+P.from.slice(0,4));
       }
+      if(r.mode==='quarter') h+=mtdQHTML(P);
     }
     el.innerHTML=h;
     Array.prototype.forEach.call(el.querySelectorAll('[data-rpvat]'),function(b){ b.addEventListener('click',function(){ S.rpVat=b.getAttribute('data-rpvat')==='1'; renderReports(); }); });
@@ -2401,8 +2472,162 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     fixPay();
     if(S.pay==='Card' && CARDSYS.indexOf(S.card)<0) S.card=cardSys();
     $('c-pay').innerHTML=payOpts(S.prov).map(function(o){ var on=o.v===S.pay&&(!o.c||o.c===S.card); return '<button type="button" data-pay="'+o.v+'"'+(o.c?' data-card="'+o.c+'"':'')+' aria-pressed="'+on+'">'+(on?'\u2713 ':'')+esc(o.l)+'</button>'}).join('');
-    Array.prototype.forEach.call($('c-prov').querySelectorAll('button'),function(b){ b.addEventListener('click',function(){ S.prov=b.getAttribute('data-prov'); applyFeeDefaults(); buildChips(); updatePreview(); }); });
-    Array.prototype.forEach.call($('c-pay').querySelectorAll('button'),function(b){ b.addEventListener('click',function(){ S.pay=b.getAttribute('data-pay'); if(b.getAttribute('data-card')) S.card=b.getAttribute('data-card'); applyFeeDefaults(); buildChips(); updatePreview(); }); });
+    Array.prototype.forEach.call($('c-prov').querySelectorAll('button'),function(b){ b.addEventListener('click',function(){ S.prov=b.getAttribute('data-prov'); applyFeeDefaults(); buildChips(); updatePreview(); jobToTop(); }); });
+    Array.prototype.forEach.call($('c-pay').querySelectorAll('button'),function(b){ b.addEventListener('click',function(){ S.pay=b.getAttribute('data-pay'); if(b.getAttribute('data-card')) S.card=b.getAttribute('data-card'); applyFeeDefaults(); buildChips(); updatePreview(); if(!S.editId){ jobToTop(); fareFocus(); } }); });
+  }
+  /* ---------- Voice entry (Matt, 10 Nov 2026) ----------
+     Say (or type) several jobs and costs in one go, e.g. "FreeNow account £50 no tip, Uber account £62.20, hand card £15 plus £5 tip, petrol £40".
+     Each provider name starts a job, each cost word starts an expense. Everything read is shown as rows to check and correct before Save all. */
+  var VJ_PROV=[[/^(freenow|free-now|freeno)$/,'Freenow'],[/^(gett|get)$/,'Gett'],[/^uber$/,'Uber'],[/^comcab$/,'ComCab'],[/^jump$/,'Jump'],[/^blackcab$/,'Blackcab'],[/^curbflow$/,'CurbFlow'],[/^(hand|street|hail|rank)$/,'Hand'],[/^private$/,'Private'],[/^taxiworld$/,'Taxiworld'],[/^helix$/,'Helix']];
+  var VJ_EXP=[[/^(petrol|fuel|diesel)$/,'Petrol'],[/^(charging|charge|electric)$/,'Electric charging'],[/^(parking|dropoff)$/,'Parking / drop-off'],[/^(wash|carwash|valet)$/,'Car wash'],[/^(rent|rental)$/,'Car rental'],[/^(repair|repairs|parts|tyre|tyres|service)$/,'Cab repairs / parts'],[/^(cleaning|supplies)$/,'Cleaning / admin supplies'],[/^union$/,'Union'],[/^(phone|broadband)$/,'Phone / broadband']];
+  var VJ_AIR={heathrow:'Heathrow',gatwick:'Gatwick',stansted:'Stansted',luton:'Luton',cityairport:'City Airport'};
+  var VJ_NUM={zero:0,one:1,two:2,three:3,four:4,five:5,six:6,seven:7,eight:8,nine:9,ten:10,eleven:11,twelve:12,thirteen:13,fourteen:14,fifteen:15,sixteen:16,seventeen:17,eighteen:18,nineteen:19,twenty:20,thirty:30,forty:40,fifty:50,sixty:60,seventy:70,eighty:80,ninety:90,hundred:100};
+  function vjParse(text){
+    var t=' '+String(text||'').toLowerCase()+' ';
+    t=t.replace(/free now/g,'freenow').replace(/black cab/g,'blackcab').replace(/com cab/g,'comcab').replace(/curb flow/g,'curbflow').replace(/taxi world/g,'taxiworld').replace(/city airport|london city/g,'cityairport').replace(/\b(heathrow|gatwick|stansted|luton)( airport)?( terminal \w+| t\d)?\b/g,'$1').replace(/drop[ -]off/g,'dropoff').replace(/car wash/g,'carwash').replace(/car rent(al)?/g,'rent')
+      .replace(/(\d)\s*pounds?\s*(and\s*)?(\d{1,2})\s*(p|pence)?\b/g,'$1.$3').replace(/(\d)\s*(pounds?|quid)/g,'$1').replace(/£\s*/g,'£')
+      .replace(/\b(twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety)[ -](one|two|three|four|five|six|seven|eight|nine)\b/g,function(m,a,b){ return String(VJ_NUM[a]+VJ_NUM[b]); })
+      .replace(/\b(zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred)\b(?=\s*(pounds?|quid|tip|£|,|\.|$|\s))/g,function(m){ return String(VJ_NUM[m]); });
+    var w=t.replace(/[,;.!?](?!\d)/g,' , ').split(/\s+/).filter(Boolean), items=[], cur=null;
+    function amt(x){ var m=/^£?(\d+(?:\.\d{1,2})?)$/.exec(x); return m?+m[1]:null; }
+    function near(i,re,back,fwd){ for(var k=Math.max(cur?cur.at:0,i-back);k<=Math.min(w.length-1,i+fwd);k++){ if(k!==i&&re.test(w[k])) return true; } return false; }
+    for(var i=0;i<w.length;i++){
+      var x=w[i], p=null, e=null, a;
+      VJ_PROV.forEach(function(r){ if(!p&&r[0].test(x)) p=r[1]; });
+      if(p==='Gett'&&x==='get'&&!(i+1<w.length&&(/^(account|card|cash|app)$/.test(w[i+1])||amt(w[i+1])!=null))) p=null;
+      if(!p) VJ_EXP.forEach(function(r){ if(!e&&r[0].test(x)) e=r[1]; });
+      var air=VJ_AIR[x]||null;
+      /* "Heathrow drop off": the airport's drop-off charge, on the job as an extra, or on its own as a cost (Matt, 10 Nov 2026) */
+      var airNear=x==='dropoff'?((i>0&&VJ_AIR[w[i-1]])||(w[i+1]&&VJ_AIR[w[i+1]])||(w[i+2]&&VJ_AIR[w[i+2]])):null;
+      if(air||(e==='Parking / drop-off'&&airNear)){
+        var an=air||airNear, fee=(AIRFEES.filter(function(f){return f[0]===an})[0]||[])[1]||0;
+        if(cur&&cur.kind==='fare'){ if(air&&!cur.airDone){ cur.airDone=an; if(!cur.exAmt) cur.extras+=fee; cur.said.push(x); } continue; }
+        if(cur&&cur.kind==='expense'&&cur.air===an) continue; /* "drop off Gatwick": one cost, not two */
+        cur={at:i,kind:'expense',cat:'Parking / drop-off',amount:fee||null,cash:false,air:an,said:[x]}; items.push(cur); continue;
+      }
+      if(p){ cur={at:i,kind:'fare',prov:p,pay:null,fare:null,tip:null,extras:0,said:[]}; items.push(cur); }
+      else if(e&&!(cur&&cur.kind==='fare'&&e==='Parking / drop-off'&&near(i,/^(plus|and|extra|extras)$/,2,0))){ cur={at:i,kind:'expense',cat:e,amount:null,cash:true,said:[]}; items.push(cur); }
+      else if(!cur) continue;
+      cur.said.push(x);
+      if(cur.kind==='fare'){
+        if(/^(account|app)$/.test(x)) cur.pay='Account'; else if(/^card$/.test(x)) cur.pay='Card'; else if(/^cash$/.test(x)) cur.pay='Cash';
+        if(x==='no'&&w[i+1]&&/^tips?$/.test(w[i+1])) cur.tip=0;
+        if((a=amt(x))!=null){
+          var tipAfter=w[i+1]&&/^tips?$/.test(w[i+1]), tipBefore=(i-1>=cur.at&&/^tips?$/.test(w[i-1]))||(i-2>=cur.at&&/^tips?$/.test(w[i-2])&&/^(of|was)$/.test(w[i-1]));
+          if(tipAfter&&cur.fare==null&&w[i+2]&&amt(w[i+2])!=null) cur.fare=a; /* "£32 tip £3": the first is the fare */
+          else if(tipAfter||tipBefore) cur.tip=a;
+          else if(cur.fare!=null&&near(i,/^(extra|extras|dropoff|parking|heathrow|gatwick|stansted|luton|cityairport)$/,0,2)){ cur.extras+=a; cur.exAmt=true; } /* the fare comes first: "£50 Heathrow drop off" is a £50 fare */
+          else if(cur.fare==null) cur.fare=a;
+          else if(cur.tip==null&&near(i,/^plus$/,1,0)) cur.tip=a;
+        }
+      } else {
+        if(/^card$/.test(x)) cur.cash=false; else if(/^cash$/.test(x)&&cur.cat!=='Parking / drop-off') cur.cash=true; /* drop-offs are never cash (Matt, 10 Nov 2026) */
+        if((a=amt(x))!=null&&!(w[i+1]&&/^tips?$/.test(w[i+1]))&&(cur.amount==null||(cur.air&&!cur.amtSaid))){ cur.amount=a; cur.amtSaid=true; }
+      }
+    }
+    items.forEach(function(it){ if(it.kind==='fare'){ var ok=paysFor(it.prov); if(!it.pay||ok.indexOf(it.pay)<0){ it.payGuess=ok.length>1; it.pay=ok[0]; } if(it.tip==null) it.tip=0; } });
+    return items;
+  }
+  S.vj={open:false,text:'',items:[]};
+  function vjRender(){
+    var box=$('vj'); if(!box) return; box.hidden=!S.vj.open; $('vj-open').setAttribute('aria-expanded',S.vj.open);
+    var df=$('d-form'); if(df){ if(S.vj.open) df.setAttribute('data-vjhide','1'); df.style.display=S.vj.open?'none':''; } /* one set of boxes at a time (Matt, 10 Nov 2026) */
+    $('vj-open').textContent=S.vj.open?'Close':'🎤 Say jobs';
+    if(!S.vj.open){ box.innerHTML=''; return; }
+    var SR=window.SpeechRecognition||window.webkitSpeechRecognition, provs=PROVS.filter(function(p){ return (provShown(p)&&!isCardK(bkey(p))); });
+    var h='<label for="vj-text" style="margin-bottom:6px">Say or type your jobs for '+esc(dlabel(S.day))+'</label>'
+      +'<textarea id="vj-text">'+esc(S.vj.text)+'</textarea>'
+      +'<div class="two" style="margin-top:8px">'+(SR?'<button class="btn ghost small" type="button" id="vj-mic" aria-pressed="false">🎤 Talk</button>':'')+'<button class="btn small" type="button" id="vj-read"'+(SR?'':' style="grid-column:1/-1"')+'>Read it</button></div>'
+      +'<p class="help" style="margin:6px 0 0">'+(SR?'':'Tap the microphone on your keyboard to talk. ')+'For example: “FreeNow account £50, Heathrow drop off, £5 tip”.</p>';
+    if(S.vj.items.length){
+      S.vj.items.forEach(function(it,i){
+        if(it.kind==='fare'){
+          var po=payOpts(it.prov), cur=it.pay==='Card'&&!isCardK(bkey(it.prov))?'Card|'+(it.card||cardSys()):it.pay;
+          h+='<div class="vjrow" data-vi="'+i+'"><select data-vf="prov" aria-label="Provider">'+provs.concat(provs.indexOf(it.prov)<0?[it.prov]:[]).map(function(p){ return '<option value="'+esc(p)+'"'+(p===it.prov?' selected':'')+'>'+esc(pname(p))+'</option>'; }).join('')+'</select>'
+            +'<select data-vf="pay" aria-label="Paid by">'+po.map(function(o){ var v=o.c?'Card|'+o.c:o.v; return '<option value="'+esc(v)+'"'+(v===cur?' selected':'')+'>'+esc(o.l)+'</option>'; }).join('')+'</select>'
+            +'<input type="text" class="money" inputmode="numeric" data-vf="fare" aria-label="Fare" placeholder="Fare" value="'+(it.fare!=null?(+it.fare).toFixed(2):'')+'">'
+            +'<input type="text" class="money" inputmode="numeric" data-vf="tip" aria-label="Tip" placeholder="Tip" value="'+(it.tip?(+it.tip).toFixed(2):'')+'">'
+            +'<label class="vjex"><span>'+(it.airDone?esc(it.airDone)+' drop-off':'Extras')+'</span><input type="text" class="money" inputmode="numeric" data-vf="extras" aria-label="'+(it.airDone?esc(it.airDone)+' drop-off':'Extras')+'" placeholder="0.00" value="'+(it.extras?(+it.extras).toFixed(2):'')+'"></label>'
+            +'<div class="vjx"><span'+(it.payGuess||it.fare==null?' class="warn"':'')+'>Job'+(it.fare==null?' · no fare heard':it.payGuess?' · check Paid by':'')+'</span><button class="linkbtn" type="button" data-vdel="'+i+'">Remove</button></div></div>';
+        } else {
+          h+='<div class="vjrow" data-vi="'+i+'"><select data-vf="cat" aria-label="Expense">'+EXPCATS.map(function(c){ return '<option'+(c===it.cat?' selected':'')+'>'+esc(c)+'</option>'; }).join('')+'</select>'
+            +'<input type="text" class="money" inputmode="numeric" data-vf="amount" aria-label="Amount" placeholder="Amount" value="'+(it.amount!=null?(+it.amount).toFixed(2):'')+'">'
+            +'<div class="vjx"><span'+(it.amount==null?' class="warn"':'')+'>Expense'+(it.air?' · '+esc(it.air)+' drop-off':'')+(it.amount==null?' · no amount heard':'')+'</span><button class="linkbtn" type="button" data-vdel="'+i+'">Remove</button></div></div>';
+        }
+      });
+      var nj=S.vj.items.filter(function(x){return x.kind==='fare'}).length, ne=S.vj.items.length-nj;
+      h+='<div class="two" style="margin-top:10px"><button class="btn" type="button" id="vj-save">Save ('+[nj?nj+' job'+(nj===1?'':'s'):'',ne?ne+' cost'+(ne===1?'':'s'):''].filter(Boolean).join(', ')+')</button><button class="btn ghost" type="button" id="vj-del">Delete</button></div>'
+        +'<p class="help" style="margin:6px 0 0">Check each row, then Save. Commission is worked out with your usual rates.</p>';
+    } else if(S.vj.read) h+='<p class="help warn" style="margin:8px 0 0">Nothing found. Start each job with the app (FreeNow, Gett, Uber, hand…), then how it was paid and the fare.</p>';
+    box.innerHTML=h;
+    Array.prototype.forEach.call(box.querySelectorAll('input.money'),moneyInput);
+  }
+  function vjSync(){ var tx=$('vj-text'); if(tx) S.vj.text=tx.value;
+    Array.prototype.forEach.call(document.querySelectorAll('#vj .vjrow'),function(r){ var it=S.vj.items[+r.getAttribute('data-vi')]; if(!it) return;
+      Array.prototype.forEach.call(r.querySelectorAll('[data-vf]'),function(el){ var f=el.getAttribute('data-vf'), v=el.value;
+        if(f==='pay'){ var pc=v.split('|'); it.pay=pc[0]; if(pc[1]) it.card=pc[1]; it.payGuess=false; }
+        else if(f==='fare'||f==='tip'||f==='amount'||f==='extras') it[f]=v===''?((f==='tip'||f==='extras')?0:null):+v;
+        else if(f==='cash') it.cash=v==='1'; else it[f]=v; }); }); }
+  var vjRec=null;
+  function vjMic(){
+    var SR=window.SpeechRecognition||window.webkitSpeechRecognition, b=$('vj-mic'); if(!SR||!b) return;
+    if(vjRec){ try{ vjRec.stop(); }catch(e){} return; }
+    S.vj.text=''; S.vj.items=[]; S.vj.read=false; vjRender(); b=$('vj-mic'); /* Talk starts with an empty box (Matt, 10 Nov 2026) */
+    var base=''; vjRec=new SR(); vjRec.lang='en-GB'; vjRec.continuous=true; vjRec.interimResults=true;
+    vjRec.onresult=function(ev){ var s=''; for(var i=0;i<ev.results.length;i++) s+=ev.results[i][0].transcript+' '; var tx=$('vj-text'); if(tx) tx.value=(base?base+', ':'')+s.trim(); };
+    vjRec.onerror=function(ev){ if(ev&&ev.error==='not-allowed') toast('Allow the microphone for Cab Books, or use the mic on your keyboard.'); };
+    vjRec.onend=function(){ vjRec=null; var m=$('vj-mic'); if(m){ m.setAttribute('aria-pressed','false'); m.textContent='🎤 Talk'; } var tx=$('vj-text'); if(tx&&tx.value.trim()){ S.vj.text=tx.value; S.vj.items=vjParse(S.vj.text); S.vj.read=true; vjRender(); } };
+    try{ vjRec.start(); b.setAttribute('aria-pressed','true'); b.textContent='■ Stop'; }catch(e){ vjRec=null; toast('Could not start listening. Use the mic on your keyboard instead.'); }
+  }
+  function vjSave(){
+    if(!S.db){ toast('Sign in to save.'); return; }
+    vjSync(); var its=S.vj.items, bad=its.filter(function(x){ return x.kind==='fare'?!(x.fare>0):!(x.amount>0); });
+    if(bad.length){ toast('Fill in the amount on every row, or remove it.'); return; }
+    var b=$('vj-save'); if(b) b.disabled=true;
+    var ws=its.map(function(it){
+      if(it.kind==='fare'){
+        var card=it.pay==='Card'&&!isCardK(bkey(it.prov))?(it.card||cardSys()):null, d=formFee(it.prov,it.pay,S.day,card)||[0,0];
+        var data={kind:'fare',date:S.day,m:monthOf(S.day),provider:it.prov,pay:it.pay,amount:Math.round(it.fare*100)/100,extras:Math.round((it.extras||0)*100)/100,tips:Math.round((it.tip||0)*100)/100,commission:+d[0]||0,feeFixed:+d[1]||0,cardPct:d.card?+d.card[0]||0:0,cardFix:d.card?+d.card[1]||0:0,note:'',src:'manual',voice:true,ts:Date.now()};
+        if(card) data.card=card; if(S.practice) data.demo=true; return data;
+      }
+      var x={kind:'expense',date:S.day,m:monthOf(S.day),category:it.cat,amount:Math.round(it.amount*100)/100,cash:!!it.cash,note:'',src:'manual',voice:true,ts:Date.now()}; if(S.practice) x.demo=true; return x;
+    });
+    /* As on the job form: an extra on a job (drop-off, parking) is also a cost you paid, saved as not-cash so the bank's own line replaces it. */
+    var wr=[]; ws.forEach(function(d,k){ var ref=S.db.collection('entries').doc(); wr.push(ref.set(d)); var it=its[k];
+      if(d.kind==='fare'&&d.extras>0){ var x={kind:'expense',date:S.day,m:monthOf(S.day),category:'Parking / drop-off',amount:d.extras,cash:false,note:(it.airDone?it.airDone+' drop-off':'Extra')+' (from job)',fromJob:ref.id,src:'manual',voice:true,ts:Date.now()}; if(d.demo) x.demo=true; wr.push(S.db.collection('entries').doc().set(x)); } });
+    /* Clear straight away (Matt, 10 Nov 2026: it stayed on screen after Save). The phone keeps the writes and sends them
+       when it can; if they fail, the rows come back so nothing is lost. */
+    var keep=S.vj, gc=ws.some(function(d){ return d.provider==='Gett'&&d.pay==='Cash'&&!d.commission&&!d.feeFixed; });
+    S.vj={open:false,text:'',items:[]}; vjRender();
+    var nj=ws.filter(function(d){return d.kind==='fare'}).length, ne=ws.length-nj;
+    toast('Saved '+[nj?nj+' job'+(nj===1?'':'s'):'',ne?ne+' cost'+(ne===1?'':'s'):''].filter(Boolean).join(' and ')+(gc?' (no Gett cash fee: edit those jobs to add it)':''));
+    Promise.all(wr).catch(function(e){ S.vj=keep; S.vj.open=true; vjRender(); fail(e); });
+  }
+  document.addEventListener('click',function(ev){
+    var t=ev.target&&ev.target.closest?ev.target.closest('#vj-open,#vj-read,#vj-mic,#vj-save,#vj-del,[data-vdel]'):null; if(!t) return;
+    if(t.id==='vj-del'){ S.vj={open:true,text:'',items:[]}; vjRender(); toast('Deleted'); return; }
+    if(t.id==='vj-open'){ S.vj.open=!S.vj.open; vjRender(); if(S.vj.open){ var c=$('j-card'); if(c) c.scrollIntoView({behavior:'smooth',block:'start'}); } }
+    else if(t.id==='vj-read'){ var tx=$('vj-text'); S.vj.text=tx?tx.value:''; S.vj.items=vjParse(S.vj.text); S.vj.read=true; vjRender(); }
+    else if(t.id==='vj-mic') vjMic();
+    else if(t.id==='vj-save') vjSave();
+    else { vjSync(); S.vj.items.splice(+t.getAttribute('data-vdel'),1); vjRender(); }
+  });
+  document.addEventListener('change',function(ev){ var el=ev.target; if(!el||!el.closest||!el.closest('#vj .vjrow')) return; vjSync(); if(el.getAttribute('data-vf')==='prov'){ var it=S.vj.items[+el.closest('.vjrow').getAttribute('data-vi')]; var ok=paysFor(it.prov); if(ok.indexOf(it.pay)<0) it.pay=ok[0]; vjRender(); } });
+  document.addEventListener('input',function(ev){ if(ev.target&&ev.target.id==='vj-text') S.vj.text=ev.target.value; });
+  /* Provider / Paid by tapped: put the "Add job" heading at the top of the screen so the whole form shows (Matt, 10 Nov 2026).
+     Not when editing a job, and not if it is already there (so a second tap doesn't jump). */
+  function jobToTop(){
+    if(S.editId) return; var c=$('j-card'); if(!c||!c.getBoundingClientRect) return;
+    var m=parseFloat(getComputedStyle(c).scrollMarginTop)||12, top=c.getBoundingClientRect().top;
+    if(Math.abs(top-m)<=20) return;
+    c.scrollIntoView({behavior:'smooth',block:'start'});
+  }
+  /* After Paid by: cursor straight into Fare so the number keypad opens. Must run inside the tap or iPhone won't show the keypad.
+     preventScroll + S.jobFocus stop the Fare box's own scroll (fareToTop) from pulling the heading off the top. */
+  function fareFocus(){
+    var a=$('j-amt'); if(!a||!a.focus) return; S.jobFocus=true;
+    try{ a.focus({preventScroll:true}); }catch(e){ a.focus(); }
+    setTimeout(function(){ S.jobFocus=false; },600);
   }
   /* Extras buttons on the job form: standard ones plus the driver's own (settings/extras {list:[{n,a}]}). */
   var EX_STD=[{n:'Airport drop-off',air:1},{n:'Parking',a:0}]; /* a:0 = type the amount; air = pick the airport */
@@ -3511,7 +3736,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   }
   function saveTax(patch){
     if(!S.db) return Promise.resolve();
-    var d=Object.assign({aside:+S.tax.aside||0,asOf:S.tax.asOf||'',mtd:S.tax.mtd||'auto',unionPct:unionPct(),accNotes:S.tax.accNotes||''},patch);
+    var d=Object.assign({aside:+S.tax.aside||0,asOf:S.tax.asOf||'',mtd:S.tax.mtd||'auto',unionPct:unionPct(),accNotes:S.tax.accNotes||'',mtdStd:!!S.tax.mtdStd},patch);
     return S.db.collection('settings').doc('tax').set(d);
   }
   document.addEventListener('click',function(ev){
@@ -3539,9 +3764,9 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   function unionAmt(A){ var t=0; Object.keys(A.exp||{}).forEach(function(c){ if(hmrcLine(c)==='union') t+=(+A.exp[c]||0); }); return t; }
   /* Profit for tax: the part of a union fee that is not allowable is added back (LTDA: 80% allowable). */
   function taxProfit(A){ return A.profit+unionAmt(A)*(1-unionPct()/100); }
-  function accPack(y){
-    var P=period({mode:'taxyear',off:y-curTaxYear()}), A=agg(P), C=compute(S.entries), cur=monthOf(todayISO()), up=unionPct();
-    var lines={}, sub={}, allow=0, dis=0;
+  /* A period's costs set out in HMRC's self-employment categories (also used for the MTD quarterly update). */
+  function hmLines(A,up){
+    var lines={}, sub={}, allow=0, dis=0; up=up==null?unionPct():up;
     HM_LINES.forEach(function(k){ lines[k]=[]; });
     if(A.fees>0.004) lines[HM_OTH].push({l:'Commission and card fees (taxi apps, card machine)',cat:'Commission and fees',v:A.fees,full:A.fees});
     Object.keys(A.exp).sort().forEach(function(c){
@@ -3550,6 +3775,11 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
       else lines[ln].push({l:c,cat:c,v:v,full:v});
     });
     HM_LINES.forEach(function(k){ sub[k]=lines[k].reduce(function(s,x){return s+x.v},0); allow+=sub[k]; });
+    return {lines:lines,sub:sub,allow:allow,dis:dis};
+  }
+  function accPack(y){
+    var P=period({mode:'taxyear',off:y-curTaxYear()}), A=agg(P), C=compute(S.entries), cur=monthOf(todayISO()), up=unionPct();
+    var HL=hmLines(A,up), lines=HL.lines, sub=HL.sub, allow=HL.allow, dis=HL.dis;
     var turnover=A.turn+A.tips, profit=turnover-allow;
     var months=[];
     P.keys.forEach(function(k){
@@ -3679,6 +3909,71 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     foot();
     offerFile(accFileBase(y)+'.pdf',doc.output('arraybuffer'),'PDF ready for your accountant');
   }
+  /* ---------- Making Tax Digital: quarterly update figures (Matt, 10 Nov 2026) ----------
+     HMRC wants each update cumulative from the start of the tax year, in the self-employment categories.
+     Cab Books cannot send it: the driver copies the figures into HMRC-recognised software or gives them to an accountant. */
+  function mtdQData(P){
+    var ty=P.mtdY, YP=P.cal?{monthly:true,keys:[],from:ty+'-04-01',to:P.to}:{std:true,from:ty+'-04-06',to:P.to};
+    if(P.cal) for(var k=ty+'-04';k<=P.to.slice(0,7);k=addMonths(k,1)) YP.keys.push(k);
+    var QA=agg(P), YA=agg(YP);
+    return {P:P,QA:QA,YA:YA,HQ:hmLines(QA),HY:hmLines(YA),qTurn:QA.turn+QA.tips,yTurn:YA.turn+YA.tips};
+  }
+  function mtdQHTML(P){
+    var D=mtdQData(P), t=todayISO(), mi=mtdInfo(), dn=daysTo(P.due), cal=P.cal;
+    var st=t<P.from?'Not started yet':t<=P.to?'Quarter in progress: figures so far':dn>=0?'Due in '+dn+' day'+(dn===1?'':'s'):'Was due '+dlabel(P.due);
+    var h='<div class="card wide" id="mtd-card"><h2>Quarterly update for HMRC</h2>'
+      +'<div class="seg" role="group" aria-label="Which quarters" style="margin:0 0 10px"><button type="button" data-mtdq="cal" aria-pressed="'+cal+'">Calendar quarters</button><button type="button" data-mtdq="std" aria-pressed="'+!cal+'">6th to 5th</button></div>'
+      +'<div class="kv"><span class="k">Quarter</span><span class="v">'+esc(P.label)+'</span></div>'
+      +'<div class="kv"><span class="k">Send by</span><span class="v"><b>'+esc(dlabel(P.due))+'</b></span></div>'
+      +'<div class="kv"><span class="k">Status</span><span class="v">'+esc(st)+'</span></div>';
+    function row(l,q,y,o){ o=o||''; return '<tr'+(o?' class="'+o+'"':'')+'><td>'+l+'</td><td class="r num">'+gbp2.format(q)+'</td><td class="r num">'+gbp2.format(y)+'</td></tr>'; }
+    h+='<div class="scroll" style="margin-top:10px"><table><tr><th>HMRC category</th><th class="r">This quarter</th><th class="r">Tax year so far</th></tr>'
+      +row('<b>Turnover</b> <span class="note">(fares + tips)</span>',D.qTurn,D.yTurn);
+    HM_LINES.forEach(function(k){ if(!(D.HQ.sub[k]||D.HY.sub[k])) return; h+=row(esc(k),D.HQ.sub[k],D.HY.sub[k]); });
+    h+=row('<b>Total allowable expenses</b>',D.HQ.allow,D.HY.allow)+row('<b>Net profit</b>',D.qTurn-D.HQ.allow,D.yTurn-D.HY.allow,'tot12')+'</table></div>';
+    h+='<p class="note">HMRC asks for the <b>tax year so far</b> column: each update covers everything from the start of the tax year ('+(cal?'1 April':'6 April')+'). If your turnover is under £90,000 a year you can send just the total expenses instead of each category.</p>';
+    var w=[]; if(D.YA.indic>0.5) w.push(gbp2.format(D.YA.indic)+' of jobs not yet matched to statements'); if(D.YA.expEst>0.5) w.push(gbp2.format(D.YA.expEst)+' of costs typed in, not yet from the bank'); if(D.YA.apport) w.push('the days at each end of a month that only has a monthly total are its share by days');
+    if(w.length) h+='<p class="warnbox" style="margin:10px 0 0">Includes estimates: '+esc(w.join('; '))+'.</p>';
+    h+='<div class="two" style="margin-top:12px"><button class="btn" type="button" id="mtd-pdf">Download PDF</button><button class="btn ghost" type="button" id="mtd-csv">Spreadsheet (CSV)</button></div>';
+    h+='<p class="note">'+(mi?'Cab Books expects you to send quarterly updates from April '+mi.from+'. '+esc(mi.why)+' ':'You may not need to send these yet. Quarterly updates apply from April '+MTDSTEPS.map(function(x){return x[0]+' if your takings (before costs) in '+tyLabel(x[1])+' were over '+gbp0.format(x[2])}).join(', from April ')+'. ')
+      +'Cab Books can’t send updates to HMRC itself: copy these figures into HMRC-recognised software, or send them to your accountant. '+(cal?'Calendar quarters match how Cab Books keeps your books (by month); you tell HMRC you use them when you sign up. ':'')+'Check with your accountant before you rely on them.</p></div>';
+    return h;
+  }
+  function mtdFileBase(P){ var n=(S.biz&&S.biz.name)||''; return 'HMRC quarterly update Q'+P.mtdQ+' '+tyLabel(P.mtdY).replace('–','-')+(n?' '+String(n).replace(/[^A-Za-z0-9 \-]/g,'').trim():''); }
+  function mtdCSV(P){
+    var D=mtdQData(P), R=[['HMRC category','This quarter (£)','Tax year so far (£)']];
+    function q(v){ v=String(v==null?'':v); return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; }
+    R.push(['Quarter',P.label,'']); R.push(['Send by',dlabel(P.due),'']); R.push(['Name',(S.biz&&S.biz.name)||'','']);
+    R.push(['Turnover (fares + tips)',n2(D.qTurn),n2(D.yTurn)]);
+    HM_LINES.forEach(function(k){ R.push([k,n2(D.HQ.sub[k]),n2(D.HY.sub[k])]); });
+    R.push(['Total allowable expenses',n2(D.HQ.allow),n2(D.HY.allow)]);
+    R.push(['Net profit',n2(D.qTurn-D.HQ.allow),n2(D.yTurn-D.HY.allow)]);
+    HM_LINES.forEach(function(k){ D.HY.lines[k].forEach(function(x){ var qx=(D.HQ.lines[k].filter(function(z){return z.l===x.l})[0]||{v:0}).v; R.push(['  '+k+': '+x.l,n2(qx),n2(x.v)]); }); });
+    return '\ufeff'+R.map(function(r){ return r.map(q).join(','); }).join('\r\n')+'\r\n';
+  }
+  function mtdPDF(P){
+    if(!window.jspdf||!window.jspdf.jsPDF){ toast('The PDF maker did not load. Check your connection and try again.'); return; }
+    var D=mtdQData(P), doc=new window.jspdf.jsPDF({unit:'mm',format:'a4'}), L=18, R=192, Y=18, z=S.biz||{};
+    try{ doc.addImage(LOGO160,'PNG',L,Y-4,22,22); }catch(e){}
+    doc.setFont('helvetica','bold'); doc.setFontSize(18); doc.text('Quarterly update figures',L+28,Y+5);
+    doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(110); doc.text(P.label+'  ·  send by '+dlabel(P.due),L+28,Y+11);
+    doc.text(brandName()+(z.name?'  ·  '+z.name:''),L+28,Y+16); doc.setTextColor(0); Y+=28;
+    doc.setFont('helvetica','bold'); doc.text('HMRC category',L,Y); doc.text('This quarter',150,Y,{align:'right'}); doc.text('Tax year so far',R,Y,{align:'right'}); Y+=2; doc.setDrawColor(200); doc.line(L,Y,R,Y); Y+=6;
+    function row(l,a,b,bold){ doc.setFont('helvetica',bold?'bold':'normal'); doc.text(doc.splitTextToSize(l,100),L,Y); doc.text(gbp2.format(a),150,Y,{align:'right'}); doc.text(gbp2.format(b),R,Y,{align:'right'}); Y+=7; }
+    row('Turnover (fares + tips)',D.qTurn,D.yTurn,true);
+    HM_LINES.forEach(function(k){ if(D.HQ.sub[k]||D.HY.sub[k]) row(k,D.HQ.sub[k],D.HY.sub[k]); });
+    row('Total allowable expenses',D.HQ.allow,D.HY.allow,true); row('Net profit',D.qTurn-D.HQ.allow,D.yTurn-D.HY.allow,true);
+    Y+=4; doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(80);
+    var t=doc.splitTextToSize('HMRC asks for the tax year so far figures: each update covers everything from the start of the tax year. If turnover is under £90,000 a year, total expenses can be sent as one figure. Commission and card fees are under other allowable expenses; only the allowable share of a union fee is counted. Produced by Cab Books on '+dlabel(todayISO())+' from the books as they stood then. Cab Books does not send updates to HMRC.',R-L);
+    doc.text(t,L,Y); doc.setTextColor(0);
+    offerFile(mtdFileBase(P)+'.pdf',doc.output('arraybuffer'),'PDF ready');
+  }
+  document.addEventListener('click',function(ev){
+    var b=ev.target&&ev.target.closest?ev.target.closest('[data-mtdq],#mtd-pdf,#mtd-csv'):null; if(!b) return;
+    if(b.id==='mtd-pdf') mtdPDF(period());
+    else if(b.id==='mtd-csv'){ var P=period(); offerFile(mtdFileBase(P)+'.csv',new Blob([mtdCSV(P)],{type:'text/csv;charset=utf-8'}),'Spreadsheet ready'); }
+    else { var std=b.getAttribute('data-mtdq')==='std'; if(std===!mtdCal()) return; S.tax=S.tax||{}; S.tax.mtdStd=std; renderReports(); saveTax({mtdStd:std}).catch(fail); }
+  });
   function accY(){ var P=period(); return +P.from.slice(0,4); }
   document.addEventListener('click',function(ev){
     var id=ev.target&&ev.target.id; if(!id||id.indexOf('acc-')!==0) return;
@@ -4760,8 +5055,20 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   $('ru-save').addEventListener('click',saveRule); $('ru-cancel').addEventListener('click',function(){ resetRuleForm(); $('ru-form').open=false; });
   $('j-save').addEventListener('click',saveJob); $('e-add').addEventListener('click',saveExpense);
   /* Tapping Fare (or Tip) brings that row to the top of the screen, so Save job shows above the keyboard (Matt, 3 Nov 2026). */
+  /* Once the keypad is up, nudge the page so Save job sits just above it (Matt, 10 Nov 2026: it was slightly hidden).
+     Scrolls only as far as needed, so Paid by and Fare stay in view. */
+  function saveAboveKeys(){
+    var vk=window.visualViewport, b=$('j-save'); if(!vk||!b) return;
+    var lim=vk.offsetTop+vk.height, tb=document.querySelector('.tabs'), tt=tb?tb.getBoundingClientRect().top:0;
+    if(tt>0&&tt<lim) lim=tt; /* the tab bar, if it shows above the keypad */
+    var over=b.getBoundingClientRect().bottom-lim+10;
+    if(over>0) window.scrollBy({top:over,behavior:'smooth'});
+  }
   function fareToTop(){
     var row=$('j-amt').closest('.field'); row=row&&row.parentElement||row; if(!row) return;
+    if(S.jobFocus){ /* focused from a Paid by tap: keep Add job at the top, also once the keyboard has opened */
+      var vk=window.visualViewport; if(vk){ var once=function(){ vk.removeEventListener('resize',once); setTimeout(saveAboveKeys,60); }; vk.addEventListener('resize',once); setTimeout(function(){ vk.removeEventListener('resize',once); },800); }
+      return; }
     function go(){ var y=row.getBoundingClientRect().top+(window.pageYOffset||document.documentElement.scrollTop)-8; window.scrollTo({top:Math.max(0,y),behavior:'smooth'}); }
     setTimeout(go,60);
     /* Again once the phone keyboard has finished opening (it moves the page). */
@@ -5536,7 +5843,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
         return cbJson(js,nm);
       }
       if(/\.(xlsx|xls|csv|txt)$/.test(low)){
-        return stSheetRows(buf).catch(function(e){ if(/numbers/i.test(String(e&&e.message||e))) throw new Error('This is an Apple Numbers file. Open it in Numbers, tap ⋯ → Export → Excel (or CSV), and choose that file here. Or download it again from Curb and save it straight to Files without opening it.'); throw e; }).then(function(rows){ return ccSheet(rows,nm)||uberCsv(rows,nm)||curbSheet(rows,nm)||lhrSheet(rows,nm)||{err:'This spreadsheet is not a Curb, ComCab, Uber or Heathrow file Cab Books knows. For bank statements use the Bank statement box below.',file:nm}; });
+        return stSheetRows(buf).catch(function(e){ if(/numbers/i.test(String(e&&e.message||e))) throw new Error('This is an Apple Numbers file. Open it in Numbers, tap ⋯ → Export → Excel (or CSV), and choose that file here. Or download it again and save it straight to Files without opening it.'); throw e; }).then(function(rows){ return ccSheet(rows,nm)||uberCsv(rows,nm)||curbSheet(rows,nm)||lhrSheet(rows,nm)||{err:'Cab Books didn’t recognise this spreadsheet. The spreadsheets it reads here are: Curb card transactions (or settlement) report, Uber earnings CSV, ComCab pay sheet and Heathrow drop-off download. FreeNow, Gett, Uber, ComCab and Taxiworld statements are PDFs. For your bank statement, use the Bank statement box below.',file:nm}; });
       }
       return {err:'Choose a PDF, Excel, CSV or Cab Books (.json) file.',file:nm};
     }).catch(function(e){ return {err:(e&&e.message)||'Could not read this file.',file:nm}; });

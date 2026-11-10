@@ -119,7 +119,7 @@ rep("var needWelcome=!S.isOwner&&S.loaded.settings&&!S.mode;", "var needWelcome=
 rep("+(S.isOwner?'':'<p class=\"privnote\" style=\"margin-top:10px\">Your figures are private to you. Nobody else using Cab Books can see them.</p>')+'</div>';",
     "+'<p class=\"privnote\" style=\"margin-top:10px\">Your figures are private to you. Nobody else using Cab Books can see them.</p></div>';")
 rep("h=renderModeCard()+renderLookCard()", "h=renderAccountCard()+renderModeCard()+renderLookCard()")
-rep('<button type="button" class="gear" id="gear"', '<style>@media (max-width:500px){#acctbtn span{display:none}}</style><button type="button" class="gear" id="acctbtn" aria-label="Your account" hidden>\U0001F464\uFE0E<span>Account</span></button><button type="button" class="gear" id="gear"')
+rep('<button type="button" class="gear" id="gear"', '<style>@media (max-width:359px){#acctbtn span{display:none}}</style><button type="button" class="gear" id="acctbtn" aria-label="Your account" hidden>\U0001F464\uFE0E<span>Account</span></button><button type="button" class="gear" id="gear"')
 
 # ---------------------------------------------------------------- boot: Firebase instead of Claude
 b0 = s.index("  /* ---------- who is using the app: private books per person ----------")
@@ -222,8 +222,8 @@ BOOT = r"""  /* ---------- website plumbing: Firebase sign-in + each driver's pr
   }
   document.addEventListener('click',function(ev){ if(ev.target&&ev.target.id==='acct-out'&&S.auth){ S.auth.signOut(); $('setovl').hidden=true; } });
   /* ---------- Your account: email, password, sign out, copy of my data, delete ---------- */
-  var ACCT_ALL=['settings','months','plans','events','bankrules','rules','closes','history','bills','receipts','entries','rphotos','rphotoimg','stmts','push','meta'];
-  var ACCT_COPY=['settings','months','plans','events','bankrules','rules','closes','history','bills','receipts','entries','rphotos','rphotoimg','stmts'];
+  var ACCT_ALL=['settings','months','plans','events','bankrules','rules','closes','history','bills','receipts','entries','rphotos','rphotoimg','stmts','tosort','push','meta']; /* every collection a driver has: delete must leave nothing (UK GDPR) */
+  var ACCT_COPY=['settings','months','plans','events','bankrules','rules','closes','history','bills','receipts','entries','rphotos','rphotoimg','stmts','tosort'];
   S.acctOpen=S.acctOpen||{};
   function acctSec(id,title,body){ return '<details class="rulex" data-acct="'+id+'"'+(S.acctOpen[id]?' open':'')+'><summary>'+title+'</summary><div style="padding:0 0 12px">'+body+'</div></details>'; }
   function acctField(id,label,type,ac){ return '<div class="field" style="margin:0 0 8px"><label for="'+id+'">'+label+'</label><input type="'+type+'" id="'+id+'" autocomplete="'+ac+'"'+(type==='email'?' inputmode="email" autocapitalize="off"':'')+'></div>'; }
