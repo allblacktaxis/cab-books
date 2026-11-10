@@ -1008,10 +1008,31 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   /* A month's figure = loaded statement total + imported rows + manual entries not yet covered by records.
      A manual entry is covered (and stops counting) when the same provider's records reach its date:
      the month's loaded "covered" date, or a later imported row for that provider and month. */
+  /* ---- Uber weekly statements take over a workbook month's Uber figure (Matt, 10 Nov 2026) ----
+     The workbook's Uber part was by payout and had Quest in with fares. Once Uber statements cover every day of a month
+     (weeks run Monday to Sunday, counted by trip date), that month's Uber money comes from the statements instead:
+     the workbook's Uber part and Uber's share of the workbook tips stop counting. A month only partly covered keeps
+     the workbook figure and the statement lines in it don't count, so nothing is lost or doubled. */
+  function ubWeeks(list){ var W=[]; (list||(typeof stList==='function'?stList():[])).forEach(function(s){ if(pkey(s.prov)!=='uber'||!s.hasJobs) return; (s.weeks&&s.weeks.length?s.weeks:(s.from&&s.to?[{f:s.from,t:s.to}]:[])).forEach(function(w){ W.push(w); }); }); return W; }
+  function ubFullMonth(k,W){
+    var md=S.months[k]; if(!md||md.opening) return false; W=W||ubWeeks();
+    if(!W.length) return false;
+    var last=new Date(+k.slice(0,4),+k.slice(5,7),0).getDate();
+    for(var d=1;d<=last;d++){ var iso=k+'-'+(d<10?'0':'')+d; if(!W.some(function(w){ return iso>=w.f&&iso<=w.t; })) return false; }
+    return true;
+  }
+  function ubWbTips(k){
+    var md=S.months[k]; if(!md||!(+md.tips)) return 0;
+    if(md.tipsBy&&md.tipsBy.uber!=null) return +md.tipsBy.uber||0;
+    var P=md.parts||{}, T=S.tipstats||{}, tot=0, ub=0;
+    Object.keys(P).forEach(function(p){ var t=T[bkey(p)]||T[p], r=t&&+t.turn>200?(+t.tips||0)/(+t.turn):((typeof tipRate==='function'?tipRate(PROV[p]||p):0)||0)/100; var w=(+P[p]||0)*r; tot+=w; if(p==='uber') ub=w; });
+    return tot>0?Math.round(+md.tips*ub/tot*100)/100:0;
+  }
+  function ubWbFull(){ var W=ubWeeks(), o={}; Object.keys(S.months||{}).forEach(function(k){ var md=S.months[k]; if(md&&md.parts&&md.parts.uber!=null&&ubFullMonth(k,W)) o[k]=true; }); return o; }
   function compute(entries){
     var st=S.settings, keys=[], i;
     var nk=Math.max(24,monthsDiff(st.start,monthOf(todayISO()))+13); for(i=0;i<nk;i++) keys.push(addMonths(st.start,i));
-    var imp={}, act={}, ind={}, nFare={}, stat={}, byImp={};
+    var imp={}, act={}, ind={}, nFare={}, stat={}, byImp={}, UF=ubWbFull();
     entries.forEach(function(e){
       if(e.kind==='fare' && e.src==='import' && !e.superseded && !e.est){ var p=pkey(e.provider)||pkey(e.card||''); if(p){ var id=e.m+'|'+p; if(!imp[id]||e.date>imp[id]) imp[id]=e.date; } }
     });
@@ -1019,6 +1040,8 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
       if(e.kind!=='fare') return;
       nFare[e.m]=(nFare[e.m]||0)+1;
       if(e.src==='import'&&e.superseded){ stat[e.id]='covered'; return; }
+      if(e.src==='import'&&e.stmt&&!e.est&&pkey(e.provider)==='uber'&&S.months[e.m]&&!S.months[e.m].opening&&!UF[e.m]){
+        var lt=stLoadedTo('Uber',e.m); if(lt&&e.date<=lt){ stat[e.id]='covered'; return; } }
       if(e.src==='import'){ act[e.m]=(act[e.m]||0)+eAmt(e); stat[e.id]='actual'; return; }
       var ck=bkey(e.provider), cm=pkey(e.card||'')||'curb';
       var p=pkey(e.provider)||(e.pay==='Card'&&(ck==='hand'?cm:(cm==='taxiworld'&&(ck==='jump'||ck==='blackcab'||ck==='other')?cm:null)))||null, md=S.months[e.m], cov='';
@@ -1031,7 +1054,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     });
     var used=[], planned=[], indArr=[];
     keys.forEach(function(k){
-      var base = S.months[k] ? +S.months[k].total : null, pt=opPart(k);
+      var base = S.months[k] ? +S.months[k].total-(UF[k]?(+S.months[k].parts.uber||0):0) : null, pt=opPart(k);
       indArr.push(ind[k]||0);
       if(base!=null || nFare[k] || pt){ used.push((base||0)+(act[k]||0)+(ind[k]||0)+pt); planned.push(false); }
       else if(S.plans[k] && S.plans[k].amount!=null){ used.push(+S.plans[k].amount); planned.push(true); }
@@ -1045,7 +1068,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     var nextLimit=keys.map(function(k,j){
       var s=0; for(var q=Math.max(0,j-11);q<j;q++) s+=(used[q]||0); return st.threshold-s;
     });
-    return {keys:keys,used:used,planned:planned,rolling:rolling,nextLimit:nextLimit,lastIdx:lastIdx,ind:indArr,stat:stat,byImp:byImp};
+    return {keys:keys,used:used,planned:planned,rolling:rolling,nextLimit:nextLimit,lastIdx:lastIdx,ind:indArr,stat:stat,byImp:byImp,ubFull:UF};
   }
   function status(r){
     var st=S.settings;
@@ -1314,7 +1337,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     S.entries.forEach(function(e){
       if(e.kind==='expense') expSum[e.m]=(expSum[e.m]||0)+(+e.amount||0);
       else if(e.kind==='tip') tipSum[e.m]=(tipSum[e.m]||0)+(+e.amount||0);
-      else if(e.kind==='fare' && +e.tips) tipSum[e.m]=(tipSum[e.m]||0)+(+e.tips||0);
+      else if(e.kind==='fare' && +e.tips && C.stat[e.id]!=='covered') tipSum[e.m]=(tipSum[e.m]||0)+(+e.tips||0);
     });
     var h=renderClose()+'<div class="card"><h2>Monthly totals</h2>';
     C.keys.forEach(function(k,j){
@@ -1324,6 +1347,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
       h+='<div class="mrow'+(j===ci?' now':'')+'"><div class="top"><span class="m">'+esc(mlabel(k))+(C.planned[j]?'<span class="tag">plan</span>':'')+(md&&md.opening?'<span class="tag">before Cab Books</span>':'')+(opPart(k)?'<span class="tag">incl. '+gbp2.format(opPart(k))+' before Cab Books</span>':'')+'</span><span class="num">'+(v==null?'–':gbp2.format(v))+'</span></div>';
       if(md && md.parts){
         var det=Object.keys(PROV).map(function(p){ return md.parts[p]!=null ? '<div class="kv"><span class="k">'+PROV[p]+'</span><span class="v">'+gbp2.format(md.parts[p])+'</span></div>' : ''; }).join('');
+        if(C.ubFull&&C.ubFull[k]) det+='<p class="note">Uber '+gbp2.format(+md.parts.uber||0)+(ubWbTips(k)?' (and about '+gbp2.format(ubWbTips(k))+' of tips)':'')+' from the workbook is replaced by your Uber weekly statements, counted by trip date.</p>';
         h+='<details><summary>'+(md.open?'Workbook part (to the dates below)':'By provider')+(md.note&&!md.open?' · note':'')+'</summary>'+det+(md.note&&!md.open?'<p class="note">'+esc(md.note)+'</p>':'')+'</details>';
       }
       if(C.ind[j]>0) h+='<div class="note">Includes '+gbp2.format(C.ind[j])+' of manual indication, not yet in statements.</div>';
@@ -1333,7 +1357,8 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
         var dm=function(d){ return d.slice(8)+'/'+d.slice(5,7); }, mEnd=k+'-'+String(new Date(+k.slice(0,4),+k.slice(5,7),0).getDate());
         h+='<div class="note">Records run to: '+Object.keys(md.covered).map(function(p){ var d=md.covered[p], t=stTo[p]&&stTo[p]>d?stTo[p]:d; return (PROV[p]||p)+' '+(t>=mEnd||t.slice(0,7)>k?'month end ✓':dm(t)); }).join(', ')+'.</div>';
       }
-      var tipAll=(md&&+md.tips||0)+(tipSum[k]||0); if(tipAll) h+='<div class="note">Tips: '+gbp2.format(tipAll)+(md&&+md.tips&&tipSum[k]?' ('+gbp2.format(+md.tips)+' from statements + '+gbp2.format(tipSum[k])+' private and logged jobs)':'')+'. Taxable income, not in VAT turnover.</div>';
+      var mdTips=md?(+md.tips||0)-(C.ubFull&&C.ubFull[k]?ubWbTips(k):0):0;
+      var tipAll=mdTips+(tipSum[k]||0); if(tipAll) h+='<div class="note">Tips: '+gbp2.format(tipAll)+(mdTips&&tipSum[k]?' ('+gbp2.format(mdTips)+' from the workbook + '+gbp2.format(tipSum[k])+' from app statements and logged jobs)':'')+'. Taxable income, not in VAT turnover.</div>';
       if(expSum[k]) h+='<div class="note">Expenses logged here: '+gbp2.format(expSum[k])+'</div>';
       if(!hasActual){
         h+='<div class="planbox"><label for="plan-'+k+'">Planned £</label><input type="text" class="money" autocomplete="off" id="plan-'+k+'" data-plan="'+k+'" inputmode="numeric" value="'+(S.plans[k]&&S.plans[k].amount!=null?(+S.plans[k].amount).toFixed(2):'')+'" placeholder="0.00"></div>';
@@ -1709,8 +1734,9 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
         if(md&&md.opening) return;
         if(md){
           A.loaded++;
-          if(md.parts) Object.keys(md.parts).forEach(function(p){ var b=bp(p), v=(+md.parts[p]||0); b.turn+=v; b.hist+=v; });
-          A.tips+=+md.tips||0; A.fees+=+md.fees||0;
+          var ubOut=!!(C.ubFull&&C.ubFull[k]);
+          if(md.parts) Object.keys(md.parts).forEach(function(p){ if(ubOut&&p==='uber') return; var b=bp(p), v=(+md.parts[p]||0); b.turn+=v; b.hist+=v; });
+          A.tips+=(+md.tips||0)-(ubOut?ubWbTips(k):0); A.fees+=+md.fees||0;
           /* Once a bank statement for this month is imported, the bank lines are the costs: the workbook's own
              expense figures for the month are dropped so the same rent and petrol aren't counted twice (Matt, Oct 2026). */
           var bankM=S.entries.some(function(e){ return e.m===k&&e.kind==='expense'&&e.src==='import'&&!e.stmt; });
@@ -1734,7 +1760,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
       S.entries.forEach(function(e){
         if(e.date<P.from||e.date>P.to) return;
         if(e.kind==='fare'){
-          if(C.byImp[e.id]) return;
+          if(C.byImp[e.id]) return; if(e.src==='import'&&C.stat[e.id]==='covered') return;
           var b=bp(e.provider); if(isJob(e)){ b.jobs++; A.jobs++; } b.turn+=eAmt(e); bbon(b,e); b.fees+=lineFee(e); b.tips+=+e.tips||0; bpay(b,e); A.turn+=eAmt(e); A.fees+=lineFee(e); A.tips+=+e.tips||0;
           if(C.stat[e.id]==='indicative') A.indic+=eAmt(e);
         } else if(e.kind==='tip'){ A.tips+=+e.amount||0; }
@@ -5669,7 +5695,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
       var P=plan.byProv[s.prov]||(plan.byProv[s.prov]={n:0,fare:0,tip:0,fee:0,bon:{}});
       ubSplit(s.jobs,ubHave,plan).forEach(function(j){
         if(existing[j.id]||have[j.id]){ plan.dup++; return; } existing[j.id]=1;
-        var lt=stLoadedTo(s.prov,monthOf(j.date)); if(lt&&j.date<=lt){ plan.loaded++; return; }
+        var lt=s.prov==='Uber'?'':stLoadedTo(s.prov,monthOf(j.date)); if(lt&&j.date<=lt){ plan.loaded++; return; }
         var e={kind:'fare',src:'import',stmt:rec.id,provider:j.prov||s.prov,date:j.date,m:monthOf(j.date),time:j.time||'',ref:j.ref,
           pay:j.pay||(s.prov==='Curb'?'Card':(j.cash?'Cash':'Account')),amount:j.fare,extras:j.extras||0,tips:j.tip,commission:0,feeFixed:Math.abs(+j.fee||0),
           note:(j.type&&j.type!=='Tour'&&j.type!=='Ride'&&j.type!=='Card payment'?j.type+' · ':'')+(s.prov==='Curb'?'':j.method),ts:Date.now()};
@@ -5728,6 +5754,10 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
       if(plan.cashN) h+='<p class="note">'+plan.cashN+' job'+(plan.cashN>1?'s':'')+' marked “cash” ('+gbp2.format(plan.cashFares)+') were paid by card in the cab, so the money is counted once, in Curb’s report. The app fees on them still count as a cost.</p>';
       if(plan.bankRepl.length){ var bt=plan.bankRepl.reduce(function(s,e){return s+eAmt(e)},0); h+='<p class="note">Replaces '+plan.bankRepl.length+' estimate'+(plan.bankRepl.length>1?'s':'')+' from your bank statement ('+gbp2.format(bt)+') with the exact figures.</p>'; }
       if(plan.dup) h+='<p class="note">'+plan.dup+' already in your books, skipped.</p>';
+      var ubM={}; plan.add.forEach(function(x){ if(x.data.provider==='Uber'&&S.months[x.data.m]&&!S.months[x.data.m].opening) ubM[x.data.m]=1; });
+      if(Object.keys(ubM).length){ var W=ubWeeks(plan.all), full=[], part=[]; Object.keys(ubM).sort().forEach(function(k){ (ubFullMonth(k,W)?full:part).push(k); });
+        if(full.length) h+='<p class="note"><b>Uber in '+full.map(mlabel).join(', ')+'</b>: these weekly statements cover the whole month, so they replace the Uber figure from your workbook.</p>';
+        if(part.length) h+='<p class="note"><b>Uber in '+part.map(mlabel).join(', ')+'</b>: not every week of the month is here yet, so your workbook figure stays for now. Add the missing weeks and the statements take over.</p>'; }
       if(plan.loaded) h+='<p class="note">'+plan.loaded+' left out: those dates are already in the figures loaded from your old workbook.</p>';
       h+='</div>';
     }
@@ -5813,7 +5843,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     db.collection('bankrules').onSnapshot(function(snap){ var o={}; snap.docs.forEach(function(d){ if(d.exists) o[d.id]=d.data(); }); S.bankRules=o; },function(){});
     db.collection('rules').onSnapshot(function(snap){ var o={}; snap.docs.forEach(function(d){ if(d.exists) o[d.id]=d.data(); }); S.rules=o; renderAll(); },function(){});
     db.collection('tosort').onSnapshot(function(snap){ var o={}; snap.docs.forEach(function(d){ if(d.exists) o[d.id]=Object.assign({id:d.id},d.data()); }); S.tosort=o; tsRender(); if(S.tab==='import') bkStatus(); },function(){});
-    db.collection('stmts').onSnapshot(function(snap){ var o={}; snap.docs.forEach(function(d){ if(d.exists) o[d.id]=Object.assign({id:d.id},d.data()); }); S.stmts=o; if(S.tab==='months') renderMonths(); if(S.tab==='import') ihRender(); },function(){});
+    db.collection('stmts').onSnapshot(function(snap){ var o={}; snap.docs.forEach(function(d){ if(d.exists) o[d.id]=Object.assign({id:d.id},d.data()); }); S.stmts=o; renderAll(); if(S.tab==='import') ihRender(); },function(){});   /* Uber statements can change a month's totals */
     db.collection('closes').onSnapshot(function(snap){ var o={}; snap.docs.forEach(function(d){ if(d.exists) o[d.id]=d.data(); }); S.closes=o; renderMonths(); },function(){});
     db.collection('history').onSnapshot(function(snap){ var o={}; snap.docs.forEach(function(d){ if(d.exists) o[d.id]=d.data(); }); S.hist=o; if(S.tab==='log') renderLog(); },function(){});
     db.collection('rphotos').onSnapshot(function(snap){ var o={}; snap.docs.forEach(function(d){ if(d.exists) o[d.id]=Object.assign({id:d.id},d.data()); }); S.rph=o; if(S.tab==='today') renderDay(); if(!$('rpovl').hidden) rpRenderView(); },function(){});
