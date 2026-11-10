@@ -389,6 +389,8 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .chips button .pdot{margin-right:6px}
 /* Job form: provider and 'Paid by' buttons all the same size, three to a row (Matt, 3 Nov 2026) */
 #j-title{font-size:20px;font-weight:700;color:var(--ink)}
+/* Tapping Provider or Paid by brings the Add job card to the top of the screen (Matt, 10 Nov 2026). */
+#j-card{scroll-margin-top:calc(12px + env(safe-area-inset-top,0px))}
 #c-prov,#c-pay{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 #c-prov button,#c-pay button{width:100%;min-height:48px;padding:8px 6px;display:flex;align-items:center;justify-content:center;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
@@ -724,7 +726,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
       </details>
       </div>
     </details>
-    <div class="card">
+    <div class="card" id="j-card">
       <div class="cardhead"><h2 id="j-title">Add job</h2><button class="btn ghost small" id="d-toggle" type="button" hidden>Hide</button></div>
       <div id="d-form">
         <div class="field"><label id="l-prov">Provider</label><div class="chips" id="c-prov" role="group" aria-labelledby="l-prov"></div></div>
@@ -2401,8 +2403,23 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     fixPay();
     if(S.pay==='Card' && CARDSYS.indexOf(S.card)<0) S.card=cardSys();
     $('c-pay').innerHTML=payOpts(S.prov).map(function(o){ var on=o.v===S.pay&&(!o.c||o.c===S.card); return '<button type="button" data-pay="'+o.v+'"'+(o.c?' data-card="'+o.c+'"':'')+' aria-pressed="'+on+'">'+(on?'\u2713 ':'')+esc(o.l)+'</button>'}).join('');
-    Array.prototype.forEach.call($('c-prov').querySelectorAll('button'),function(b){ b.addEventListener('click',function(){ S.prov=b.getAttribute('data-prov'); applyFeeDefaults(); buildChips(); updatePreview(); }); });
-    Array.prototype.forEach.call($('c-pay').querySelectorAll('button'),function(b){ b.addEventListener('click',function(){ S.pay=b.getAttribute('data-pay'); if(b.getAttribute('data-card')) S.card=b.getAttribute('data-card'); applyFeeDefaults(); buildChips(); updatePreview(); }); });
+    Array.prototype.forEach.call($('c-prov').querySelectorAll('button'),function(b){ b.addEventListener('click',function(){ S.prov=b.getAttribute('data-prov'); applyFeeDefaults(); buildChips(); updatePreview(); jobToTop(); }); });
+    Array.prototype.forEach.call($('c-pay').querySelectorAll('button'),function(b){ b.addEventListener('click',function(){ S.pay=b.getAttribute('data-pay'); if(b.getAttribute('data-card')) S.card=b.getAttribute('data-card'); applyFeeDefaults(); buildChips(); updatePreview(); if(!S.editId){ jobToTop(); fareFocus(); } }); });
+  }
+  /* Provider / Paid by tapped: put the "Add job" heading at the top of the screen so the whole form shows (Matt, 10 Nov 2026).
+     Not when editing a job, and not if it is already there (so a second tap doesn't jump). */
+  function jobToTop(){
+    if(S.editId) return; var c=$('j-card'); if(!c||!c.getBoundingClientRect) return;
+    var m=parseFloat(getComputedStyle(c).scrollMarginTop)||12, top=c.getBoundingClientRect().top;
+    if(Math.abs(top-m)<=20) return;
+    c.scrollIntoView({behavior:'smooth',block:'start'});
+  }
+  /* After Paid by: cursor straight into Fare so the number keypad opens. Must run inside the tap or iPhone won't show the keypad.
+     preventScroll + S.jobFocus stop the Fare box's own scroll (fareToTop) from pulling the heading off the top. */
+  function fareFocus(){
+    var a=$('j-amt'); if(!a||!a.focus) return; S.jobFocus=true;
+    try{ a.focus({preventScroll:true}); }catch(e){ a.focus(); }
+    setTimeout(function(){ S.jobFocus=false; },600);
   }
   /* Extras buttons on the job form: standard ones plus the driver's own (settings/extras {list:[{n,a}]}). */
   var EX_STD=[{n:'Airport drop-off',air:1},{n:'Parking',a:0}]; /* a:0 = type the amount; air = pick the airport */
@@ -4762,6 +4779,9 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   /* Tapping Fare (or Tip) brings that row to the top of the screen, so Save job shows above the keyboard (Matt, 3 Nov 2026). */
   function fareToTop(){
     var row=$('j-amt').closest('.field'); row=row&&row.parentElement||row; if(!row) return;
+    if(S.jobFocus){ /* focused from a Paid by tap: keep Add job at the top, also once the keyboard has opened */
+      var vk=window.visualViewport; if(vk){ var once=function(){ vk.removeEventListener('resize',once); setTimeout(jobToTop,30); }; vk.addEventListener('resize',once); setTimeout(function(){ vk.removeEventListener('resize',once); },800); }
+      return; }
     function go(){ var y=row.getBoundingClientRect().top+(window.pageYOffset||document.documentElement.scrollTop)-8; window.scrollTo({top:Math.max(0,y),behavior:'smooth'}); }
     setTimeout(go,60);
     /* Again once the phone keyboard has finished opening (it moves the page). */
