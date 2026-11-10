@@ -2497,11 +2497,12 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
       if(!p) VJ_EXP.forEach(function(r){ if(!e&&r[0].test(x)) e=r[1]; });
       var air=VJ_AIR[x]||null;
       /* "Heathrow drop off": the airport's drop-off charge, on the job as an extra, or on its own as a cost (Matt, 10 Nov 2026) */
-      if(air||(e==='Parking / drop-off'&&x==='dropoff'&&i>0&&VJ_AIR[w[i-1]])){
-        var an=air||VJ_AIR[w[i-1]], fee=(AIRFEES.filter(function(f){return f[0]===an})[0]||[])[1]||0;
+      var airNear=x==='dropoff'?((i>0&&VJ_AIR[w[i-1]])||(w[i+1]&&VJ_AIR[w[i+1]])||(w[i+2]&&VJ_AIR[w[i+2]])):null;
+      if(air||(e==='Parking / drop-off'&&airNear)){
+        var an=air||airNear, fee=(AIRFEES.filter(function(f){return f[0]===an})[0]||[])[1]||0;
         if(cur&&cur.kind==='fare'){ if(air&&!cur.airDone){ cur.airDone=an; if(!cur.exAmt) cur.extras+=fee; cur.said.push(x); } continue; }
-        if(air){ cur={at:i,kind:'expense',cat:'Parking / drop-off',amount:fee||null,cash:false,air:an,said:[x]}; items.push(cur); continue; }
-        if(cur&&cur.air) continue;
+        if(cur&&cur.kind==='expense'&&cur.air===an) continue; /* "drop off Gatwick": one cost, not two */
+        cur={at:i,kind:'expense',cat:'Parking / drop-off',amount:fee||null,cash:false,air:an,said:[x]}; items.push(cur); continue;
       }
       if(p){ cur={at:i,kind:'fare',prov:p,pay:null,fare:null,tip:null,extras:0,said:[]}; items.push(cur); }
       else if(e&&!(cur&&cur.kind==='fare'&&e==='Parking / drop-off'&&near(i,/^(plus|and|extra|extras)$/,2,0))){ cur={at:i,kind:'expense',cat:e,amount:null,cash:true,said:[]}; items.push(cur); }
@@ -2520,7 +2521,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
         }
       } else {
         if(/^card$/.test(x)) cur.cash=false; else if(/^cash$/.test(x)&&cur.cat!=='Parking / drop-off') cur.cash=true; /* drop-offs are never cash (Matt, 10 Nov 2026) */
-        if((a=amt(x))!=null&&(cur.amount==null||(cur.air&&!cur.amtSaid))){ cur.amount=a; cur.amtSaid=true; }
+        if((a=amt(x))!=null&&!(w[i+1]&&/^tips?$/.test(w[i+1]))&&(cur.amount==null||(cur.air&&!cur.amtSaid))){ cur.amount=a; cur.amtSaid=true; }
       }
     }
     items.forEach(function(it){ if(it.kind==='fare'){ var ok=paysFor(it.prov); if(!it.pay||ok.indexOf(it.pay)<0){ it.payGuess=ok.length>1; it.pay=ok[0]; } if(it.tip==null) it.tip=0; } });
