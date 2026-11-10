@@ -498,6 +498,9 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent)}
 :root[data-theme=light] .tabs button[aria-current=page]{color:#000!important;background:var(--accent)!important;border-radius:12px}
 /* Bottom bar order list in Settings */
 .barlist{list-style:none;margin:8px 0 0;padding:0}
+.toolhome{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.toolhome button{display:flex;flex-direction:column;align-items:flex-start;gap:4px;text-align:left;margin:0;min-height:96px;padding:14px;font:inherit;color:var(--ink);cursor:pointer;border:1px solid var(--line)}
+.toolhome b{font-size:16px} .toolhome span{font-size:13px;color:var(--muted)}
 .tabs button{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
 .tabs button.barlift{transform-origin:center;z-index:3;position:relative;box-shadow:0 6px 16px #000a!important;outline:2px solid var(--accent);outline-offset:-2px;transition:none}
 .tabs.barediting button:not(.barlift){transition:transform .12s}
@@ -4897,6 +4900,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     var el=$('tab-tools'); if(!el) return;
     if(S.tool!=='fare'&&S.fx.map){ try{ S.fx.map.remove(); }catch(e){} S.fx.map=null; S.fx.marks=[]; }
     if(S.tool!=='ranks'&&S.tool!=='toilets') pmDrop();
+    if(S.tool==='home'){ renderToolHome(el); return; }
     if(S.tool==='flights'){ renderFlights(el); return; }
     if(S.tool==='tube'){ renderTube(el); return; }
     if(S.tool==='trains'){ renderTrains(el); return; }
@@ -4909,6 +4913,12 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
      AeroDataBox and caches for 10 minutes for every driver. Inside Claude there is no server,
      so the tool explains that it works on the website. */
   S.tool=lsGet('cb-tool')||'fare'; S.fl={ap:lsGet('cb-fl-ap')||'LHR',term:'',n:40,data:{},err:{},busy:{}};
+  var TOOL_INFO=[['fare','Fare calculator','What a journey should cost on the meter'],['flights','Flight arrivals','Heathrow and London City landings, terminal by terminal'],['ranks','Taxi ranks','Ranks near you on the map'],['toilets','Toilets','Toilets near you on the map'],['tube','Tube status','Line closures and delays now'],['trains','Train status','Delays and cancellations at the London stations']];
+  function renderToolHome(el){
+    el.innerHTML='<h1 style="margin:2px 2px 10px;font-size:22px;font-weight:700">Tools</h1><div class="toolhome">'
+      +TOOL_INFO.map(function(t){ return '<button type="button" class="card" data-tool="'+t[0]+'"><b>'+esc(t[1])+'</b><span>'+esc(t[2])+'</span></button>'; }).join('')
+      +'</div><p class="note" style="margin:10px 2px">Tip: any of these can have its own button on the bottom bar (Settings → Bottom bar).</p>';
+  }
   var TOOL_TITLES={fare:'Fare calculator',flights:'Flight arrivals',ranks:'Taxi ranks',toilets:'Toilets',tube:'Tube status',trains:'Train status'};
   S.toolSolo=false;
   function toolHead(){ return S.toolSolo?'<h1 style="margin:2px 2px 0;font-size:22px;font-weight:700">'+esc(TOOL_TITLES[S.tool]||'Tools')+'</h1>':'<div class="card">'+toolNav()+'</div>'; }
@@ -5176,8 +5186,9 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   Array.prototype.forEach.call(document.querySelectorAll('.tabs button'),function(b){ b.addEventListener('click',function(){
     var sub=b.getAttribute('data-sub'); if(sub){ S.tool=sub; lsSet('cb-tool',sub); S.toolSolo=true; }
     else if(b.getAttribute('data-tab')==='tools'){ S.toolSolo=false;
-      /* Tools opens a tool that has no button of its own (Fares first), not the last bar page again (Matt, 30 Oct). */
-      if(barVisible(S.tool)){ var free=['fare','flights','ranks','toilets','tube','trains'].filter(function(k){ return !barVisible(k); }); S.tool=free[0]||'fare'; lsSet('cb-tool',S.tool); } }
+      /* Tools opens the Tools menu: every tool with a line on what it does (Matt, 10 Nov 2026: with each tool on its own
+         button, Tools used to open one of them and light that button instead, so it looked as if nothing happened). */
+      S.tool='home'; }
     showTab(b.getAttribute('data-tab'));
   }); });
   Array.prototype.forEach.call(document.querySelectorAll('input.money'),moneyInput);
