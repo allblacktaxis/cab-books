@@ -7,6 +7,7 @@
 // Finish times are our own estimate: kick-off or start time plus a usual length for that kind of event.
 // West End and other long-running shows come from our own list (lib/westend.mjs): regular weekly times + running time.
 import { westEndEvents, CHECKED } from './lib/westend.mjs';
+import { venueEvents } from './lib/venues.mjs';
 
 const LONDON_CLUBS = [
   [/^arsenal/i, 'Emirates Stadium', 'Holloway'],
@@ -108,6 +109,7 @@ export default async (req) => {
       .then(pages => { pages.forEach(j => { events = events.concat(ticketmasterEvents(j, day)); }); })
       .catch(e => { sources.ticketmaster = 'error_' + e; }));
   }
+  jobs.push(venueEvents(day).then(v => { events = events.concat(v.events); sources.venues = v.report; }).catch(() => { sources.venues = 'error'; }));
   await Promise.all(jobs);
   const seen = new Set();
   events = events.filter(e => { const k = e.venue + '|' + e.start; if (seen.has(k)) return false; seen.add(k); return true; })
