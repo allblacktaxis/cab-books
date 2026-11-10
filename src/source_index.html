@@ -389,6 +389,14 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .chips button .pdot{margin-right:6px}
 /* Job form: provider and 'Paid by' buttons all the same size, three to a row (Matt, 3 Nov 2026) */
 #j-title{font-size:20px;font-weight:700;color:var(--ink)}
+/* Voice entry (Matt, 10 Nov 2026) */
+#vj{margin:0 0 14px;padding:12px;border:1px solid var(--line);border-radius:12px}
+#vj textarea{width:100%;min-height:84px;font:inherit;font-size:16px}
+.vjrow{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:8px 0;border-top:1px solid var(--line)}
+.vjrow select,.vjrow input{width:100%;min-height:40px;font-size:15px}
+.vjrow .vjx{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--muted)}
+.vjrow .warn{color:var(--warn)}
+#vj-mic[aria-pressed=true]{color:var(--bad);border-color:var(--bad)!important}
 /* Tapping Provider or Paid by brings the Add job card to the top of the screen (Matt, 10 Nov 2026). */
 #j-card{scroll-margin-top:calc(12px + env(safe-area-inset-top,0px))}
 #c-prov,#c-pay{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
@@ -730,7 +738,8 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
       </div>
     </details>
     <div class="card" id="j-card">
-      <div class="cardhead"><h2 id="j-title">Add job</h2><button class="btn ghost small" id="d-toggle" type="button" hidden>Hide</button></div>
+      <div class="cardhead"><h2 id="j-title">Add job</h2><span style="display:flex;gap:8px"><button class="btn ghost small" id="vj-open" type="button" aria-expanded="false">🎤 Say jobs</button><button class="btn ghost small" id="d-toggle" type="button" hidden>Hide</button></span></div>
+      <div id="vj" hidden></div>
       <div id="d-form">
         <div class="field"><label id="l-prov">Provider</label><div class="chips" id="c-prov" role="group" aria-labelledby="l-prov"></div></div>
         <div class="field"><label id="l-pay">Paid by</label><div class="chips" id="c-pay" role="group" aria-labelledby="l-pay"></div></div>
@@ -2465,6 +2474,126 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     Array.prototype.forEach.call($('c-prov').querySelectorAll('button'),function(b){ b.addEventListener('click',function(){ S.prov=b.getAttribute('data-prov'); applyFeeDefaults(); buildChips(); updatePreview(); jobToTop(); }); });
     Array.prototype.forEach.call($('c-pay').querySelectorAll('button'),function(b){ b.addEventListener('click',function(){ S.pay=b.getAttribute('data-pay'); if(b.getAttribute('data-card')) S.card=b.getAttribute('data-card'); applyFeeDefaults(); buildChips(); updatePreview(); if(!S.editId){ jobToTop(); fareFocus(); } }); });
   }
+  /* ---------- Voice entry (Matt, 10 Nov 2026) ----------
+     Say (or type) several jobs and costs in one go, e.g. "FreeNow account £50 no tip, Uber account £62.20, hand card £15 plus £5 tip, petrol £40".
+     Each provider name starts a job, each cost word starts an expense. Everything read is shown as rows to check and correct before Save all. */
+  var VJ_PROV=[[/^(freenow|free-now|freeno)$/,'Freenow'],[/^(gett|get)$/,'Gett'],[/^uber$/,'Uber'],[/^comcab$/,'ComCab'],[/^jump$/,'Jump'],[/^blackcab$/,'Blackcab'],[/^curbflow$/,'CurbFlow'],[/^(hand|street|hail|rank)$/,'Hand'],[/^private$/,'Private'],[/^taxiworld$/,'Taxiworld'],[/^helix$/,'Helix']];
+  var VJ_EXP=[[/^(petrol|fuel|diesel)$/,'Petrol'],[/^(charging|charge|electric)$/,'Electric charging'],[/^(parking|dropoff)$/,'Parking / drop-off'],[/^(wash|carwash|valet)$/,'Car wash'],[/^(rent|rental)$/,'Car rental'],[/^(repair|repairs|parts|tyre|tyres|service)$/,'Cab repairs / parts'],[/^(cleaning|supplies)$/,'Cleaning / admin supplies'],[/^union$/,'Union'],[/^(phone|broadband)$/,'Phone / broadband']];
+  var VJ_NUM={zero:0,one:1,two:2,three:3,four:4,five:5,six:6,seven:7,eight:8,nine:9,ten:10,eleven:11,twelve:12,thirteen:13,fourteen:14,fifteen:15,sixteen:16,seventeen:17,eighteen:18,nineteen:19,twenty:20,thirty:30,forty:40,fifty:50,sixty:60,seventy:70,eighty:80,ninety:90,hundred:100};
+  function vjParse(text){
+    var t=' '+String(text||'').toLowerCase()+' ';
+    t=t.replace(/free now/g,'freenow').replace(/black cab/g,'blackcab').replace(/com cab/g,'comcab').replace(/curb flow/g,'curbflow').replace(/taxi world/g,'taxiworld').replace(/drop[ -]off/g,'dropoff').replace(/car wash/g,'carwash').replace(/car rent(al)?/g,'rent')
+      .replace(/(\d)\s*pounds?\s*(and\s*)?(\d{1,2})\s*(p|pence)?\b/g,'$1.$3').replace(/(\d)\s*(pounds?|quid)/g,'$1').replace(/£\s*/g,'£')
+      .replace(/\b(twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety)[ -](one|two|three|four|five|six|seven|eight|nine)\b/g,function(m,a,b){ return String(VJ_NUM[a]+VJ_NUM[b]); })
+      .replace(/\b(zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred)\b(?=\s*(pounds?|quid|tip|£|,|\.|$|\s))/g,function(m){ return String(VJ_NUM[m]); });
+    var w=t.replace(/[,;.!?](?!\d)/g,' , ').split(/\s+/).filter(Boolean), items=[], cur=null;
+    function amt(x){ var m=/^£?(\d+(?:\.\d{1,2})?)$/.exec(x); return m?+m[1]:null; }
+    function near(i,re,back,fwd){ for(var k=Math.max(cur?cur.at:0,i-back);k<=Math.min(w.length-1,i+fwd);k++){ if(k!==i&&re.test(w[k])) return true; } return false; }
+    for(var i=0;i<w.length;i++){
+      var x=w[i], p=null, e=null, a;
+      VJ_PROV.forEach(function(r){ if(!p&&r[0].test(x)) p=r[1]; });
+      if(p==='Gett'&&x==='get'&&!(i+1<w.length&&(/^(account|card|cash|app)$/.test(w[i+1])||amt(w[i+1])!=null))) p=null;
+      if(!p) VJ_EXP.forEach(function(r){ if(!e&&r[0].test(x)) e=r[1]; });
+      if(p){ cur={at:i,kind:'fare',prov:p,pay:null,fare:null,tip:null,extras:0,said:[]}; items.push(cur); }
+      else if(e&&!(cur&&cur.kind==='fare'&&e==='Parking / drop-off'&&near(i,/^(plus|and|extra|extras)$/,2,0))){ cur={at:i,kind:'expense',cat:e,amount:null,cash:true,said:[]}; items.push(cur); }
+      else if(!cur) continue;
+      cur.said.push(x);
+      if(cur.kind==='fare'){
+        if(/^(account|app)$/.test(x)) cur.pay='Account'; else if(/^card$/.test(x)) cur.pay='Card'; else if(/^cash$/.test(x)) cur.pay='Cash';
+        if(x==='no'&&w[i+1]&&/^tips?$/.test(w[i+1])) cur.tip=0;
+        if((a=amt(x))!=null){
+          var tipAfter=w[i+1]&&/^tips?$/.test(w[i+1]), tipBefore=(i-1>=cur.at&&/^tips?$/.test(w[i-1]))||(i-2>=cur.at&&/^tips?$/.test(w[i-2])&&/^(of|was)$/.test(w[i-1]));
+          if(tipAfter&&cur.fare==null&&w[i+2]&&amt(w[i+2])!=null) cur.fare=a; /* "£32 tip £3": the first is the fare */
+          else if(tipAfter||tipBefore) cur.tip=a;
+          else if(near(i,/^(extra|extras|dropoff|parking)$/,0,2)) cur.extras+=a;
+          else if(cur.fare==null) cur.fare=a;
+          else if(cur.tip==null&&near(i,/^plus$/,1,0)) cur.tip=a;
+        }
+      } else {
+        if(/^card$/.test(x)) cur.cash=false; else if(/^cash$/.test(x)) cur.cash=true;
+        if((a=amt(x))!=null&&cur.amount==null) cur.amount=a;
+      }
+    }
+    items.forEach(function(it){ if(it.kind==='fare'){ var ok=paysFor(it.prov); if(!it.pay||ok.indexOf(it.pay)<0){ it.payGuess=ok.length>1; it.pay=ok[0]; } if(it.tip==null) it.tip=0; } });
+    return items;
+  }
+  S.vj={open:false,text:'',items:[]};
+  function vjRender(){
+    var box=$('vj'); if(!box) return; box.hidden=!S.vj.open; $('vj-open').setAttribute('aria-expanded',S.vj.open);
+    if(!S.vj.open){ box.innerHTML=''; return; }
+    var SR=window.SpeechRecognition||window.webkitSpeechRecognition, provs=PROVS.filter(function(p){ return (provShown(p)&&!isCardK(bkey(p))); });
+    var h='<label for="vj-text" style="margin-bottom:6px">Say or type your jobs for '+esc(dlabel(S.day))+'</label>'
+      +'<textarea id="vj-text" placeholder="FreeNow account £50 no tip, Uber account £62.20, hand card £15 plus £5 tip, petrol £40">'+esc(S.vj.text)+'</textarea>'
+      +'<div class="two" style="margin-top:8px">'+(SR?'<button class="btn ghost small" type="button" id="vj-mic" aria-pressed="false">🎤 Talk</button>':'')+'<button class="btn small" type="button" id="vj-read"'+(SR?'':' style="grid-column:1/-1"')+'>Read it</button></div>'
+      +(SR?'':'<p class="help" style="margin:6px 0 0">Tap the microphone on your keyboard to talk.</p>');
+    if(S.vj.items.length){
+      S.vj.items.forEach(function(it,i){
+        if(it.kind==='fare'){
+          var po=payOpts(it.prov), cur=it.pay==='Card'&&!isCardK(bkey(it.prov))?'Card|'+(it.card||cardSys()):it.pay;
+          h+='<div class="vjrow" data-vi="'+i+'"><select data-vf="prov" aria-label="Provider">'+provs.concat(provs.indexOf(it.prov)<0?[it.prov]:[]).map(function(p){ return '<option value="'+esc(p)+'"'+(p===it.prov?' selected':'')+'>'+esc(pname(p))+'</option>'; }).join('')+'</select>'
+            +'<select data-vf="pay" aria-label="Paid by">'+po.map(function(o){ var v=o.c?'Card|'+o.c:o.v; return '<option value="'+esc(v)+'"'+(v===cur?' selected':'')+'>'+esc(o.l)+'</option>'; }).join('')+'</select>'
+            +'<input type="text" class="money" inputmode="numeric" data-vf="fare" aria-label="Fare" placeholder="Fare" value="'+(it.fare!=null?(+it.fare).toFixed(2):'')+'">'
+            +'<input type="text" class="money" inputmode="numeric" data-vf="tip" aria-label="Tip" placeholder="Tip" value="'+(it.tip?(+it.tip).toFixed(2):'')+'">'
+            +'<div class="vjx"><span'+(it.payGuess||it.fare==null?' class="warn"':'')+'>Job'+(it.extras?' · extras '+gbp2.format(it.extras):'')+(it.fare==null?' · no fare heard':it.payGuess?' · check Paid by':'')+'</span><button class="linkbtn" type="button" data-vdel="'+i+'">Remove</button></div></div>';
+        } else {
+          h+='<div class="vjrow" data-vi="'+i+'"><select data-vf="cat" aria-label="Expense">'+EXPCATS.map(function(c){ return '<option'+(c===it.cat?' selected':'')+'>'+esc(c)+'</option>'; }).join('')+'</select>'
+            +'<select data-vf="cash" aria-label="Paid by"><option value="1"'+(it.cash?' selected':'')+'>Cash</option><option value="0"'+(!it.cash?' selected':'')+'>Card / bank</option></select>'
+            +'<input type="text" class="money" inputmode="numeric" data-vf="amount" aria-label="Amount" placeholder="Amount" value="'+(it.amount!=null?(+it.amount).toFixed(2):'')+'" style="grid-column:1/-1">'
+            +'<div class="vjx"><span'+(it.amount==null?' class="warn"':'')+'>Expense'+(it.amount==null?' · no amount heard':'')+'</span><button class="linkbtn" type="button" data-vdel="'+i+'">Remove</button></div></div>';
+        }
+      });
+      var nj=S.vj.items.filter(function(x){return x.kind==='fare'}).length, ne=S.vj.items.length-nj;
+      h+='<button class="btn" type="button" id="vj-save" style="margin-top:10px">Save all ('+[nj?nj+' job'+(nj===1?'':'s'):'',ne?ne+' expense'+(ne===1?'':'s'):''].filter(Boolean).join(', ')+')</button>'
+        +'<p class="help" style="margin:6px 0 0">Commission is worked out with your usual rates. Check each row, then Save all.</p>';
+    } else if(S.vj.read) h+='<p class="help warn" style="margin:8px 0 0">Nothing found. Start each job with the app (FreeNow, Gett, Uber, hand…), then how it was paid and the fare.</p>';
+    box.innerHTML=h;
+    Array.prototype.forEach.call(box.querySelectorAll('input.money'),moneyInput);
+  }
+  function vjSync(){ var tx=$('vj-text'); if(tx) S.vj.text=tx.value;
+    Array.prototype.forEach.call(document.querySelectorAll('#vj .vjrow'),function(r){ var it=S.vj.items[+r.getAttribute('data-vi')]; if(!it) return;
+      Array.prototype.forEach.call(r.querySelectorAll('[data-vf]'),function(el){ var f=el.getAttribute('data-vf'), v=el.value;
+        if(f==='pay'){ var pc=v.split('|'); it.pay=pc[0]; if(pc[1]) it.card=pc[1]; it.payGuess=false; }
+        else if(f==='fare'||f==='tip'||f==='amount') it[f]=v===''?(f==='tip'?0:null):+v;
+        else if(f==='cash') it.cash=v==='1'; else it[f]=v; }); }); }
+  var vjRec=null;
+  function vjMic(){
+    var SR=window.SpeechRecognition||window.webkitSpeechRecognition, b=$('vj-mic'); if(!SR||!b) return;
+    if(vjRec){ try{ vjRec.stop(); }catch(e){} return; }
+    var base=($('vj-text').value||'').trim(); vjRec=new SR(); vjRec.lang='en-GB'; vjRec.continuous=true; vjRec.interimResults=true;
+    vjRec.onresult=function(ev){ var s=''; for(var i=0;i<ev.results.length;i++) s+=ev.results[i][0].transcript+' '; var tx=$('vj-text'); if(tx) tx.value=(base?base+', ':'')+s.trim(); };
+    vjRec.onerror=function(ev){ if(ev&&ev.error==='not-allowed') toast('Allow the microphone for Cab Books, or use the mic on your keyboard.'); };
+    vjRec.onend=function(){ vjRec=null; var m=$('vj-mic'); if(m){ m.setAttribute('aria-pressed','false'); m.textContent='🎤 Talk'; } var tx=$('vj-text'); if(tx&&tx.value.trim()){ S.vj.text=tx.value; S.vj.items=vjParse(S.vj.text); S.vj.read=true; vjRender(); } };
+    try{ vjRec.start(); b.setAttribute('aria-pressed','true'); b.textContent='■ Stop'; }catch(e){ vjRec=null; toast('Could not start listening. Use the mic on your keyboard instead.'); }
+  }
+  function vjSave(){
+    if(!S.db){ toast('Sign in to save.'); return; }
+    vjSync(); var its=S.vj.items, bad=its.filter(function(x){ return x.kind==='fare'?!(x.fare>0):!(x.amount>0); });
+    if(bad.length){ toast('Fill in the amount on every row, or remove it.'); return; }
+    var b=$('vj-save'); if(b) b.disabled=true;
+    var ws=its.map(function(it){
+      if(it.kind==='fare'){
+        var card=it.pay==='Card'&&!isCardK(bkey(it.prov))?(it.card||cardSys()):null, d=formFee(it.prov,it.pay,S.day,card)||[0,0];
+        var data={kind:'fare',date:S.day,m:monthOf(S.day),provider:it.prov,pay:it.pay,amount:Math.round(it.fare*100)/100,extras:Math.round((it.extras||0)*100)/100,tips:Math.round((it.tip||0)*100)/100,commission:+d[0]||0,feeFixed:+d[1]||0,cardPct:d.card?+d.card[0]||0:0,cardFix:d.card?+d.card[1]||0:0,note:'',src:'manual',voice:true,ts:Date.now()};
+        if(card) data.card=card; if(S.practice) data.demo=true; return data;
+      }
+      var x={kind:'expense',date:S.day,m:monthOf(S.day),category:it.cat,amount:Math.round(it.amount*100)/100,cash:!!it.cash,note:'',src:'manual',voice:true,ts:Date.now()}; if(S.practice) x.demo=true; return x;
+    });
+    Promise.all(ws.map(function(d){ return S.db.collection('entries').doc().set(d); })).then(function(){
+      var gc=ws.some(function(d){ return d.provider==='Gett'&&d.pay==='Cash'&&!d.commission&&!d.feeFixed; });
+      toast('Saved '+ws.length+(ws.length===1?' entry':' entries')+(gc?' (no Gett cash fee: edit those jobs to add it)':''));
+      S.vj={open:false,text:'',items:[]}; vjRender();
+    }).catch(fail).then(function(){ var b2=$('vj-save'); if(b2) b2.disabled=false; });
+  }
+  document.addEventListener('click',function(ev){
+    var t=ev.target&&ev.target.closest?ev.target.closest('#vj-open,#vj-read,#vj-mic,#vj-save,[data-vdel]'):null; if(!t) return;
+    if(t.id==='vj-open'){ S.vj.open=!S.vj.open; vjRender(); if(S.vj.open){ var c=$('j-card'); if(c) c.scrollIntoView({behavior:'smooth',block:'start'}); } }
+    else if(t.id==='vj-read'){ var tx=$('vj-text'); S.vj.text=tx?tx.value:''; S.vj.items=vjParse(S.vj.text); S.vj.read=true; vjRender(); }
+    else if(t.id==='vj-mic') vjMic();
+    else if(t.id==='vj-save') vjSave();
+    else { vjSync(); S.vj.items.splice(+t.getAttribute('data-vdel'),1); vjRender(); }
+  });
+  document.addEventListener('change',function(ev){ var el=ev.target; if(!el||!el.closest||!el.closest('#vj .vjrow')) return; vjSync(); if(el.getAttribute('data-vf')==='prov'){ var it=S.vj.items[+el.closest('.vjrow').getAttribute('data-vi')]; var ok=paysFor(it.prov); if(ok.indexOf(it.pay)<0) it.pay=ok[0]; vjRender(); } });
+  document.addEventListener('input',function(ev){ if(ev.target&&ev.target.id==='vj-text') S.vj.text=ev.target.value; });
   /* Provider / Paid by tapped: put the "Add job" heading at the top of the screen so the whole form shows (Matt, 10 Nov 2026).
      Not when editing a job, and not if it is already there (so a second tap doesn't jump). */
   function jobToTop(){
