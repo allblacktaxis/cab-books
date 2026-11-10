@@ -2533,9 +2533,9 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     if(!S.vj.open){ box.innerHTML=''; return; }
     var SR=window.SpeechRecognition||window.webkitSpeechRecognition, provs=PROVS.filter(function(p){ return (provShown(p)&&!isCardK(bkey(p))); });
     var h='<label for="vj-text" style="margin-bottom:6px">Say or type your jobs for '+esc(dlabel(S.day))+'</label>'
-      +'<textarea id="vj-text" placeholder="FreeNow account £50 no tip, Uber account £62.20, hand card £15 plus £5 tip, petrol £40">'+esc(S.vj.text)+'</textarea>'
+      +'<textarea id="vj-text">'+esc(S.vj.text)+'</textarea>'
       +'<div class="two" style="margin-top:8px">'+(SR?'<button class="btn ghost small" type="button" id="vj-mic" aria-pressed="false">🎤 Talk</button>':'')+'<button class="btn small" type="button" id="vj-read"'+(SR?'':' style="grid-column:1/-1"')+'>Read it</button></div>'
-      +(SR?'':'<p class="help" style="margin:6px 0 0">Tap the microphone on your keyboard to talk.</p>');
+      +'<p class="help" style="margin:6px 0 0">'+(SR?'':'Tap the microphone on your keyboard to talk. ')+'For example: “FreeNow account £50, Heathrow drop off, £5 tip”.</p>';
     if(S.vj.items.length){
       S.vj.items.forEach(function(it,i){
         if(it.kind==='fare'){
@@ -2552,8 +2552,8 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
         }
       });
       var nj=S.vj.items.filter(function(x){return x.kind==='fare'}).length, ne=S.vj.items.length-nj;
-      h+='<button class="btn" type="button" id="vj-save" style="margin-top:10px">Save all ('+[nj?nj+' job'+(nj===1?'':'s'):'',ne?ne+' expense'+(ne===1?'':'s'):''].filter(Boolean).join(', ')+')</button>'
-        +'<p class="help" style="margin:6px 0 0">Commission is worked out with your usual rates. Check each row, then Save all.</p>';
+      h+='<div class="two" style="margin-top:10px"><button class="btn" type="button" id="vj-save">Save ('+[nj?nj+' job'+(nj===1?'':'s'):'',ne?ne+' cost'+(ne===1?'':'s'):''].filter(Boolean).join(', ')+')</button><button class="btn ghost" type="button" id="vj-del">Delete</button></div>'
+        +'<p class="help" style="margin:6px 0 0">Check each row, then Save. Commission is worked out with your usual rates.</p>';
     } else if(S.vj.read) h+='<p class="help warn" style="margin:8px 0 0">Nothing found. Start each job with the app (FreeNow, Gett, Uber, hand…), then how it was paid and the fare.</p>';
     box.innerHTML=h;
     Array.prototype.forEach.call(box.querySelectorAll('input.money'),moneyInput);
@@ -2568,7 +2568,8 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   function vjMic(){
     var SR=window.SpeechRecognition||window.webkitSpeechRecognition, b=$('vj-mic'); if(!SR||!b) return;
     if(vjRec){ try{ vjRec.stop(); }catch(e){} return; }
-    var base=($('vj-text').value||'').trim(); vjRec=new SR(); vjRec.lang='en-GB'; vjRec.continuous=true; vjRec.interimResults=true;
+    S.vj.text=''; S.vj.items=[]; S.vj.read=false; vjRender(); b=$('vj-mic'); /* Talk starts with an empty box (Matt, 10 Nov 2026) */
+    var base=''; vjRec=new SR(); vjRec.lang='en-GB'; vjRec.continuous=true; vjRec.interimResults=true;
     vjRec.onresult=function(ev){ var s=''; for(var i=0;i<ev.results.length;i++) s+=ev.results[i][0].transcript+' '; var tx=$('vj-text'); if(tx) tx.value=(base?base+', ':'')+s.trim(); };
     vjRec.onerror=function(ev){ if(ev&&ev.error==='not-allowed') toast('Allow the microphone for Cab Books, or use the mic on your keyboard.'); };
     vjRec.onend=function(){ vjRec=null; var m=$('vj-mic'); if(m){ m.setAttribute('aria-pressed','false'); m.textContent='🎤 Talk'; } var tx=$('vj-text'); if(tx&&tx.value.trim()){ S.vj.text=tx.value; S.vj.items=vjParse(S.vj.text); S.vj.read=true; vjRender(); } };
@@ -2590,14 +2591,17 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     /* As on the job form: an extra on a job (drop-off, parking) is also a cost you paid, saved as not-cash so the bank's own line replaces it. */
     var wr=[]; ws.forEach(function(d,k){ var ref=S.db.collection('entries').doc(); wr.push(ref.set(d)); var it=its[k];
       if(d.kind==='fare'&&d.extras>0){ var x={kind:'expense',date:S.day,m:monthOf(S.day),category:'Parking / drop-off',amount:d.extras,cash:false,note:(it.airDone?it.airDone+' drop-off':'Extra')+' (from job)',fromJob:ref.id,src:'manual',voice:true,ts:Date.now()}; if(d.demo) x.demo=true; wr.push(S.db.collection('entries').doc().set(x)); } });
-    Promise.all(wr).then(function(){
-      var gc=ws.some(function(d){ return d.provider==='Gett'&&d.pay==='Cash'&&!d.commission&&!d.feeFixed; });
-      toast('Saved '+ws.length+(ws.length===1?' entry':' entries')+(gc?' (no Gett cash fee: edit those jobs to add it)':''));
-      S.vj={open:false,text:'',items:[]}; vjRender();
-    }).catch(fail).then(function(){ var b2=$('vj-save'); if(b2) b2.disabled=false; });
+    /* Clear straight away (Matt, 10 Nov 2026: it stayed on screen after Save). The phone keeps the writes and sends them
+       when it can; if they fail, the rows come back so nothing is lost. */
+    var keep=S.vj, gc=ws.some(function(d){ return d.provider==='Gett'&&d.pay==='Cash'&&!d.commission&&!d.feeFixed; });
+    S.vj={open:false,text:'',items:[]}; vjRender();
+    var nj=ws.filter(function(d){return d.kind==='fare'}).length, ne=ws.length-nj;
+    toast('Saved '+[nj?nj+' job'+(nj===1?'':'s'):'',ne?ne+' cost'+(ne===1?'':'s'):''].filter(Boolean).join(' and ')+(gc?' (no Gett cash fee: edit those jobs to add it)':''));
+    Promise.all(wr).catch(function(e){ S.vj=keep; S.vj.open=true; vjRender(); fail(e); });
   }
   document.addEventListener('click',function(ev){
-    var t=ev.target&&ev.target.closest?ev.target.closest('#vj-open,#vj-read,#vj-mic,#vj-save,[data-vdel]'):null; if(!t) return;
+    var t=ev.target&&ev.target.closest?ev.target.closest('#vj-open,#vj-read,#vj-mic,#vj-save,#vj-del,[data-vdel]'):null; if(!t) return;
+    if(t.id==='vj-del'){ S.vj={open:true,text:'',items:[]}; vjRender(); toast('Deleted'); return; }
     if(t.id==='vj-open'){ S.vj.open=!S.vj.open; vjRender(); if(S.vj.open){ var c=$('j-card'); if(c) c.scrollIntoView({behavior:'smooth',block:'start'}); } }
     else if(t.id==='vj-read'){ var tx=$('vj-text'); S.vj.text=tx?tx.value:''; S.vj.items=vjParse(S.vj.text); S.vj.read=true; vjRender(); }
     else if(t.id==='vj-mic') vjMic();
