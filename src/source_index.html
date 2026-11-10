@@ -396,6 +396,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .vjrow select,.vjrow input{width:100%;min-height:40px;font-size:15px}
 .vjrow .vjx{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--muted)}
 .vjrow .warn{color:var(--warn)}
+.vjrow .vjex{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:6px;align-items:center;margin:0;font-weight:400;font-size:14px;color:var(--muted)}
 #vj-mic[aria-pressed=true]{color:var(--bad);border-color:var(--bad)!important}
 /* Tapping Provider or Paid by brings the Add job card to the top of the screen (Matt, 10 Nov 2026). */
 #j-card{scroll-margin-top:calc(12px + env(safe-area-inset-top,0px))}
@@ -2483,7 +2484,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   var VJ_NUM={zero:0,one:1,two:2,three:3,four:4,five:5,six:6,seven:7,eight:8,nine:9,ten:10,eleven:11,twelve:12,thirteen:13,fourteen:14,fifteen:15,sixteen:16,seventeen:17,eighteen:18,nineteen:19,twenty:20,thirty:30,forty:40,fifty:50,sixty:60,seventy:70,eighty:80,ninety:90,hundred:100};
   function vjParse(text){
     var t=' '+String(text||'').toLowerCase()+' ';
-    t=t.replace(/free now/g,'freenow').replace(/black cab/g,'blackcab').replace(/com cab/g,'comcab').replace(/curb flow/g,'curbflow').replace(/taxi world/g,'taxiworld').replace(/city airport|london city/g,'cityairport').replace(/drop[ -]off/g,'dropoff').replace(/car wash/g,'carwash').replace(/car rent(al)?/g,'rent')
+    t=t.replace(/free now/g,'freenow').replace(/black cab/g,'blackcab').replace(/com cab/g,'comcab').replace(/curb flow/g,'curbflow').replace(/taxi world/g,'taxiworld').replace(/city airport|london city/g,'cityairport').replace(/\b(heathrow|gatwick|stansted|luton)( airport)?( terminal \w+| t\d)?\b/g,'$1').replace(/drop[ -]off/g,'dropoff').replace(/car wash/g,'carwash').replace(/car rent(al)?/g,'rent')
       .replace(/(\d)\s*pounds?\s*(and\s*)?(\d{1,2})\s*(p|pence)?\b/g,'$1.$3').replace(/(\d)\s*(pounds?|quid)/g,'$1').replace(/£\s*/g,'£')
       .replace(/\b(twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety)[ -](one|two|three|four|five|six|seven|eight|nine)\b/g,function(m,a,b){ return String(VJ_NUM[a]+VJ_NUM[b]); })
       .replace(/\b(zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred)\b(?=\s*(pounds?|quid|tip|£|,|\.|$|\s))/g,function(m){ return String(VJ_NUM[m]); });
@@ -2530,6 +2531,8 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   S.vj={open:false,text:'',items:[]};
   function vjRender(){
     var box=$('vj'); if(!box) return; box.hidden=!S.vj.open; $('vj-open').setAttribute('aria-expanded',S.vj.open);
+    var df=$('d-form'); if(df){ if(S.vj.open) df.setAttribute('data-vjhide','1'); df.style.display=S.vj.open?'none':''; } /* one set of boxes at a time (Matt, 10 Nov 2026) */
+    $('vj-open').textContent=S.vj.open?'Close':'🎤 Say jobs';
     if(!S.vj.open){ box.innerHTML=''; return; }
     var SR=window.SpeechRecognition||window.webkitSpeechRecognition, provs=PROVS.filter(function(p){ return (provShown(p)&&!isCardK(bkey(p))); });
     var h='<label for="vj-text" style="margin-bottom:6px">Say or type your jobs for '+esc(dlabel(S.day))+'</label>'
@@ -2544,7 +2547,8 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
             +'<select data-vf="pay" aria-label="Paid by">'+po.map(function(o){ var v=o.c?'Card|'+o.c:o.v; return '<option value="'+esc(v)+'"'+(v===cur?' selected':'')+'>'+esc(o.l)+'</option>'; }).join('')+'</select>'
             +'<input type="text" class="money" inputmode="numeric" data-vf="fare" aria-label="Fare" placeholder="Fare" value="'+(it.fare!=null?(+it.fare).toFixed(2):'')+'">'
             +'<input type="text" class="money" inputmode="numeric" data-vf="tip" aria-label="Tip" placeholder="Tip" value="'+(it.tip?(+it.tip).toFixed(2):'')+'">'
-            +'<div class="vjx"><span'+(it.payGuess||it.fare==null?' class="warn"':'')+'>Job'+(it.extras?' · '+(it.airDone?esc(it.airDone)+' drop-off ':'extras ')+gbp2.format(it.extras):'')+(it.fare==null?' · no fare heard':it.payGuess?' · check Paid by':'')+'</span><button class="linkbtn" type="button" data-vdel="'+i+'">Remove</button></div></div>';
+            +'<label class="vjex"><span>'+(it.airDone?esc(it.airDone)+' drop-off':'Extras')+'</span><input type="text" class="money" inputmode="numeric" data-vf="extras" aria-label="'+(it.airDone?esc(it.airDone)+' drop-off':'Extras')+'" placeholder="0.00" value="'+(it.extras?(+it.extras).toFixed(2):'')+'"></label>'
+            +'<div class="vjx"><span'+(it.payGuess||it.fare==null?' class="warn"':'')+'>Job'+(it.fare==null?' · no fare heard':it.payGuess?' · check Paid by':'')+'</span><button class="linkbtn" type="button" data-vdel="'+i+'">Remove</button></div></div>';
         } else {
           h+='<div class="vjrow" data-vi="'+i+'"><select data-vf="cat" aria-label="Expense">'+EXPCATS.map(function(c){ return '<option'+(c===it.cat?' selected':'')+'>'+esc(c)+'</option>'; }).join('')+'</select>'
             +'<input type="text" class="money" inputmode="numeric" data-vf="amount" aria-label="Amount" placeholder="Amount" value="'+(it.amount!=null?(+it.amount).toFixed(2):'')+'">'
@@ -2562,7 +2566,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     Array.prototype.forEach.call(document.querySelectorAll('#vj .vjrow'),function(r){ var it=S.vj.items[+r.getAttribute('data-vi')]; if(!it) return;
       Array.prototype.forEach.call(r.querySelectorAll('[data-vf]'),function(el){ var f=el.getAttribute('data-vf'), v=el.value;
         if(f==='pay'){ var pc=v.split('|'); it.pay=pc[0]; if(pc[1]) it.card=pc[1]; it.payGuess=false; }
-        else if(f==='fare'||f==='tip'||f==='amount') it[f]=v===''?(f==='tip'?0:null):+v;
+        else if(f==='fare'||f==='tip'||f==='amount'||f==='extras') it[f]=v===''?((f==='tip'||f==='extras')?0:null):+v;
         else if(f==='cash') it.cash=v==='1'; else it[f]=v; }); }); }
   var vjRec=null;
   function vjMic(){
