@@ -498,6 +498,13 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent)}
 :root[data-theme=light] .tabs button[aria-current=page]{color:#000!important;background:var(--accent)!important;border-radius:12px}
 /* Bottom bar order list in Settings */
 .barlist{list-style:none;margin:8px 0 0;padding:0}
+.tnrow{display:flex;gap:12px;padding:10px 0;border-top:1px solid var(--line)}
+.tnrow:first-of-type{border-top:0}
+.tnrow .tnt{flex:none;width:76px;display:flex;flex-direction:column}
+.tnrow .tnt .n{font-size:22px;font-weight:800;line-height:1.1}
+.tnrow .tnt .l{font-size:11px;color:var(--muted)}
+.tnrow.soon .tnt .n{color:var(--accent)}
+.tnrow .tnb{flex:1;min-width:0;font-size:14px} .tnrow .tnb b{font-size:15px}
 .tabs button{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
 .tabs button.barlift{transform-origin:center;z-index:3;position:relative;box-shadow:0 6px 16px #000a!important;outline:2px solid var(--accent);outline-offset:-2px;transition:none}
 .tabs.barediting button:not(.barlift){transition:transform .12s}
@@ -1041,6 +1048,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   <button type="button" data-tab="log"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg><span>Log</span></button>
   <button type="button" data-tab="tools"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3h10a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zM9 7h6M9 12h.01M12 12h.01M15 12h.01M9 16h.01M12 16h.01M15 16h.01"/></svg><span>Tools</span></button>
   <button type="button" data-tab="tools" data-sub="fare" data-bar="fare" hidden><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 17h14M6 17l1.5-6h9L18 17M9 11l1-3h4l1 3M7.5 20a1.5 1.5 0 1 0 0-.01M16.5 20a1.5 1.5 0 1 0 0-.01"/></svg><span>Fares</span></button>
+  <button type="button" data-tab="tools" data-sub="tonight" data-bar="tonight" hidden><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9a2 2 0 0 0 0 4v5h16v-5a2 2 0 0 0 0-4V5H4zM10 5v13"/></svg><span>Tonight</span></button>
   <button type="button" data-tab="tools" data-sub="flights" data-bar="flights" hidden><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 14l7-2V6a2 2 0 0 1 4 0v6l7 2v2l-7-1.5V18l2 1.5V21l-4-1-4 1v-1.5l2-1.5v-3.5L3 16z"/></svg><span>Flights</span></button>
   <button type="button" data-tab="tools" data-sub="ranks" data-bar="ranks" hidden><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6-5.6-6-10.5a6 6 0 0 1 12 0C18 15.4 12 21 12 21zM9.5 8h5M12 8v5"/></svg><span>Ranks</span></button>
   <button type="button" data-tab="tools" data-sub="toilets" data-bar="toilets" hidden><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6-5.6-6-10.5a6 6 0 0 1 12 0C18 15.4 12 21 12 21zM8.5 8l1 4 1-3 1 3 1-4M14 8h2v4"/></svg><span>Toilets</span></button>
@@ -4897,6 +4905,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     var el=$('tab-tools'); if(!el) return;
     if(S.tool!=='fare'&&S.fx.map){ try{ S.fx.map.remove(); }catch(e){} S.fx.map=null; S.fx.marks=[]; }
     if(S.tool!=='ranks'&&S.tool!=='toilets') pmDrop();
+    if(S.tool==='tonight'){ renderTonight(el); return; }
     if(S.tool==='flights'){ renderFlights(el); return; }
     if(S.tool==='tube'){ renderTube(el); return; }
     if(S.tool==='trains'){ renderTrains(el); return; }
@@ -4909,13 +4918,13 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
      AeroDataBox and caches for 10 minutes for every driver. Inside Claude there is no server,
      so the tool explains that it works on the website. */
   S.tool=lsGet('cb-tool')||'fare'; S.fl={ap:lsGet('cb-fl-ap')||'LHR',term:'',n:40,data:{},err:{},busy:{}};
-  var TOOL_TITLES={fare:'Fare calculator',flights:'Flight arrivals',ranks:'Taxi ranks',toilets:'Toilets',tube:'Tube status',trains:'Train status'};
+  var TOOL_TITLES={tonight:'Tonight',fare:'Fare calculator',flights:'Flight arrivals',ranks:'Taxi ranks',toilets:'Toilets',tube:'Tube status',trains:'Train status'};
   S.toolSolo=false;
   function toolHead(){ return S.toolSolo?'<h1 style="margin:2px 2px 0;font-size:22px;font-weight:700">'+esc(TOOL_TITLES[S.tool]||'Tools')+'</h1>':'<div class="card">'+toolNav()+'</div>'; }
   function toolNav(){
     /* Opened from its own bottom-bar button: a page of its own, just the title (Matt, 28 Oct). */
     if(S.toolSolo) return '<h2 style="margin:0;font-size:19px;text-transform:none;letter-spacing:0;color:var(--ink)">'+esc(TOOL_TITLES[S.tool]||'Tools')+'</h2>';
-    return '<div class="seg toolseg" style="margin:0" role="group" aria-label="Tool">'+[['fare','Fares'],['flights','Flights'],['ranks','Ranks'],['toilets','Toilets'],['tube','Tube'],['trains','Trains']].map(function(t){ return '<button type="button" data-tool="'+t[0]+'" aria-pressed="'+(S.tool===t[0])+'">'+t[1]+'</button>'; }).join('')+'</div>';
+    return '<div class="seg toolseg" style="margin:0" role="group" aria-label="Tool">'+[['fare','Fares'],['tonight','Tonight'],['flights','Flights'],['ranks','Ranks'],['toilets','Toilets'],['tube','Tube'],['trains','Trains']].map(function(t){ return '<button type="button" data-tool="'+t[0]+'" aria-pressed="'+(S.tool===t[0])+'">'+t[1]+'</button>'; }).join('')+'</div>';
   }
   document.addEventListener('click',function(ev){ var b=ev.target.closest&&ev.target.closest('[data-tool]'); if(!b) return; S.tool=b.getAttribute('data-tool'); lsSet('cb-tool',S.tool); renderTools(); if(typeof markCurrentTab==='function') markCurrentTab(); });
   var LTZ={timeZone:'Europe/London',hour:'2-digit',minute:'2-digit',hour12:false};
@@ -4941,6 +4950,47 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
       .catch(function(){ F.err[ap]='offline'; })
       .then(function(){ F.busy[ap]=false; if(S.tab==='tools'&&S.tool==='flights') renderTools(); });
   }
+  /* ---------- Tools: Tonight – big London events and when they should finish (Matt, 10 Nov 2026) ----------
+     From the website's server function (/.netlify/functions/events): football (football-data.org) and the big
+     venues on Ticketmaster (The O2, Wembley, Royal Albert Hall …), cached 30 minutes for every driver. */
+  S.tn={off:0,data:{},err:{},busy:{}};
+  function tnDay(){ return dayAdd(todayISO(),S.tn.off); }
+  function fetchTonight(force){
+    var T=S.tn, d=tnDay(), x=T.data[d];
+    if(T.busy[d]) return; if(!force&&x&&Date.now()-x._at<10*60000) return;
+    if(typeof firebase==='undefined'){ T.err[d]='claude'; renderTools(); return; }
+    T.busy[d]=true; T.err[d]='';
+    fetch('/.netlify/functions/events?day='+d,{headers:{accept:'application/json'}}).then(function(r){ return r.json().then(function(j){ return {ok:r.ok,j:j}; }); })
+      .then(function(r){ if(!r.ok||!r.j||r.j.error){ T.err[d]=(r.j&&r.j.error)||'error'; } else { r.j._at=Date.now(); T.data[d]=r.j; } })
+      .catch(function(){ T.err[d]='offline'; })
+      .then(function(){ T.busy[d]=false; if(S.tab==='tools'&&S.tool==='tonight') renderTools(); });
+  }
+  var TN_KIND={football:'Football',sport:'Sport',concert:'Concert',show:'Show'};
+  function renderTonight(el){
+    var T=S.tn, d=tnDay(), x=T.data[d], err=T.err[d], now=Date.now();
+    var h=toolHead()+'<div class="card"><div class="seg" style="margin:0" role="group" aria-label="Day"><button type="button" data-tnday="0" aria-pressed="'+(T.off===0)+'">Today</button><button type="button" data-tnday="1" aria-pressed="'+(T.off===1)+'">Tomorrow</button></div></div>';
+    if(!x&&!err){ el.innerHTML=h+'<div class="card empty">Loading events…</div>'; fetchTonight(); return; }
+    if(!x){
+      var msg=err==='claude'?'<b>Works on the Cab Books website</b>Tonight needs the website’s own server to fetch the events, so it doesn’t show inside Claude.'
+        :err==='not_set_up'?'<b>Events not switched on yet</b>The website needs its football-data.org and Ticketmaster keys added in Netlify.'
+        :err==='offline'?'<b>No connection</b>Check your signal and try again.':'<b>Couldn’t get events just now</b>Try again in a minute.';
+      el.innerHTML=h+'<div class="card empty">'+msg+(err==='claude'||err==='not_set_up'?'':'<div style="margin-top:12px"><button class="btn ghost small" type="button" id="tn-retry">Try again</button></div>')+'</div>'; return;
+    }
+    var ev=x.events||[], later=ev.filter(function(e){ return T.off>0||Date.parse(e.finish)>=now-20*60000; }), gone=ev.filter(function(e){ return later.indexOf(e)<0; });
+    function row(e){ var fin=Date.parse(e.finish), mins=Math.round((fin-now)/60000), soon=T.off===0&&mins>=-20&&mins<=45;
+      return '<div class="tnrow'+(soon?' soon':'')+'"><div class="tnt"><span class="l">ends about</span><span class="n num">'+esc(hm(e.finish))+'</span>'+(T.off===0&&mins>0&&mins<=180?'<span class="l">in '+(mins<60?mins+' min':Math.floor(mins/60)+'h '+(mins%60)+'m')+'</span>':'')+'</div>'
+        +'<div class="tnb"><b>'+esc(e.title)+'</b><div>'+esc(e.venue)+' · '+esc(e.area)+'</div><div class="note">'+esc(TN_KIND[e.kind]||'')+(e.note?' · '+esc(e.note):'')+' · starts '+esc(hm(e.start))+(e.live?' · <span class="badge rec">on now</span>':'')+'</div></div></div>'; }
+    h+='<div class="card"><div class="cardhead"><h2>'+(T.off===0?'Still to finish today':'Tomorrow')+'</h2><button class="btn ghost small" type="button" id="tn-retry">'+(T.busy[d]?'Updating…':'Refresh')+'</button></div>'
+      +(later.length?later.map(row).join(''):'<p class="note" style="margin:0">'+(ev.length?'Everything today has finished.':'No big events found at these venues.')+'</p>')+'</div>';
+    if(gone.length) h+='<details class="card"><summary style="cursor:pointer">Finished earlier today ('+gone.length+')</summary>'+gone.map(row).join('')+'</details>';
+    var off=[]; if(x.sources){ if(x.sources.football!=='ok') off.push('football'); if(x.sources.ticketmaster!=='ok') off.push('concerts and shows'); }
+    h+='<p class="note" style="margin:0 4px 12px">Finish times are estimates: kick-off plus about 2 hours for football, start time plus 2½–3½ hours for concerts and shows depending on the venue. Venues: London clubs’ home grounds, The O2, Wembley, Royal Albert Hall, Eventim Apollo, Alexandra Palace, O2 Academy Brixton, London Stadium.'
+      +(off.length?' <b>Not showing just now: '+esc(off.join(' and '))+'.</b>':'')+' Updated '+esc(hm(x.updated))+'. Football data provided by the Football-Data.org API. Event listings from Ticketmaster.</p>';
+    el.innerHTML=h;
+  }
+  document.addEventListener('click',function(ev){ var b=ev.target.closest&&ev.target.closest('[data-tnday],#tn-retry'); if(!b) return;
+    if(b.id==='tn-retry'){ fetchTonight(true); renderTools(); return; } S.tn.off=+b.getAttribute('data-tnday'); renderTools(); });
+  setInterval(function(){ if(S.tab==='tools'&&S.tool==='tonight'&&!document.hidden){ fetchTonight(); renderTools(); } },5*60000);
   function renderFlights(el){
     var F=S.fl, ap=F.ap, d=F.data[ap], err=F.err[ap];
     var h='<div class="card">'+toolNav()+'<div class="seg" style="margin:12px 0 0" role="group" aria-label="Airport"><button type="button" data-flap="LHR" aria-pressed="'+(ap==='LHR')+'">Heathrow</button><button type="button" data-flap="LCY" aria-pressed="'+(ap==='LCY')+'">City Airport</button></div></div>';
@@ -4998,10 +5048,10 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   /* ---------- user mode: Full books vs Just tracking ---------- */
   var FULLTABS=['receipts','months','log','import','receipt'];
   /* ---------- bottom bar: each driver picks which buttons they see (Matt, 28 Oct) ---------- */
-  var BAR_ITEMS=[['today','Today'],['position','Position'],['receipts','Receipts'],['reports','Reports'],['months','Data'],['log','Log'],['import','Import'],['fare','Fare calculator'],['flights','Flight arrivals'],['ranks','Taxi ranks'],['toilets','Toilets'],['tube','Tube status'],['trains','Train status']];
-  var BAR_GROUPS=[['Your books',['today','position','receipts','reports','months','log','import']],['On the road',['fare','flights','ranks','toilets','tube','trains']]];
+  var BAR_ITEMS=[['today','Today'],['position','Position'],['receipts','Receipts'],['reports','Reports'],['months','Data'],['log','Log'],['import','Import'],['fare','Fare calculator'],['tonight','Tonight (events)'],['flights','Flight arrivals'],['ranks','Taxi ranks'],['toilets','Toilets'],['tube','Tube status'],['trains','Train status']];
+  var BAR_GROUPS=[['Your books',['today','position','receipts','reports','months','log','import']],['On the road',['fare','tonight','flights','ranks','toilets','tube','trains']]];
   /* No Tools button (Matt, 10 Nov 2026): Fares, Flights, Ranks, Toilets, Tube and Trains each have their own. */
-  var BAR_TOOLS=['fare','flights','ranks','toilets','tube','trains'];
+  var BAR_TOOLS=['fare','tonight','flights','ranks','toilets','tube','trains'];
   var BAR_DEFAULT=['today','position','receipts','reports','months','log','import'].concat(BAR_TOOLS);
   /* A saved bar from before: drop Tools; if it had Tools but none of its tools, put the six tools in its place. */
   function barFix(v){ if(!Array.isArray(v)||!v.length) return null; var had=v.indexOf('tools')>=0, out=v.filter(function(k){return k!=='tools'});
@@ -5234,7 +5284,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   ['m-date','m-amt','m-tips','m-desc','m-prov','m-cat','m-from','m-abs'].forEach(function(id){ $(id).addEventListener('change',buildImport); });
   $('ik-fare').addEventListener('click',function(){setIKind('fare')}); $('ik-expense').addEventListener('click',function(){setIKind('expense')});
   $('i-save').addEventListener('click',saveImport);
-  try{ var qtool=new URLSearchParams(location.search).get('tool'); if(qtool&&['fare','flights','ranks','toilets','tube','trains'].indexOf(qtool)>=0){ S.tool=qtool; S.toolSolo=true; lsSet('cb-tool',qtool); lsSet('cb-tab','tools'); if(history.replaceState) history.replaceState(null,'',location.pathname); } }catch(e){}
+  try{ var qtool=new URLSearchParams(location.search).get('tool'); if(qtool&&['fare','tonight','flights','ranks','toilets','tube','trains'].indexOf(qtool)>=0){ S.tool=qtool; S.toolSolo=true; lsSet('cb-tool',qtool); lsSet('cb-tab','tools'); if(history.replaceState) history.replaceState(null,'',location.pathname); } }catch(e){}
   var st0=lsGet('cb-tab'); if(st0==='tools') S.toolSolo=true; showTab(['today','position','receipts','reports','months','log','tools','import'].indexOf(st0)>=0?st0:'today');
   renderAll();
 
