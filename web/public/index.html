@@ -5296,7 +5296,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   function renderModeCard(){
     return '<div class="card"><h2>How you use Cab Books</h2>'+modeButtons(S.mode||'full')
       +'<p class="note">You can switch at any time. Nothing is deleted; hidden tabs come back when you choose Full books.</p>'
-      +'<p class="privnote" style="margin-top:10px">Your figures are private to you. Nobody else using Cab Books can see them.</p></div>';
+      +'<p class="privnote" style="margin-top:10px">Your figures are private. Only you can see them.</p></div>';
   }
   function curMonthKey(){ var d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); }
   function openWelcome(){
