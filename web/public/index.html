@@ -1337,7 +1337,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     curb:['#00A86B','#FFFFFF'],curbflow:['#00A86B','#FFFFFF'],hips:['#E6007E','#FFFFFF'],comcab:['#1E2B5C','#FFFFFF'],helix:['#5A2D8C','#FFFFFF'],taxiworld:['#0B63B6','#FFFFFF'],blackcab:['#000000','#FF8A00']};
   function bkey(n){ return String(n||'').toLowerCase().replace(/\s+/g,''); }
   /* Names shown on screen where the saved name differs (saved names stay the same so old jobs still match). */
-  var PNAME={helix:'Helix Pay',curbflow:'Curb Flow',hips:'HIPS',freenow:'FreeNow'};
+  var PNAME={helix:'Helix Pay',curbflow:'Curb Flow',hips:'HIPS',freenow:'FreeNow',cardother:'Other card'};
   function pname(n){ return PNAME[bkey(n)]||n; }
   function popt(n,sel){ return '<option value="'+esc(n)+'"'+(sel?' selected':'')+'>'+esc(pname(n))+'</option>'; }
   function brand(n){ return BRAND[bkey(n)]||null; }
@@ -2275,11 +2275,12 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   }
 
   /* ---------- fees ---------- */
-  var PROVS=['Freenow','Gett','CurbFlow','ComCab','Jump','Uber','Curb','Taxiworld','Helix','HIPS','Blackcab','Other','Hand','Private'];
-  var PROV_OFF=['Taxiworld','Helix','HIPS','CurbFlow']; /* hidden until a driver switches them on in 'Providers I use' */
+  var PROVS=['Freenow','Gett','CurbFlow','ComCab','Jump','Uber','Curb','Taxiworld','Helix','HIPS','CardOther','Blackcab','Other','Hand','Private'];
+  var PROV_OFF=['Taxiworld','Helix','HIPS','CardOther','CurbFlow']; /* hidden until a driver switches them on in 'Providers I use' */
   /* Card payments = the card machine/system in the cab (Curb, Taxiworld, Helix Pay, HIPS). Curb Flow = Curb's job app (like FreeNow). */
-  var PGROUPS=[['Job apps',['Freenow','Gett','CurbFlow','Uber','Jump','ComCab','Blackcab','Other']],['Card machine in my cab',['Curb','Taxiworld','Helix','HIPS']],['Other fares',['Hand','Private']]];
-  var CARDSYS=['Curb','HIPS','Helix','Taxiworld'], CARDK={curb:1,hips:1,helix:1,taxiworld:1};
+  var PGROUPS=[['Job apps',['Freenow','Gett','CurbFlow','Uber','Jump','ComCab','Blackcab','Other']],['Card machine in my cab',['Curb','Taxiworld','Helix','HIPS','CardOther']],['Other fares',['Hand','Private']]];
+  /* Other card: a card machine not on the list (Matt, 11 Nov 2026). Its fee is set in Fee defaults. */
+  var CARDSYS=['Curb','HIPS','Helix','Taxiworld','CardOther'], CARDK={curb:1,hips:1,helix:1,taxiworld:1,cardother:1};
   function isCardK(k){ return !!CARDK[k]; }
   /* The driver's own card system: the first one switched on in 'Providers I use' (Curb if none). */
   function cardSys(){ var c=CARDSYS.filter(provShown); return c[0]||'Curb'; }
@@ -2301,16 +2302,16 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     var cur=PROVS.filter(provShown), i=cur.indexOf(p);
     if(i>=0){ if(cur.length<=1){ toast('Keep at least one provider.'); return; } cur.splice(i,1); } else cur.push(p);
     cur=PROVS.filter(function(x){return cur.indexOf(x)>=0});
-    S.db.collection('settings').doc('providers').set({shown:cur,known:PROVS.slice()}).then(function(){ toast(p+(i>=0?' hidden':' shown')); }).catch(fail); if(typeof remSync==='function') remSync(); /* the reminder names the apps you use */
+    S.db.collection('settings').doc('providers').set({shown:cur,known:PROVS.slice()}).then(function(){ toast(pname(p)+(i>=0?' hidden':' shown')+(i<0&&bkey(p)==='cardother'?'. Put its fee in Settings → Fee defaults.':'')); }).catch(fail); if(typeof remSync==='function') remSync(); /* the reminder names the apps you use */
   }
   var PAYS=['Account','Card','Cash','Bank transfer'];
   /* Which payment types each provider allows (Matt, 27 Oct). Providers not listed allow all. */
-  var PAYRULE={freenow:['Account','Card','Cash'],gett:['Account','Card','Cash'],jump:['Card','Cash'],blackcab:['Card','Cash'],comcab:['Account','Card','Cash'],curb:['Card'],taxiworld:['Card'],helix:['Card'],hips:['Card'],curbflow:['Account','Card','Cash'],uber:['Account'],hand:['Card','Cash'],private:['Card','Bank transfer'],other:['Account','Card','Cash','Bank transfer']};
+  var PAYRULE={freenow:['Account','Card','Cash'],gett:['Account','Card','Cash'],jump:['Card','Cash'],blackcab:['Card','Cash'],comcab:['Account','Card','Cash'],curb:['Card'],taxiworld:['Card'],helix:['Card'],hips:['Card'],cardother:['Card'],curbflow:['Account','Card','Cash'],uber:['Account'],hand:['Card','Cash'],private:['Card','Bank transfer'],other:['Account','Card','Cash','Bank transfer']};
   function paysFor(p){ return PAYRULE[bkey(p)]||PAYS; }
   /* The card machines this driver uses (Settings → Providers I use → Card machine in my cab); Curb if none. */
   function cardSysAll(){ var c=CARDSYS.filter(provShown); return c.length?c:['Curb']; }
   /* 'Paid by' buttons: Card becomes one button per card machine (Curb card, HIPS card…). Saved as pay:'Card' + card:<machine>. */
-  function payOpts(p){ var out=[]; paysFor(p).forEach(function(v){ if(v==='Card' && !isCardK(bkey(p))) cardSysAll().forEach(function(c){ out.push({v:'Card',c:c,l:pname(c)+' card'}); }); else out.push({v:v,l:v}); }); return out; }
+  function payOpts(p){ var out=[]; paysFor(p).forEach(function(v){ if(v==='Card' && !isCardK(bkey(p))) cardSysAll().forEach(function(c){ out.push({v:'Card',c:c,l:pname(c)+(bkey(c)==='cardother'?'':' card')}); }); else out.push({v:v,l:v}); }); return out; }
   /* Fee shown on the job form. Street/own jobs paid by card in the cab take the card machine's fee only.
      ComCab jobs paid by card take ComCab's commission (fare only) PLUS the card machine's fee (fare + extras) – Matt, 3 Nov 2026.
      App jobs (Gett, FreeNow…) paid by card in the cab take the app's commission PLUS the card machine's fee (Matt and Marcin, 31 Oct). */
