@@ -37,6 +37,13 @@ a{color:var(--accent)}
 .appicon img{width:64px;height:64px;border-radius:15px;display:block;margin:0 auto 4px}
 .appicon figcaption{font-size:13px;color:var(--ink)}
 .appicon p{margin:0;font-size:15px;color:var(--muted)}
+details.vid{margin:4px 0 14px}
+details.vid summary{display:inline-flex;align-items:center;gap:8px;list-style:none;cursor:pointer;background:var(--accent);color:#000;font-weight:700;border-radius:999px;padding:10px 18px;min-height:44px;font-size:15px}
+details.vid summary::-webkit-details-marker{display:none}
+details.vid[open] summary{background:var(--surface);color:var(--accent);border:1px solid var(--accent)}
+details.vid video{display:block;width:100%;max-width:340px;margin:12px auto 0;border-radius:16px;border:1px solid var(--line);background:#000}
+.shot{display:block;width:100%;max-width:340px;margin:8px 0 4px;border-radius:12px;border:1px solid var(--line)}
+.shot.bar{max-width:390px}
 .fine{color:var(--muted);font-size:14px;text-align:center}
 </style>
 </head>
@@ -54,7 +61,7 @@ a{color:var(--accent)}
 <a href="#alerts">4. Train alerts</a>
 <a href="#bank">5. Bank statement</a>
 <a href="#statements">6. App statements</a>
-<a href="#daily">7. Every day</a>
+<a href="#daily">7. Everyday use</a>
 <a href="#receipts">8. Receipt photos</a>
 <a href="#fix">9. Fixing mistakes</a>
 <a href="#help">Help</a>
@@ -223,7 +230,7 @@ a{color:var(--accent)}
 </section>
 
 <section id="daily">
-<h2>7. Every day</h2>
+<h2>7. Everyday use</h2>
 <p><b>You’re ready to go.</b> Now that you’ve set up your apps and train alerts, you can start adding your fares. You can add every kind of job:</p>
 <ul>
 <li><b>Hailing apps</b>: FreeNow, Gett, Uber and the others you ticked</li>
@@ -232,14 +239,24 @@ a{color:var(--accent)}
 <li><b>Cash jobs</b>: pick <b>Cash</b> under Paid by</li>
 </ul>
 <p class="tip">Everything you add to Cab Books, including cash jobs, is kept as part of your business records and included in your tax and VAT figures. Remember that you’re responsible for your own tax return.</p>
-<h3>Your main screens</h3>
+<h3>Adding a job: an example</h3>
+<p>You pick up a street job. The fare is <b>£10</b>, paid by card, and they add a <b>£2 tip</b>.</p>
+<details class="vid"><summary>▶ Watch a short video</summary><video controls playsinline muted preload="none" poster="/guide/add-job-poster.jpg" src="/guide/add-job.mp4"></video></details>
+<ol>
+<li>Tap <b>Today</b> on the bottom bar.<img class="shot bar" src="/guide/bottom-bar-today.png" alt="The bottom bar with Today highlighted" loading="lazy"></li>
+<li>Under <b>Add job</b>, tap <b>Hand</b> (a street job).</li>
+<li>Under <b>Paid by</b>, tap your card machine, for example <b>Curb card</b>.</li>
+<li>Type the fare and the tip. <b>Amounts go in pence, like a till</b>: type <b>1000</b> for £10.00 and <b>200</b> for £2.00. There’s no need for a dot.</li>
+<li>Tap <b>Save job</b>. Cab Books works out the card fee and shows what you keep.<img class="shot" src="/guide/add-job-form.png" alt="The Add job form filled in: Hand, Curb card, fare 10.00, tip 2.00" loading="lazy"></li>
+</ol>
+<p>Other jobs work the same way: pick the app, then <b>Paid by</b> Account (paid in the app), card or Cash. Tap an extras button for drop-off fees or parking. Busy shift? Tap <b>🎤 Say jobs</b> and say several at once, for example “FreeNow account £50, Uber £62, petrol £40”. You check them before they’re saved.</p>
+<div class="priv"><h2>🛈 About tips</h2><p>Tips aren’t part of your VAT turnover, but they are taxable income. Cab Books keeps them separate for you.</p></div>
+<h3>Your other screens</h3>
 <ul>
-<li><b>Today</b>: tap <b>Add job</b>, pick the app (or Hand for a street job, or Private), then <b>Paid by</b>: Account (paid in the app), your card machine (for example “Curb card”) or Cash. Type the fare and any tip. Tap an extras button for drop-off fees or parking. The fee is worked out for you. Or tap <b>🎤 Say jobs</b> and say several at once, for example “FreeNow account £50, Uber £62, petrol £40”. You check them before they’re saved.</li>
 <li><b>Position</b>: how this month is going and where you are against the VAT limit. You’ll get a warning well before you get close.</li>
 <li><b>Reports</b>: month by month, the tax year, the quarter (for Making Tax Digital), days worked and days off, and a pack for your accountant.</li>
 <li><b>Handy screens</b>: <b>Fares</b> (fare calculator with the route on a map), <b>Tonight</b> (when football, concerts and West End shows let out), <b>Flights</b>, <b>Ranks</b>, <b>Toilets</b>, <b>Trains</b> and <b>Tube</b>. Add the ones you want to your bottom bar in Settings → <b>Bottom bar</b>.</li>
 </ul>
-<p class="tip">Tips aren’t part of your VAT turnover, but they are taxable income. Cab Books keeps them separate for you.</p>
 </section>
 
 <section id="receipts">
