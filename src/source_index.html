@@ -749,6 +749,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   <section id="tab-position" hidden></section>
 
   <section id="tab-today">
+    <div class="card" id="guide-card" hidden></div>
     <div class="card">
       <div class="nav"><button type="button" id="d-cal" aria-label="Open calendar">&#128197;</button><button type="button" id="d-prev" aria-label="Previous day">&#8249;</button>
         <label class="dpick"><span class="ttl" id="d-label"></span><input type="date" id="d-date" aria-label="Choose date"></label>
@@ -1478,7 +1479,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     var el=$('set-body'); if(!el || $('setovl').hidden) return;
     if(!S.db){ el.innerHTML='<p class="help">Open this page while signed in to change settings.</p>'; return; }
     var ae=document.activeElement; if(ae && el.contains(ae) && /INPUT|TEXTAREA|SELECT/.test(ae.tagName)) return;
-    var st=S.settings, z=S.biz||{}, h=renderModeCard()+renderLookCard()+(S.isOwner?renderBackupCard():'')+renderPracticeCard()+renderSuggest()+renderProvPick()+renderBarPick()+renderAlertPick()+renderRemindPick()+renderChargeCard()+renderAdminCard()
+    var st=S.settings, z=S.biz||{}, h=renderGuideLink()+renderModeCard()+renderLookCard()+(S.isOwner?renderBackupCard():'')+renderPracticeCard()+renderSuggest()+renderProvPick()+renderBarPick()+renderAlertPick()+renderRemindPick()+renderChargeCard()+renderAdminCard()
       +'<div class="card"><h2>Your details on receipts</h2><p class="help">Printed at the bottom of every receipt and PDF.</p>'
       +'<div class="field"><label for="bz-trade">Name on your receipts</label><input type="text" id="bz-trade" maxlength="60" value="'+esc(z.trade!=null?z.trade:BIZNAME)+'"><p class="note" style="margin-top:4px">Shown at the top of every receipt. Leave as '+BIZNAME+' if you drive under our brand, or use your own trading name.</p></div>'
       +'<div class="field"><label for="bz-name">Your name</label><input type="text" id="bz-name" maxlength="60" value="'+esc(z.name||'')+'" placeholder="e.g. your full name"></div>'
@@ -1757,7 +1758,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     h+='<h2 style="margin-top:14px">Biggest costs</h2>'; big.forEach(function(r){ h+='<div class="kv"><span class="k">'+esc(dlabel(r.date)+' · '+r.prov+(r.note?' · '+r.note.slice(0,40):''))+'</span><span class="v">'+gbp2.format(r.fare)+'</span></div>'; });
     return h+'</div>';
   }
-  function renderAll(){ renderBills(); renderDay(); renderEvents(); if(S.tab==='cal'&&$('c-grid')&&S.db) renderCal(); renderRules(); renderPosition(); renderReports(); renderMonths(); if(S.tab==='log') renderLog(); updatePreview(); }
+  function renderAll(){ renderGuide(); renderBills(); renderDay(); renderEvents(); if(S.tab==='cal'&&$('c-grid')&&S.db) renderCal(); renderRules(); renderPosition(); renderReports(); renderMonths(); if(S.tab==='log') renderLog(); updatePreview(); }
 
 
   /* ---------- reports ---------- */
@@ -4508,6 +4509,38 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     var last=+lsGet('cb-seen')||0; if(Date.now()-last>3600000){ lsSet('cb-seen',String(Date.now())); S.db.collection('meta').doc('seen').set({at:Date.now(),device:admDevice()}).catch(function(){}); }
     if(!S.adm.checked){ S.adm.checked=true; admCall('?check=1').then(function(j){ S.adm.is=!!j.admin; renderSettings(); }).catch(function(){ S.adm.checked=false; }); }
   },10000);
+  /* ---------- Getting started guide (to-do item 11, Matt 11 Nov 2026) ----------
+     New drivers see a welcome card on Today pointing to help.html until they tap "Done, hide this".
+     Accounts made before this went live don't see it unless they turn it back on in Settings.
+     Stored in settings/guide: {hidden:true|false}. */
+  var GUIDE_FROM=Date.parse('2026-11-11T00:00:00Z');
+  function guideShown(){
+    var g=S.guide; if(g&&typeof g.hidden==='boolean') return !g.hidden;
+    var u=S.authUser, made=u&&u.metadata&&Date.parse(u.metadata.creationTime||0);
+    return !!(made&&made>=GUIDE_FROM);
+  }
+  function renderGuide(){
+    var el=$('guide-card'); if(!el) return;
+    if(!S.db||!guideShown()){ el.hidden=true; el.innerHTML=''; return; }
+    el.innerHTML='<h2>New to Cab Books?</h2><p class="help">Follow the 10-minute Getting started guide. It walks you through setting up, bringing in your statements and adding your first jobs.</p>'
+      +'<a class="btn" href="/help.html" target="_blank" rel="noopener" style="display:block;text-align:center;text-decoration:none">Open the guide</a>'
+      +'<button class="btn ghost" type="button" id="gd-hide" style="margin-top:8px">Done, hide this</button>'
+      +'<p class="note" style="margin-top:8px">You can always find the guide again in Settings.</p>';
+    el.hidden=false;
+  }
+  function renderGuideLink(){
+    return '<div class="card"><h2>Getting started guide</h2><p class="help">Step-by-step help with setting up Cab Books, bringing in your statements and everyday use.</p>'
+      +'<a class="btn ghost" href="/help.html" target="_blank" rel="noopener" style="display:block;text-align:center;text-decoration:none">Open the guide</a>'
+      +(guideShown()?'':'<button class="btn ghost small" type="button" id="gd-show" style="margin-top:8px">Show the welcome card on Today again</button>')+'</div>';
+  }
+  function guideSet(hidden){
+    if(!S.db) return;
+    S.db.collection('settings').doc('guide').set({hidden:hidden,ts:Date.now()}).then(function(){
+      toast(hidden?'Hidden. The guide is always in Settings.':'The welcome card is back on Today.'); if(typeof renderSettings==='function') renderSettings();
+    }).catch(fail);
+  }
+  document.addEventListener('click',function(ev){ var t=ev.target; if(!t) return; if(t.id==='gd-hide') guideSet(true); else if(t.id==='gd-show') guideSet(false); });
+
   function renderAdminCard(){
     if(!S.adm.is) return '';
     return '<div class="card"><h2>Admin</h2><p class="help">Who has signed up and how they use Cab Books. Account details only: nobody’s jobs or money.</p><button class="btn ghost" type="button" id="adm-open">Open admin panel</button></div>';
@@ -6389,6 +6422,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   function subscribe(db){
     function onErr(name){return function(e){ $('sync').textContent='Could not load '+name; }}
     db.collection('settings').onSnapshot(function(snap){
+      var gd=null; snap.docs.forEach(function(d){ if(d.id==='guide'&&d.exists) gd=d.data()||{}; }); S.guide=gd; renderGuide();
       snap.docs.forEach(function(d){ if(d.id==='stopts'&&d.exists){ S.stopts=d.data()||{}; stSyncVia(); } if(d.id==='tipstats'&&d.exists){ S.tipstats=d.data(); } if(d.id==='business'&&d.exists){ S.biz=d.data()||{}; } if(d.id==='practice'){ S.practice=!!(d.exists&&d.data().on); } if(d.id==='drivers'&&d.exists){ var nm=d.data().names; if(Array.isArray(nm)&&nm.length) S.drivers=nm; } if(d.id==='providers'&&d.exists){ var sv=d.data().shown, kn=d.data().known; S.shown=Array.isArray(sv)&&sv.length?sv:null; S.provKnown=Array.isArray(kn)?kn:null; if(S.shown&&S.shown.indexOf(S.prov)<0&&!S.editId){ S.prov=S.shown[0]; if(typeof applyFeeDefaults==='function') applyFeeDefaults(); } if(typeof buildChips==='function') buildChips(); } if(d.id==='bank'&&d.exists){ S.bankCov=d.data().covered||''; if(typeof bkStatus==='function') bkStatus(); } if(d.id==='main'&&d.exists){ var v=d.data(); S.settings=Object.assign({},DEF,{threshold:+v.threshold||DEF.threshold,amberPct:+v.amberPct||DEF.amberPct,redPct:+v.redPct||DEF.redPct,start:v.start||DEF.start,fees:v.fees||{}}); } });
       var md=null; snap.docs.forEach(function(d){ if(d.id==='look'&&d.exists){ var lk=(d.data()||{}).theme; if(lk&&lk!==S.look) applyLook(lk); } if(d.id==='opening'&&d.exists) S.opening=d.data()||{}; if(d.id==='tax'&&d.exists) S.tax=d.data()||{}; if(d.id==='mode'&&d.exists){ var mv=(d.data()||{}).mode; if(mv==='full'||mv==='track') md=mv; } if(d.id==='extras'&&d.exists){ var xl=(d.data()||{}).list; S.exList=Array.isArray(xl)?xl:null; if(typeof exRender==='function') exRender(); } if(d.id==='tabs'&&d.exists){ var tv=(d.data()||{}).shown, to=(d.data()||{}).order; S.bar=barFix(tv); S.barOrder=Array.isArray(to)&&to.length?to:null; } if(d.id==='charging'&&d.exists){ S.charge=d.data()||null; if(typeof renderAll==='function') setTimeout(renderAll,0); } if(d.id==='remind'&&d.exists){ S.rem=Object.assign({},REM_DEF,d.data()||{}); if(typeof remSync==='function') remSync(); } if(d.id==='alerts'&&d.exists){ var av=d.data()||{}; S.al={on:av.on!==false,min:+av.min||4,express:av.express!==false,off:Array.isArray(av.off)?av.off:[],tube:av.tube!==false,tlines:Array.isArray(av.tlines)?av.tlines:AL_TLINES.slice()}; if(typeof alRender==='function') alRender(); } }); S.mode=md||(S.isOwner?'full':null); S.loaded.settings=true; applyMode(); renderAll();
     },onErr('settings'));

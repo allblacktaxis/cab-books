@@ -118,7 +118,7 @@ rep("S.mode=md||(S.isOwner?'full':null);", "S.mode=md||null;")
 rep("var needWelcome=!S.isOwner&&S.loaded.settings&&!S.mode;", "var needWelcome=S.loaded.settings&&!S.mode;")
 rep("+(S.isOwner?'':'<p class=\"privnote\" style=\"margin-top:10px\">Your figures are private to you. Nobody else using Cab Books can see them.</p>')+'</div>';",
     "+'<p class=\"privnote\" style=\"margin-top:10px\">Your figures are private to you. Nobody else using Cab Books can see them.</p></div>';")
-rep("h=renderModeCard()+renderLookCard()", "h=renderAccountCard()+renderModeCard()+renderLookCard()")
+rep("h=renderGuideLink()+renderModeCard()+renderLookCard()", "h=renderAccountCard()+renderGuideLink()+renderModeCard()+renderLookCard()")
 rep('<button type="button" class="gear" id="gear"', '<style>@media (max-width:359px){#acctbtn span{display:none}}</style><button type="button" class="gear" id="acctbtn" aria-label="Your account" hidden>\U0001F464\uFE0E<span>Account</span></button><button type="button" class="gear" id="gear"')
 
 # ---------------------------------------------------------------- boot: Firebase instead of Claude
