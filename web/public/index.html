@@ -1079,7 +1079,14 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     <div class="card" id="ih-card">
       <h2>What you've imported</h2>
       <p class="help">Every statement, card report and bank file you've brought in, newest first. If one went in by mistake, remove it here: the jobs, payments and costs that came from it come out with it, and any bank estimates it had replaced come back.</p>
+      <div id="ih-filter" hidden style="display:flex;flex-wrap:wrap;gap:8px;margin:0 0 8px">
+        <select id="ih-prov" aria-label="Which imports to show" style="flex:1 1 100%;min-width:0"></select>
+        <label class="note" style="flex:1 1 40%;min-width:0">From<input type="date" id="ih-from" style="width:100%"></label>
+        <label class="note" style="flex:1 1 40%;min-width:0">To<input type="date" id="ih-to" style="width:100%"></label>
+      </div>
+      <div id="ih-batch" hidden style="margin:0 0 6px"></div>
       <div id="ih-list"></div>
+      <button class="btn ghost small" type="button" id="ih-more" hidden style="margin-top:8px">Show more</button>
       <div id="ih-bankall" hidden style="margin-top:12px;padding-top:12px;border-top:1px solid var(--line)"></div>
     </div>
   </section>
@@ -6607,15 +6614,15 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     var G={}, out=[], loose=[];
     (S.entriesRaw||[]).forEach(function(e){
       if(e.src!=='import' && e.src!=='ics') return;
-      if(e.stmt){ var k='st:'+e.stmt; if(!G[k]){ var st=(S.stmts||{})[e.stmt]; G[k]={key:k,stmt:e.stmt,label:st?(st.label||((st.prov||'')+' statement')):(e.stmt==='curb-payout-fees'?'Curb payout fees':(pname(e.provider)||'Statement')+' statement'),file:st&&st.file||'',ids:[],ts:0,from:'',to:'',fares:0,costs:0,money:0}; out.push(G[k]); } add(G[k],e); }
+      if(e.stmt){ var k='st:'+e.stmt; if(!G[k]){ var st=(S.stmts||{})[e.stmt]; G[k]={key:k,stmt:e.stmt,prov:(st&&st.prov)||pname(e.provider)||'Other statements',label:st?(st.label||((st.prov||'')+' statement')):(e.stmt==='curb-payout-fees'?'Curb payout fees':(pname(e.provider)||'Statement')+' statement'),file:st&&st.file||'',ids:[],ts:0,from:'',to:'',fares:0,costs:0,money:0}; out.push(G[k]); } add(G[k],e); }
       else loose.push(e);
     });
-    Object.keys(S.stmts||{}).forEach(function(id){ var k='st:'+id, st=S.stmts[id]; if(!G[k]){ G[k]={key:k,stmt:id,label:st.label||((st.prov||'')+' statement'),file:st.file||'',ids:[],ts:+st.ts||0,from:st.from||'',to:st.to||'',fares:0,costs:0,money:0}; out.push(G[k]); } });
+    Object.keys(S.stmts||{}).forEach(function(id){ var k='st:'+id, st=S.stmts[id]; if(!G[k]){ G[k]={key:k,stmt:id,prov:st.prov||'Other statements',label:st.label||((st.prov||'')+' statement'),file:st.file||'',ids:[],ts:+st.ts||0,from:st.from||'',to:st.to||'',fares:0,costs:0,money:0}; out.push(G[k]); } });
     function kindOf(e){ return e.src==='ics'?'Calendar':(e.est==='bank'||(e.kind==='expense'&&!e.provider))?'Bank statement':'CSV file'; }
     loose.sort(function(a,b){return (+a.ts||0)-(+b.ts||0)});
     var cur=null;
     loose.forEach(function(e){ var t=+e.ts||0, kd=kindOf(e);
-      if(!cur||cur.kd!==kd||t-cur.last>5*60000){ cur={key:'ts:'+kd+':'+t,kd:kd,label:kd,file:'',ids:[],ts:t,last:t,from:'',to:'',fares:0,costs:0,money:0}; out.push(cur); }
+      if(!cur||cur.kd!==kd||t-cur.last>5*60000){ cur={key:'ts:'+kd+':'+t,kd:kd,prov:kd,label:kd,file:'',ids:[],ts:t,last:t,from:'',to:'',fares:0,costs:0,money:0}; out.push(cur); }
       cur.last=t; add(cur,e); });
     function add(g,e){ g.ids.push(e.id); if(+e.ts>g.ts) g.ts=+e.ts; if(e.date){ if(!g.from||e.date<g.from) g.from=e.date; if(!g.to||e.date>g.to) g.to=e.date; }
       if(e.kind==='expense'){ g.costs++; } else { g.fares++; g.money+=(+e.amount||0)+(+e.extras||0)+(+e.tips||0); } }
@@ -6646,9 +6653,38 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   document.addEventListener('click',function(ev){ var b=ev.target; if(!b||b.id!=='ih-bankall-go') return;
     if(!b.classList.contains('arm')){ b.classList.add('arm'); b.textContent='Tap again to remove all bank imports'; setTimeout(function(){ if(b.isConnected){ b.classList.remove('arm'); b.textContent='Remove all bank imports'; } },5000); return; }
     b.disabled=true; b.textContent='Removing…'; ihRemoveAllBank(); });
+  /* Filter and batch remove (Matt, 12 Nov 2026): the list gets long, so pick a kind (e.g. ComCab) and dates,
+     then remove one, or everything shown in one go. */
+  var IHF={prov:'',from:'',to:'',n:30};
+  function ihDates(g){ var t=g.ts?new Date(g.ts).toISOString().slice(0,10):''; return [g.from||t,g.to||g.from||t]; }
+  function ihShown(L){ return L.filter(function(g){ if(IHF.prov&&g.prov!==IHF.prov) return false; var d=ihDates(g);
+    if(IHF.from&&d[1]&&d[1]<IHF.from) return false; if(IHF.to&&d[0]&&d[0]>IHF.to) return false; return true; }); }
+  function ihFilterBind(){
+    var p=$('ih-prov'), f=$('ih-from'), t=$('ih-to'), m=$('ih-more'); if(!p||p._b) return; p._b=1;
+    p.addEventListener('change',function(){ IHF.prov=p.value; IHF.n=30; ihRender(); });
+    f.addEventListener('change',function(){ IHF.from=f.value; IHF.n=30; ihRender(); });
+    t.addEventListener('change',function(){ IHF.to=t.value; IHF.n=30; ihRender(); });
+    m.addEventListener('click',function(){ IHF.n+=30; ihRender(); });
+  }
   function ihRender(){
-    var box=$('ih-list'); if(!box) return; var L=ihGroups(); ihBankAllRender();
-    if(!L.length){ box.innerHTML='<p class="note" style="margin:0">Nothing imported yet.</p>'; return; }
+    var box=$('ih-list'); if(!box) return; var All=ihGroups(); ihBankAllRender(); ihFilterBind();
+    var fb=$('ih-filter'), bb=$('ih-batch'), mb=$('ih-more');
+    if(!All.length){ fb.hidden=true; bb.hidden=true; mb.hidden=true; box.innerHTML='<p class="note" style="margin:0">Nothing imported yet.</p>'; return; }
+    var cnt={}; All.forEach(function(g){ cnt[g.prov]=(cnt[g.prov]||0)+1; });
+    var ks=Object.keys(cnt).sort(); if(IHF.prov&&!cnt[IHF.prov]) IHF.prov='';
+    fb.hidden=All.length<6;
+    $('ih-prov').innerHTML='<option value="">Everything ('+All.length+')</option>'+ks.map(function(k){ return '<option value="'+esc(k)+'"'+(k===IHF.prov?' selected':'')+'>'+esc(k)+' ('+cnt[k]+')</option>'; }).join('');
+    $('ih-from').value=IHF.from; $('ih-to').value=IHF.to;
+    var Sh=fb.hidden?All:ihShown(All), L=Sh.slice(0,IHF.n);
+    mb.hidden=Sh.length<=L.length; mb.textContent='Show more ('+(Sh.length-L.length)+' more)';
+    var filtered=!fb.hidden&&(IHF.prov||IHF.from||IHF.to);
+    if(filtered&&Sh.length){ var nr=Sh.reduce(function(a,g){return a+g.ids.length},0);
+      bb.hidden=false; bb.innerHTML='<p class="note" style="margin:0 0 6px">'+Sh.length+' import'+(Sh.length===1?'':'s')+' shown, '+nr+' record'+(nr===1?'':'s')+'.</p><button class="btn ghost small" type="button" id="ih-batch-go">Remove all '+Sh.length+' shown</button>';
+      var bg=$('ih-batch-go'); bg.addEventListener('click',function(){
+        if(!bg.classList.contains('arm')){ bg.classList.add('arm'); bg.textContent='Tap again to remove all '+Sh.length; setTimeout(function(){ if(bg.isConnected){ bg.classList.remove('arm'); bg.textContent='Remove all '+Sh.length+' shown'; } },5000); return; }
+        bg.disabled=true; ihRemoveMany(Sh,bg); });
+    } else { bb.hidden=true; bb.innerHTML=''; }
+    if(!Sh.length){ box.innerHTML='<p class="note" style="margin:0">Nothing matches. Change the choice or the dates above.</p>'; return; }
     box.innerHTML=L.map(function(g,i){
       var bits=[]; if(g.fares) bits.push(g.fares+' job'+(g.fares===1?'':'s')+' or payment'+(g.fares===1?'':'s')+' ('+gbp2.format(g.money)+')'); if(g.costs) bits.push(g.costs+' cost'+(g.costs===1?'':'s')); if(!bits.length) bits.push('no records');
       return '<div class="xrow" style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line)"><div style="min-width:0"><b>'+esc(g.label)+'</b>'+(g.file?'<br><span class="note">'+esc(g.file)+'</span>':'')
@@ -6658,33 +6694,43 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     Array.prototype.forEach.call(box.querySelectorAll('[data-ihrm]'),function(b){ b.addEventListener('click',function(){
       var g=L[+b.getAttribute('data-ihrm')]; if(!g) return;
       if(!b.classList.contains('arm')){ b.classList.add('arm'); b.textContent='Tap again to remove'; setTimeout(function(){ if(b.isConnected){ b.classList.remove('arm'); b.textContent='Remove'; } },4000); return; }
-      b.disabled=true; b.textContent='Removing…'; ihRemove(g);
+      b.disabled=true; b.textContent='Removing…'; ihRemove(g).then(function(r){ toast('Removed '+g.label+': '+r.n+' record'+(r.n===1?'':'s')+(r.nb?', '+r.nb+' bank estimate'+(r.nb===1?'':'s')+' restored':'')); ihRender(); }).catch(function(e){ fail(e); ihRender(); });
     }); });
   }
-  function ihRemove(g){
-    var gone={}; g.ids.forEach(function(id){gone[id]=1});
+  function ihRemoveMany(L,btn){
+    var ctx={gone:{},skip:{}}; L.forEach(function(g){ g.ids.forEach(function(id){ctx.gone[id]=1}); if(g.stmt) ctx.skip[g.stmt]=1; });
+    var i=0, n=0, nb=0;
+    (function next(){
+      if(i>=L.length){ toast('Removed '+L.length+' import'+(L.length===1?'':'s')+': '+n+' record'+(n===1?'':'s')+(nb?', '+nb+' bank estimate'+(nb===1?'':'s')+' restored':'')); ihRender(); return; }
+      if(btn&&btn.isConnected) btn.textContent='Removing '+(i+1)+' of '+L.length+'…';
+      ihRemove(L[i++],ctx).then(function(r){ n+=r.n; nb+=r.nb; next(); }).catch(function(e){ fail(e); ihRender(); });
+    })();
+  }
+  function ihRemove(g,ctx){ return new Promise(function(res,rej){
+    var gone=ctx?ctx.gone:{}; g.ids.forEach(function(id){gone[id]=1});
     prRun(g.ids,function(id){ return S.db.collection('entries').doc(id).delete(); },function(n){
       var p=(g.stmt&&S.stmts&&S.stmts[g.stmt])?S.db.collection('stmts').doc(g.stmt).delete():Promise.resolve();
       p.then(function(){
         /* Bank estimates this statement had replaced come back if no other statement still covers them. */
-        var left=stList().filter(function(s){return s.id!==g.stmt}), back=[];
-        if(g.stmt) (S.entriesRaw||[]).forEach(function(e){ if(gone[e.id]||e.est!=='bank'||!e.superseded) return; var net=bankNet(e); if(net==null||!stCoversBank(e.provider,e.date,net,left)) back.push(e); });
+        var left=stList().filter(function(s){return s.id!==g.stmt&&!(ctx&&ctx.skip[s.id])}), back=[];
+        if(g.stmt) (S.entriesRaw||[]).forEach(function(e){ if(gone[e.id]||e.est!=='bank'||!e.superseded||(ctx&&ctx.back&&ctx.back[e.id])) return; var net=bankNet(e); if(net==null||!stCoversBank(e.provider,e.date,net,left)) back.push(e); });
         /* Removing a bank import also winds back "bank lines up to" to the last bank line still in the books,
            so a replacement statement isn't skipped and typed expenses for those days count again (Marcin, 3 Nov 2026). */
         var cj=Promise.resolve();
         if(g.label==='Bank statement'){
           var last=''; (S.entriesRaw||[]).forEach(function(e){ if(gone[e.id]||e.src!=='import'||e.stmt) return; if(!(e.est==='bank'||(e.kind==='expense'&&!e.provider))) return; if(e.date>last) last=e.date; });
           /* "To sort out" lines saved with this import go too; ones from other imports keep their dates. */
-          var t0=Infinity,t1=0; (S.entriesRaw||[]).forEach(function(e){ if(!gone[e.id]) return; var t=+e.ts||0; if(t<t0) t0=t; if(t>t1) t1=t; });
+          var mine={}; g.ids.forEach(function(id){mine[id]=1}); var t0=Infinity,t1=0; (S.entriesRaw||[]).forEach(function(e){ if(!mine[e.id]) return; var t=+e.ts||0; if(t<t0) t0=t; if(t>t1) t1=t; });
           var tsDel=[]; Object.keys(S.tosort||{}).forEach(function(k){ var t=S.tosort[k]; if(!t) return; var tt=+t.ts||0;
             if(t1&&tt>=t0-60000&&tt<=t1+60000){ tsDel.push(k); return; } if(t.d>last) last=t.d; });
           cj=Promise.all(tsDel.map(function(k){ return S.db.collection('tosort').doc(k).delete(); }));
           if(last<(S.bankCov||'')){ S.bankCov=last; cj=cj.then(function(){ return S.db.collection('settings').doc('bank').set({covered:last}); }); var bf=$('bk-from'); if(bf) bf.value=''; }
         }
+        if(ctx){ ctx.back=ctx.back||{}; back.forEach(function(e){ ctx.back[e.id]=1; }); }
         return cj.then(function(){ return Promise.all(back.map(function(e){ var d=Object.assign({},e); delete d.id; delete d.superseded; return S.db.collection('entries').doc(e.id).set(d); })); }).then(function(){ if(typeof bkStatus==='function') bkStatus(); return back.length; });
-      }).then(function(nb){ toast('Removed '+g.label+': '+n+' record'+(n===1?'':'s')+(nb?', '+nb+' bank estimate'+(nb===1?'':'s')+' restored':'')); ihRender(); }).catch(function(e){ fail(e); ihRender(); });
+      }).then(function(nb){ res({n:n,nb:nb}); }).catch(rej);
     });
-  }
+  }); }
   function stList(){ return Object.keys(S.stmts||{}).map(function(k){ return S.stmts[k]; }); }
   function bankNet(e){ if(e.net!=null) return +e.net; var m=/From bank: £([\d,]+\.\d\d)/.exec(e.note||''); return m?stMoney(m[1]):null; }
   /* a bank-estimated payment is replaced when a statement shows the same money: an exact payout, or the pay window of a statement's jobs */
