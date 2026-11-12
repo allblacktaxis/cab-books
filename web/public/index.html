@@ -832,6 +832,7 @@ details.sgrp details.sgrp{background:var(--bg)}
 input[type=file]{max-width:100%}
 /* No sideways wobble on iPhone: clip the content areas only, never html/body, so the bottom bar stays put */
 .wrap{overflow-x:clip;max-width:100%}
+html{overscroll-behavior-x:none}
 .ovl .sheet{overflow-x:hidden}
 .su-scroll{overflow-x:hidden}
 .ru-inline{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;align-items:end}
