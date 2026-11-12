@@ -796,6 +796,8 @@ details.sgrp details.sgrp{background:var(--bg)}
 .bardemo b{position:absolute;top:4px;left:66px;width:52px;height:30px;border-radius:7px;background:var(--accent);animation:bardemo 3.2s ease-in-out infinite}
 @keyframes bardemo{0%,15%{transform:translateX(0) scale(1)}25%{transform:translateX(0) scale(1.12)}60%,75%{transform:translateX(116px) scale(1.12)}85%,100%{transform:translateX(116px) scale(1)}}
 .helpcontact{user-select:all;font-weight:600}
+html,body{overflow-x:clip;overscroll-behavior-x:none}
+input[type=file]{max-width:100%}
 .ru-inline{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;align-items:end}
 .ru-inline .field{margin:0}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
@@ -902,6 +904,10 @@ details.sgrp details.sgrp{background:var(--bg)}
           <div class="two">
             <div class="field"><label for="ru-freq">How often</label><select id="ru-freq"><option value="week">A week</option><option value="month">A month</option><option value="year">A year</option></select></div>
             <div class="field" style="align-self:end"><label class="su-tick" style="min-height:44px"><input type="checkbox" id="ru-vat"> VAT included</label></div>
+          </div>
+          <div class="two">
+            <div class="field"><label for="ru-biz">Business use (%)</label><input type="number" id="ru-biz" inputmode="numeric" min="0" max="100" step="1" placeholder="100"></div>
+            <p class="note" style="align-self:end;margin:0 0 14px">For example 80 for a phone you also use privately. Applies to all costs in this category.</p>
           </div>
           <div class="two">
             <div class="field"><label for="ru-from">Starts</label><input type="date" id="ru-from"></div>
@@ -2239,7 +2245,7 @@ details.sgrp details.sgrp{background:var(--bg)}
       if(P.ty){
         var T=taxEst(taxProfit(A));
         h+='<div class="card"><h2>Tax estimate</h2><div class="kv"><span class="k">Income tax</span><span class="v">'+gbp2.format(T.it)+'</span></div><div class="kv"><span class="k">Class 4 National Insurance</span><span class="v">'+gbp2.format(T.ni)+'</span></div><div class="kv hl"><span class="k"><b>Set aside</b></span><span class="v">'+gbp2.format(T.total)+'</span></div><div class="kv"><span class="k">As share of profit</span><span class="v">'+(A.profit>0?(T.total/A.profit*100).toFixed(1):'0.0')+'%</span></div>'
-          +'<p class="note">A rough guide on profit so far this tax year, using calendar months April to March (HMRC accepts accounts made up to 31 March). Only the allowable share of a union fee is counted. It ignores any other income, pension, allowances and payments on account. Confirm the figures with your accountant or HMRC.</p></div>';
+          +'<p class="note">A rough guide on profit so far this tax year, using calendar months April to March (HMRC accepts accounts made up to 31 March). Only the allowable share of a union fee, and the business share of costs like your phone, is counted. It ignores any other income, pension, allowances and payments on account. Confirm the figures with your accountant or HMRC.</p></div>';
         h+=taxDatesCard()+accPackHTML(+P.from.slice(0,4));
       }
       if(r.mode==='quarter') h+=mtdQHTML(P);
@@ -3142,7 +3148,7 @@ details.sgrp details.sgrp{background:var(--bg)}
     ids.forEach(function(id){
       var r=S.rules[id], w=+r.amount||0, f=ruleFreq(r), on=ruleLive(r,t); if(on) live++;
       var pz=(r.pauses||[]).filter(function(p){ return p&&p.from&&(!p.to||p.to>=t); }), ck=on?ruleCheck(r):null, op=S.ruOpen&&S.ruOpen.id===id?S.ruOpen.kind:'';
-      h+='<div class="logitem"><div style="min-width:0;flex:1"><div>'+esc(r.category)+(r.vat?' <span class="badge">VAT incl.</span>':'')+'</div><div class="d">'+gbp2.format(w)+' '+FQ_WORD[f]+(f==='week'?' · '+gbp2.format(w/7)+' a day':' · about '+gbp2.format(w*FQ_WEEK[f])+' a week')+' · from '+esc(dlabel(r.start))+(r.end?' until '+esc(dlabel(r.end)):'')+'</div>'
+      h+='<div class="logitem"><div style="min-width:0;flex:1"><div>'+esc(r.category)+(r.vat?' <span class="badge">VAT incl.</span>':'')+(bizPct(r.category)<100?' <span class="badge">'+bizPct(r.category)+'% business</span>':'')+'</div><div class="d">'+gbp2.format(w)+' '+FQ_WORD[f]+(f==='week'?' · '+gbp2.format(w/7)+' a day':' · about '+gbp2.format(w*FQ_WEEK[f])+' a week')+' · from '+esc(dlabel(r.start))+(r.end?' until '+esc(dlabel(r.end)):'')+'</div>'
         +pz.map(function(p){ return '<div class="d" style="color:var(--warn)">Paused '+esc(dlabel(p.from))+(p.to?' to '+esc(dlabel(p.to)):'')+'</div>'; }).join('')
         +(ck?'<div class="ru-flag" style="color:'+(ck.bad?'var(--warn)':'var(--ok)')+'">'+(ck.bad?'⚠ ':'✓ ')+esc(ck.t)+'</div>':'')
         +(on?'<button class="rc" type="button" data-ruchg="'+esc(id)+'">Change amount</button><button class="rc" type="button" data-rupz="'+esc(id)+'">'+(pz.length?'Pauses':'Pause')+'</button>':'')
@@ -3208,8 +3214,8 @@ details.sgrp details.sgrp{background:var(--bg)}
     if(ok) toast('Thanks. See you next week.');
     else { openRegular(); toast('Use Change amount, Pause or Edit on the one that changed.'); }
   });
-  function resetRuleForm(){ S.ruleEdit=null; $('ru-cat').value='Car rental'; $('ru-amt').value=''; $('ru-freq').value='week'; $('ru-vat').checked=false; $('ru-from').value=nextMonday(); $('ru-until').value=''; $('ru-sum').textContent='Add a rule'; $('ru-cancel').hidden=true; $('ru-save').textContent='Save rule'; }
-  function editRule(id){ var r=S.rules[id]; if(!r) return; S.ruleEdit=id; $('ru-cat').value=r.category; setMoney('ru-amt',r.amount); $('ru-freq').value=ruleFreq(r); $('ru-vat').checked=!!r.vat; $('ru-from').value=r.start||''; $('ru-until').value=r.end||''; $('ru-sum').textContent='Edit rule'; $('ru-cancel').hidden=false; $('ru-save').textContent='Update rule'; $('ru-form').open=true; $('ru-form').scrollIntoView({behavior:'smooth',block:'center'}); }
+  function resetRuleForm(){ S.ruleEdit=null; $('ru-cat').value='Car rental'; $('ru-amt').value=''; $('ru-freq').value='week'; $('ru-vat').checked=false; $('ru-biz').value=''; $('ru-from').value=nextMonday(); $('ru-until').value=''; $('ru-sum').textContent='Add a rule'; $('ru-cancel').hidden=true; $('ru-save').textContent='Save rule'; }
+  function editRule(id){ var r=S.rules[id]; if(!r) return; S.ruleEdit=id; $('ru-cat').value=r.category; setMoney('ru-amt',r.amount); $('ru-freq').value=ruleFreq(r); $('ru-vat').checked=!!r.vat; $('ru-biz').value=bizPct(r.category)<100?bizPct(r.category):''; $('ru-from').value=r.start||''; $('ru-until').value=r.end||''; $('ru-sum').textContent='Edit rule'; $('ru-cancel').hidden=false; $('ru-save').textContent='Update rule'; $('ru-form').open=true; $('ru-form').scrollIntoView({behavior:'smooth',block:'center'}); }
   function delRule(id){
     if(ruArmed!==id){ ruArmed=id; renderRules(); clearTimeout(delRule._t); delRule._t=setTimeout(function(){ruArmed=null;renderRules()},3000); return; }
     ruArmed=null; S.db.collection('rules').doc(id).delete().then(function(){toast('Rule deleted')}).catch(fail);
@@ -3224,6 +3230,8 @@ details.sgrp details.sgrp{background:var(--bg)}
     var data=Object.assign({},old||{},{category:$('ru-cat').value,amount:Math.round(amt*100)/100,freq:fq,start:from,active:true,vat:$('ru-vat').checked,ts:Date.now()});
     if(until) data.end=until; else delete data.end;
     $('ru-save').disabled=true;
+    var bz=$('ru-biz').value, bzv=bz===''?100:Math.max(0,Math.min(100,Math.round(+bz||0)));
+    if(bzv!==bizPct(data.category)){ var bm=Object.assign({},(S.tax&&S.tax.bizPct)||{}); if(bzv===100) delete bm[data.category]; else bm[data.category]=bzv; S.tax=S.tax||{}; S.tax.bizPct=bm; saveTax({bizPct:bm}).catch(fail); }
     var t=todayISO(), job;
     /* A new amount or frequency on a rule that has already run starts today; earlier days keep the old amount. */
     if(old&&old.start===from&&from<t&&((+old.amount||0)!==data.amount||ruleFreq(old)!==fq)&&data.category===old.category){
@@ -4026,7 +4034,7 @@ details.sgrp details.sgrp{background:var(--bg)}
   }
   function saveTax(patch){
     if(!S.db) return Promise.resolve();
-    var d=Object.assign({aside:+S.tax.aside||0,asOf:S.tax.asOf||'',mtd:S.tax.mtd||'auto',unionPct:unionPct(),accNotes:S.tax.accNotes||'',mtdStd:!!S.tax.mtdStd},patch);
+    var d=Object.assign({aside:+S.tax.aside||0,asOf:S.tax.asOf||'',mtd:S.tax.mtd||'auto',unionPct:unionPct(),accNotes:S.tax.accNotes||'',mtdStd:!!S.tax.mtdStd,bizPct:(S.tax&&S.tax.bizPct)||{}},patch);
     return S.db.collection('settings').doc('tax').set(d);
   }
   document.addEventListener('click',function(ev){
@@ -4053,24 +4061,28 @@ details.sgrp details.sgrp{background:var(--bg)}
   }
   function unionPct(){ var v=S.tax&&S.tax.unionPct; return (v!=null&&v!==''&&!isNaN(+v))?Math.max(0,Math.min(100,+v)):80; }
   function unionAmt(A){ var t=0; Object.keys(A.exp||{}).forEach(function(c){ if(hmrcLine(c)==='union') t+=(+A.exp[c]||0); }); return t; }
+  /* Business-use share (Matt, 12 Nov 2026): e.g. a phone used 80% for work. Applies to every cost in that category
+     (typed in, from the bank, or a regular expense). Only the business share counts for tax. settings/tax.bizPct {category: %}. */
+  function bizPct(c){ var m=S.tax&&S.tax.bizPct, v=m&&m[c]; return (v!=null&&v!==''&&!isNaN(+v))?Math.max(0,Math.min(100,+v)):100; }
+  function bizNot(A){ var t=0; Object.keys(A.exp||{}).forEach(function(c){ if(hmrcLine(c)!=='union') t+=(+A.exp[c]||0)*(1-bizPct(c)/100); }); return t; }
   /* Profit for tax: the part of a union fee that is not allowable is added back (LTDA: 80% allowable). */
-  function taxProfit(A){ return A.profit+unionAmt(A)*(1-unionPct()/100); }
+  function taxProfit(A){ return A.profit+unionAmt(A)*(1-unionPct()/100)+bizNot(A); }
   /* A period's costs set out in HMRC's self-employment categories (also used for the MTD quarterly update). */
   function hmLines(A,up){
-    var lines={}, sub={}, allow=0, dis=0; up=up==null?unionPct():up;
+    var lines={}, sub={}, allow=0, dis=0, disU=0, disB=0; up=up==null?unionPct():up;
     HM_LINES.forEach(function(k){ lines[k]=[]; });
     if(A.fees>0.004) lines[HM_OTH].push({l:'Commission and card fees (taxi apps, card machine)',cat:'Commission and fees',v:A.fees,full:A.fees});
     Object.keys(A.exp).sort().forEach(function(c){
       var v=+A.exp[c]||0; if(!(Math.abs(v)>0.004)) return; var ln=hmrcLine(c);
-      if(ln==='union'){ var a=v*up/100; lines[HM_OTH].push({l:c+' ('+up+'% allowable)',cat:c,v:a,full:v,dis:v-a}); dis+=v-a; }
-      else lines[ln].push({l:c,cat:c,v:v,full:v});
+      if(ln==='union'){ var a=v*up/100; lines[HM_OTH].push({l:c+' ('+up+'% allowable)',cat:c,v:a,full:v,dis:v-a}); dis+=v-a; disU+=v-a; }
+      else { var bp=bizPct(c); if(bp<100){ var ab=v*bp/100; lines[ln].push({l:c+' ('+bp+'% business use)',cat:c,v:ab,full:v,dis:v-ab}); dis+=v-ab; disB+=v-ab; } else lines[ln].push({l:c,cat:c,v:v,full:v}); }
     });
     HM_LINES.forEach(function(k){ sub[k]=lines[k].reduce(function(s,x){return s+x.v},0); allow+=sub[k]; });
-    return {lines:lines,sub:sub,allow:allow,dis:dis};
+    return {lines:lines,sub:sub,allow:allow,dis:dis,disU:disU,disB:disB};
   }
   function accPack(y){
     var P=period({mode:'taxyear',off:y-curTaxYear()}), A=agg(P), C=compute(S.entries), cur=monthOf(todayISO()), up=unionPct();
-    var HL=hmLines(A,up), lines=HL.lines, sub=HL.sub, allow=HL.allow, dis=HL.dis;
+    var HL=hmLines(A,up), lines=HL.lines, sub=HL.sub, allow=HL.allow, dis=HL.dis, disU=HL.disU, disB=HL.disB;
     var turnover=A.turn+A.tips, profit=turnover-allow;
     var months=[];
     P.keys.forEach(function(k){
@@ -4086,7 +4098,7 @@ details.sgrp details.sgrp{background:var(--bg)}
     var ended=todayISO()>P.to, first=months.length?months[0].k+'-01':P.from;
     if(first<P.from) first=P.from;
     var lastDay=ended?dkey(y+1,3,31):todayISO();
-    return {y:y,P:P,A:A,lines:lines,sub:sub,allow:allow,dis:dis,up:up,turnover:turnover,profit:profit,T:taxEst(profit),
+    return {y:y,P:P,A:A,lines:lines,sub:sub,allow:allow,dis:dis,disU:disU,disB:disB,up:up,turnover:turnover,profit:profit,T:taxEst(profit),
       months:months,prov:prov,bankEst:bankEst,indic:A.indic,expEst:A.expEst,vatMax:vatMax,vatAt:vatAt,ended:ended,first:first,lastDay:lastDay,
       open:months.filter(function(m){return m.st!=='Closed'&&m.st!=='Reconciled'}).length};
   }
@@ -4143,7 +4155,8 @@ details.sgrp details.sgrp{background:var(--bg)}
     R.push(['Income','Turnover for the tax return','',n2(K.turnover),'Fares + tips']);
     HM_LINES.forEach(function(k){ K.lines[k].forEach(function(x){ R.push(['Expenses: '+k,x.l,x.cat,n2(x.v),x.dis?('Paid '+n2(x.full)+'; '+n2(x.dis)+' not allowable'):'']); }); if(K.lines[k].length) R.push(['Expenses: '+k,'Subtotal','',n2(K.sub[k]),'']); });
     R.push(['Expenses','Total allowable expenses','',n2(K.allow),'']);
-    if(K.dis>0.004) R.push(['Expenses','Not allowable (union fee share)','',n2(K.dis),'Paid but not claimed']);
+    if(K.disU>0.004) R.push(['Expenses','Not allowable (union fee share)','',n2(K.disU),'Paid but not claimed']);
+    if(K.disB>0.004) R.push(['Expenses','Not allowable (private use share)','',n2(K.disB),'Paid but not claimed']);
     R.push(['Result','Net profit','',n2(K.profit),'']);
     R.push(['Result','Rough income tax','',n2(K.T.it),'Estimate only']);
     R.push(['Result','Rough Class 4 NI','',n2(K.T.ni),'Estimate only']);
@@ -4176,7 +4189,8 @@ details.sgrp details.sgrp{background:var(--bg)}
     head('Allowable expenses');
     HM_LINES.forEach(function(k){ if(!K.lines[k].length) return; row(k,gbp2.format(K.sub[k]),{b:1}); K.lines[k].forEach(function(x){ row(x.l,gbp2.format(x.v),{i:5,s:9,c:90}); }); Y+=1; });
     row('Total allowable expenses',gbp2.format(K.allow),{b:1,line:1});
-    if(K.dis>0.004) row('Union fee not claimed ('+(100-K.up)+'% of '+gbp2.format(K.dis/(1-K.up/100||1))+')',gbp2.format(K.dis),{s:9,c:110});
+    if(K.disU>0.004) row('Union fee not claimed ('+(100-K.up)+'% of '+gbp2.format(K.disU/(1-K.up/100||1))+')',gbp2.format(K.disU),{s:9,c:110});
+    if(K.disB>0.004) row('Private use share not claimed',gbp2.format(K.disB),{s:9,c:110});
     head('Profit and tax');
     row('Net profit',gbp2.format(K.profit),{b:1,line:1});
     row('Rough income tax',gbp2.format(K.T.it),{line:1}); row('Rough Class 4 National Insurance',gbp2.format(K.T.ni),{line:1});
@@ -5548,8 +5562,8 @@ details.sgrp details.sgrp{background:var(--bg)}
     else if(a.cab==='rent'||a.cab==='finance'){ a.cab=old?null:a.cab; }
     if(chargeNow()){ a.ev='home'; a.night=chargeAt(t); }
     a.exps={};
-    SU_EXP.forEach(function(x){ var id=suRuleId(x.k,x.cat), r=id&&S.rules[id]; a.exps[x.k]=r?{on:true,amt:+r.amount||0,fq:ruleFreq(r),vat:!!r.vat}:{on:false,amt:0,fq:x.fq,vat:false}; });
-    a.own=[]; Object.keys(S.rules||{}).forEach(function(id){ var r=S.rules[id]; if(ruleLive(r,t)&&/^own/.test(r.sk||'')) a.own.push({k:r.sk,name:r.category,on:true,amt:+r.amount||0,fq:ruleFreq(r),vat:!!r.vat}); });
+    SU_EXP.forEach(function(x){ var id=suRuleId(x.k,x.cat), r=id&&S.rules[id]; a.exps[x.k]=r?{on:true,amt:+r.amount||0,fq:ruleFreq(r),vat:!!r.vat,biz:bizPct(x.cat)}:{on:false,amt:0,fq:x.fq,vat:false,biz:bizPct(x.cat)}; });
+    a.own=[]; Object.keys(S.rules||{}).forEach(function(id){ var r=S.rules[id]; if(ruleLive(r,t)&&/^own/.test(r.sk||'')) a.own.push({k:r.sk,name:r.category,on:true,amt:+r.amount||0,fq:ruleFreq(r),vat:!!r.vat,biz:bizPct(r.category)}); });
     if(old) a.bar=BAR_ITEMS.map(function(x){return x[0]}).filter(barOn);
     else if(!a.bar) a.bar=['today','position','reports','receipts','months','log','import','trains','tube','tonight','ranks','toilets','fare'];
     if(a.bar.indexOf('today')<0) a.bar.unshift('today');
@@ -5590,7 +5604,8 @@ details.sgrp details.sgrp{background:var(--bg)}
     if(e.on) h+='<div class="su-expd">'+(own?'<input type="text" data-sf="x:'+k+':name" maxlength="40" placeholder="What is it?" aria-label="What is it?" value="'+esc(e.name||'')+'" style="grid-column:1/-1">':'')
       +'<input type="text" class="money" data-sf="x:'+k+':amt" inputmode="numeric" autocomplete="off" placeholder="0.00" aria-label="Amount (£)" value="'+(+e.amt>0?(+e.amt).toFixed(2):'')+'">'
       +'<select data-sf="x:'+k+':fq" aria-label="How often">'+['week','month','year'].map(function(f){ return '<option value="'+f+'"'+(e.fq===f?' selected':'')+'>'+FQ_WORD[f]+'</option>'; }).join('')+'</select>'
-      +'<label class="su-tick"><input type="checkbox" data-sf="x:'+k+':vat"'+(e.vat?' checked':'')+'> VAT included</label></div>';
+      +'<label class="su-tick"><input type="checkbox" data-sf="x:'+k+':vat"'+(e.vat?' checked':'')+'> VAT included</label>'
+      +(own||k==='phone'?'<div class="field" style="margin:0;grid-column:1/-1"><label for="su-bz-'+k+'">Business use (%)</label><input type="number" id="su-bz-'+k+'" data-sf="x:'+k+':biz" inputmode="numeric" min="0" max="100" step="1" value="'+(e.biz==null?100:esc(e.biz))+'" style="width:96px"><p class="note">If you also use it privately, only the business share counts for tax. For example, 80 if your accountant says 80%.</p></div>':'')+'</div>';
     return h+'</div>';
   }
   function suStep(k,n,title,hint,body){
@@ -5684,8 +5699,8 @@ details.sgrp details.sgrp{background:var(--bg)}
     var L=[];
     if(a.cab==='rent'&&+a.rent>0) L.push({sk:'rent',cat:'Car rental',amount:r2s(a.rent),freq:'week',vat:false,name:'Cab rent'});
     if(a.cab==='finance'&&+a.fin>0) L.push({sk:'fin',cat:'Cab finance',amount:r2s(a.fin),freq:'month',vat:false,name:'Cab finance'});
-    SU_EXP.forEach(function(x){ var e=a.exps[x.k]; if(e&&e.on&&+e.amt>0) L.push({sk:x.k,cat:x.cat,amount:r2s(e.amt),freq:e.fq||x.fq,vat:!!e.vat,name:x.n}); });
-    (a.own||[]).forEach(function(o){ var n=String(o.name||'').trim(); if(o.on&&+o.amt>0&&n) L.push({sk:o.k,cat:n,amount:r2s(o.amt),freq:o.fq||'month',vat:!!o.vat,name:n}); });
+    SU_EXP.forEach(function(x){ var e=a.exps[x.k]; if(e&&e.on&&+e.amt>0) L.push({sk:x.k,cat:x.cat,amount:r2s(e.amt),freq:e.fq||x.fq,vat:!!e.vat,name:x.n,biz:e.biz}); });
+    (a.own||[]).forEach(function(o){ var n=String(o.name||'').trim(); if(o.on&&+o.amt>0&&n) L.push({sk:o.k,cat:n,amount:r2s(o.amt),freq:o.fq||'month',vat:!!o.vat,name:n,biz:o.biz}); });
     return L;
   }
   function suCheck(a){
@@ -5772,7 +5787,11 @@ details.sgrp details.sgrp{background:var(--bg)}
     jobs.push(function(){ if(a.ver!=='full') return null; S.rem=Object.assign({},S.rem,{on:!!a.rem.on,dow:+a.rem.dow,hour:+a.rem.hour}); remSync();
       return cs.doc('remind').set({on:S.rem.on,dow:S.rem.dow,hour:S.rem.hour,ts:Date.now()}); });
     /* 9. Making Tax Digital; earlier takings answered No */
-    jobs.push(function(){ S.tax=S.tax||{}; if((S.tax.mtd||'auto')===a.mtd) return null; S.tax.mtd=a.mtd; return saveTax({mtd:a.mtd}); });
+    jobs.push(function(){ S.tax=S.tax||{}; var bm=Object.assign({},S.tax.bizPct||{}), ch=false;
+      [['phone','Phone / broadband']].concat((a.own||[]).filter(function(o){return o.on&&String(o.name||'').trim()}).map(function(o){return [o.k,String(o.name).trim()]})).forEach(function(x){
+        var e=suExp(a,x[0]); if(!e||!e.on||e.biz==null) return; var v=+e.biz; if(v===bizPct(x[1])) return; ch=true; if(v>=100) delete bm[x[1]]; else bm[x[1]]=v; });
+      var patch={}; if(ch){ S.tax.bizPct=bm; patch.bizPct=bm; } if((S.tax.mtd||'auto')!==a.mtd){ S.tax.mtd=a.mtd; patch.mtd=a.mtd; }
+      return Object.keys(patch).length?saveTax(patch):null; });
     jobs.push(function(){ if(a.prior==='no'&&!(S.opening&&S.opening.done)) saveOpening(true); return null; });
     /* 10. Receipt details */
     jobs.push(function(){ var z=Object.assign({},S.biz||{}), tr=String(a.trade||'').trim();
@@ -5797,7 +5816,7 @@ details.sgrp details.sgrp{background:var(--bg)}
       :a.vat==='close'?'Watching your rolling 12 months against the '+th+' threshold, with how much room you have each coming month (Position).'
       :'Keeping a quiet eye on your rolling 12 months, with a warning if you start to get close to '+th+'.')
       +(a.prior==='yes'&&!(S.opening&&S.opening.done)?'<p class="note">You haven’t added your earlier takings yet. Do it from Position, or Settings → Changes to your setup → VAT and tax.</p>':''));
-    h+=box('Added automatically',(W.length?'<ul>'+W.map(function(w){ return li(esc(w.name)+': '+gbp2.format(w.amount)+' '+FQ_WORD[w.freq]+(w.vat?' (VAT included)':'')); }).join('')+'</ul><div class="su-tot"><span>About each week</span><span class="num">'+gbp2.format(weekly)+'</span></div>':'<p class="note" style="margin:0">No regular expenses yet. Add them any time in Settings → Changes to your setup.</p>')
+    h+=box('Added automatically',(W.length?'<ul>'+W.map(function(w){ return li(esc(w.name)+': '+gbp2.format(w.amount)+' '+FQ_WORD[w.freq]+(w.vat?' (VAT included)':'')+(w.biz!=null&&+w.biz<100?', '+(+w.biz)+'% business use':'')); }).join('')+'</ul><div class="su-tot"><span>About each week</span><span class="num">'+gbp2.format(weekly)+'</span></div>':'<p class="note" style="margin:0">No regular expenses yet. Add them any time in Settings → Changes to your setup.</p>')
       +(a.ev==='home'?(+a.night>0?'<p class="note">Home charging: '+gbp2.format(+a.night)+' on each day you work, as Electric charging.</p>':'<p class="note">Home charging: set what a night’s charge costs in Settings → Changes to your setup → Your cab and regular expenses.</p>'):'')
       +(full&&W.length?'<p class="note">Each one is matched to its bank payment, and flagged if it’s missing or a different amount. It’s never counted twice.</p>':''));
     var bl=BAR_ITEMS.map(function(x){return x[0]}).filter(function(k){ return (a.bar||[]).indexOf(k)>=0&&(full||BAR_FULLONLY.indexOf(k)<0); }).map(function(k){return SU_BARNAME[k]||k});
@@ -5857,7 +5876,7 @@ details.sgrp details.sgrp{background:var(--bg)}
     if(chk&&evType!=='change') return;
     var v=chk?el.checked:el.value;
     if(f.indexOf('x:')===0){ var p=f.split(':'), e=suExp(a,p[1]); if(!e) return;
-      e[p[2]]=p[2]==='amt'?(+v||0):v;
+      e[p[2]]=p[2]==='amt'?(+v||0):p[2]==='biz'?(v===''?100:Math.max(0,Math.min(100,Math.round(+v||0)))):v;
       if(p[2]==='on'){ suRender(true); suFocus('[data-sf="'+f+'"]'); return; }
       if(p[2]==='name'){ var lab=el.closest('.su-exp').querySelector('label span'); if(lab&&lab.firstChild) lab.firstChild.textContent=v||'Your own expense'; }
     }
