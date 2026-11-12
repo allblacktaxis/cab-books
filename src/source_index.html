@@ -945,7 +945,7 @@ html{overscroll-behavior-x:none}
       <div class="csum" id="c-sum"></div>
       <div class="cgrid" id="c-grid"></div>
       <div class="ckey"><span><i style="background:var(--ok)"></i>Matches statements</span><span><i style="background:var(--warn)"></i>Typed in only (or bank estimate)</span><span><i style="background:linear-gradient(90deg,var(--ok) 50%,var(--warn) 50%)"></i>Some of each</span></div>
-      <p class="note">Tap a day to see its jobs and expenses. The amount under a date is what you took that day. Press and hold a Sunday for that week’s summary. Green dot: expenses only. Blue dot: schedule event. Amber dot: Guard ceremony (roads around the Palace closed). For the hour-by-hour schedule, open the day and tap See the whole day.</p>
+      <p class="note">Tap a day to see its jobs and expenses. The amount under a date is what you took that day. Press and hold a Sunday for that week’s summary. Green dot: expenses only. Blue dot: schedule event. Amber dot: driver notice, such as a Guard ceremony (roads around the Palace closed) or an RMT strike. For the hour-by-hour schedule, open the day and tap See the whole day.</p>
       <button class="btn ghost" id="c-back" type="button">Back to the day</button>
     </div>
   </section>
@@ -3645,6 +3645,19 @@ html{overscroll-behavior-x:none}
   function evOn(e,iso){ if(e.rep==='w'&&e.days&&e.days.length){ return e.date<=iso && (!e.until||iso<=e.until) && e.days.indexOf(dowOf(iso))>=0 && (e.skip||[]).indexOf(iso)<0; } return e.date===iso; }
   function dayEvents(iso){ return Object.keys(S.events).map(function(id){var e=S.events[id]; e.id=id; return e}).filter(function(e){return evOn(e,iso)}).sort(function(a,b){return (a.start||'')<(b.start||'')?-1:(a.start||'')>(b.start||'')?1:0}); }
   var NOTICE_SUN=['2026-10-18','2026-10-25','2026-11-01','2026-11-15','2026-11-22','2026-11-29'];
+  /* RMT 24-hour strikes, noon to noon London time, for all drivers (Matt, 12 Nov 2026). Shown on the day before too. */
+  var RMT_STRIKES=['2026-11-26','2026-12-17','2026-12-19','2027-01-04','2027-01-06','2027-02-17','2027-02-23','2027-02-25'];
+  function isoAdd(iso,n){ var p=iso.split('-'), d=new Date(Date.UTC(+p[0],+p[1]-1,+p[2]+n)); return d.toISOString().slice(0,10); }
+  function rmtNotices(iso){
+    var T='RMT strike (24 hours) \u2013 expect busy roads', L=[];
+    RMT_STRIKES.forEach(function(s){
+      var e=isoAdd(s,1), span='Runs from 12:00 noon '+DN[dowOf(s)]+' '+dlabel(s)+' to 12:00 noon '+DN[dowOf(e)]+' '+dlabel(e)+' (London time). Expect heavier traffic and busier roads.';
+      if(iso===isoAdd(s,-1)) L.push({start:'Tomorrow',title:T,notes:'Starts tomorrow at 12:00 noon. '+span});
+      if(iso===s) L.push({start:'12:00',end:'23:59',title:T,notes:'Starts today at 12:00 noon. '+span});
+      if(iso===e) L.push({start:'00:00',end:'12:00',title:T,notes:'Ends today at 12:00 noon. '+span});
+    });
+    return L;
+  }
   function dayNotices(iso){
     var w=dowOf(iso), L=[];
     var src='Household Division calendar (checked 25 Oct 2026)';
@@ -3659,13 +3672,14 @@ html{overscroll-behavior-x:none}
       '2027-01-01':{start:'00:00',end:'06:00',title:'New Year\u2019s Eve closures end \u2013 central London',notes:'Event areas due to reopen about 06:00. Some roads stay closed for the London Parade 2027 (date and route not yet confirmed here). Source: london.gov.uk'}
     };
     if(YD[iso]) L.unshift(YD[iso]);
+    L=rmtNotices(iso).concat(L);
     var have=dayEvents(iso); return L.filter(function(n){ var base=n.title.split(' \u2013 ')[0]; return !have.some(function(e){ return e.start===n.start && e.title===base; }); });
   }
   function renderEvents(){
     var el=$('ev-list'); if(!el) return;
     if(!S.db){ el.innerHTML=''; return; }
     var L=dayEvents(S.day), h='';
-    var hd=$('ev-head'); if(hd) hd.textContent = L.length ? 'Schedule \u00b7 '+L.length+(L.length>1?' events':' event')+' \u00b7 '+(L[0].start?L[0].start+' ':'')+(L[0].title||'Event') : 'Schedule \u00b7 nothing on'; if(hd){ var nn=dayNotices(S.day).filter(function(n){return n.title.indexOf('Captain')<0&&n.title.indexOf('Mall')<0}).length; if(nn) hd.textContent+=' \u00b7 \u26a0 Guard'; }
+    var hd=$('ev-head'); if(hd) hd.textContent = L.length ? 'Schedule \u00b7 '+L.length+(L.length>1?' events':' event')+' \u00b7 '+(L[0].start?L[0].start+' ':'')+(L[0].title||'Event') : 'Schedule \u00b7 nothing on'; if(hd){ var nn=dayNotices(S.day).filter(function(n){return n.title.indexOf('Captain')<0&&n.title.indexOf('Mall')<0}).length; if(nn) hd.textContent+=' \u00b7 \u26a0 '+(dayNotices(S.day).some(function(n){return n.title.indexOf('RMT')===0})?'RMT strike':'Guard'); }
     if(!L.length) h='<p class="note" style="margin:0">Nothing scheduled for this day.</p>';
     L.forEach(function(e){
       h+='<div class="evrow"><div style="min-width:0"><div>'+esc(e.title||'Event')+'</div>'+(e.notes?'<div class="d" style="font-size:12px;color:var(--muted)">'+esc(e.notes)+'</div>':'')
@@ -3675,7 +3689,7 @@ html{overscroll-behavior-x:none}
     });
     var N=dayNotices(S.day);
     if(N.length){ h+='<div class="note" style="margin:14px 0 4px;font-weight:600">Driver notices</div>';
-      N.forEach(function(n,ni){ h+='<div class="evrow" style="border-left:3px solid var(--nt-line);padding-left:10px"><div style="min-width:0"><div>'+esc(n.title)+'</div><div class="d" style="font-size:12px;color:var(--muted)">'+esc(n.notes)+'</div>'+(n.rep?'<button class="rc" type="button" data-nrep="'+ni+'">Add every Mon, Wed, Fri</button>':'')+(n.start!=='All day'?'<button class="rc" type="button" data-nadd="'+ni+'">Add to my schedule</button>':'')+'</div><div class="tm">'+esc(n.start)+'</div></div>'; }); }
+      N.forEach(function(n,ni){ h+='<div class="evrow" style="border-left:3px solid var(--nt-line);padding-left:10px"><div style="min-width:0"><div>'+esc(n.title)+'</div><div class="d" style="font-size:12px;color:var(--muted)">'+esc(n.notes)+'</div>'+(n.rep?'<button class="rc" type="button" data-nrep="'+ni+'">Add every Mon, Wed, Fri</button>':'')+(tmin(n.start)!=null?'<button class="rc" type="button" data-nadd="'+ni+'">Add to my schedule</button>':'')+'</div><div class="tm">'+esc(n.start)+'</div></div>'; }); }
     el.innerHTML=h;
     Array.prototype.forEach.call(el.querySelectorAll('[data-evskip]'),function(b){ b.addEventListener('click',function(){ var id=b.getAttribute('data-evskip'), e=S.events[id]; if(!e||!S.db) return; var sk=(e.skip||[]).concat([S.day]); S.db.collection('events').doc(id).set(Object.assign({},e,{skip:sk,ts:Date.now()})).then(function(){ toast('Skipped this day'); }).catch(fail); }); });
     Array.prototype.forEach.call(el.querySelectorAll('[data-nrep],[data-nadd]'),function(b){ b.addEventListener('click',function(){
@@ -3755,8 +3769,8 @@ html{overscroll-behavior-x:none}
     $('f-title').textContent=dayLabel(S.day);
     var ev=dayEvents(S.day), N=dayNotices(S.day), allh='', items=[];
     ev.forEach(function(e){ var a=tmin(e.start); if(a==null){ allh+='<div class="chip2 ev" data-fe="'+esc(e.id)+'">'+esc(e.title||'Event')+' \u00b7 all day</div>'; return; } var b=tmin(e.end); if(b==null||b<=a) b=a+60; items.push({a:a,b:b,t:(e.title||'Event'),sub:hhmm(a)+'\u2013'+hhmm(b),id:e.id,nt:false}); });
-    N.forEach(function(n){ var a=tmin(n.start); if(a==null){ allh+='<div class="chip2"><b>'+esc(n.title)+'</b> \u00b7 all day<div style="font-size:12px;color:var(--muted)">'+esc(n.notes)+'</div></div>'; return; }
-      var dur=n.end?tmin(n.end)-a:(n.title.indexOf('Captain')>=0?30:45); items.push({a:a,b:a+dur,t:n.title,sub:n.start+' (ceremony)',nt:true,notes:n.notes}); });
+    N.forEach(function(n){ var a=tmin(n.start); if(a==null){ allh+='<div class="chip2"><b>'+esc(n.title)+'</b> \u00b7 '+esc(n.start==='All day'?'all day':n.start.toLowerCase())+'<div style="font-size:12px;color:var(--muted)">'+esc(n.notes)+'</div></div>'; return; }
+      var dur=n.end?tmin(n.end)-a:(n.title.indexOf('Captain')>=0?30:45); items.push({a:a,b:a+dur,t:n.title,sub:n.end?n.start+'\u2013'+n.end:n.start+' (ceremony)',nt:true,notes:n.notes}); });
     $('f-allday').innerHTML=allh;
     items.sort(function(x,y){return x.a-y.a||x.b-y.b});
     var cols=[]; items.forEach(function(it){ var c=0; while(cols[c]!=null && cols[c]>it.a) c++; cols[c]=it.b; it.c=c; });
