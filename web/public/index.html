@@ -772,6 +772,39 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
 .fx-pin.a{background:#39d98a} .fx-pin.b{background:#ff5c6c}
 .fx-ex summary{cursor:pointer;font-weight:700;color:var(--accent);list-style:none;min-height:28px}
 .fx-ex summary::-webkit-details-marker{display:none}
+/* Set up my app (Matt, 11 Nov 2026) */
+.ovl .sheet.su-sheet{width:min(100%,560px);max-height:94vh;padding:0;display:flex;flex-direction:column;overflow:hidden}
+.su-scroll{overflow:auto;padding:16px 16px 8px;flex:1;min-height:0}
+.su-foot{padding:10px 16px calc(12px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line);background:var(--surface)}
+.su-steps{list-style:none;margin:8px 0 0;padding:0}
+.su-step{position:relative;padding:18px 0 18px 42px;border-top:1px solid var(--line)}
+.su-step:first-child{border-top:0}
+.su-num{position:absolute;left:0;top:18px;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:15px;border:2px solid var(--line);color:var(--muted)}
+.su-step.done .su-num{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.su-step h3{margin:3px 0 4px;font-size:17px;line-height:1.25}
+.su-step .help{margin-bottom:10px}
+.su-exp{border:1px solid var(--line);border-radius:12px;margin-bottom:8px}
+.su-exp.on{border-color:var(--accent)}
+.su-exp>label{display:flex;gap:12px;align-items:center;padding:12px;margin:0;color:var(--ink);font-size:15px;cursor:pointer}
+.su-exp>label input{width:22px;height:22px;accent-color:var(--accent);flex:none;margin:0}
+.su-exp small{display:block;color:var(--muted);font-size:12px}
+.su-expd{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 12px 12px 46px}
+.su-tick{display:flex;gap:10px;align-items:center;margin:0;font-size:14px;color:var(--ink);cursor:pointer}
+.su-tick input{width:20px;height:20px;accent-color:var(--accent);flex:none;margin:0}
+.su-expd .su-tick{grid-column:1/-1}
+.su-add{width:100%;margin-top:2px;background:none;border:1.5px dashed var(--line);border-radius:12px;padding:12px;min-height:46px;cursor:pointer;color:var(--ink);font-weight:600}
+.su-fees{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.su-fees input{width:96px!important}
+.su-count{display:block;font-size:13px;font-weight:500;opacity:.8;text-transform:none;letter-spacing:0}
+.su-out{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-top:10px}
+.su-out h3{margin:0 0 4px;font-size:16px}
+.su-out ul{margin:4px 0 0;padding-left:20px}
+.su-out li{margin:3px 0}
+.su-out a{color:var(--accent);font-weight:600}
+.su-tot{display:flex;justify-content:space-between;border-top:1px solid var(--line);margin-top:8px;padding-top:8px;font-weight:600}
+.ru-flag{font-size:12px;margin-top:2px}
+.ru-inline{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;align-items:end}
+.ru-inline .field{margin:0}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -862,21 +895,26 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
       </details>
 
     </div>
+    <div class="card" id="rx-check" hidden></div>
     <details class="card rucard" id="ru-card"><summary class="rusum"><span class="rul">Expense rules</span><span class="ruc" id="ru-count"></span><span class="rubtn">Set rules</span></summary>
       <div style="margin-top:12px">
-      <p class="help">A rule adds an expense for you, for example rent of £410 a week, spread as a daily amount. When the real payment is entered or imported for that week, it replaces the rule for that week.</p>
+      <p class="help">A rule adds a regular expense for you, for example rent of £410 a week or insurance of £120 a month, spread as a daily amount. When the real payment is entered or imported for that week, month or year, it replaces the rule for that time, so nothing is counted twice.</p>
       <div id="ru-list"></div>
       <details id="ru-form" style="margin-top:10px"><summary id="ru-sum">Add a rule</summary>
         <div style="margin-top:12px">
           <div class="two">
             <div class="field"><label for="ru-cat">Category</label><select id="ru-cat"></select></div>
-            <div class="field"><label for="ru-amt">Per week (£)</label><input type="text" class="money" id="ru-amt" inputmode="numeric" autocomplete="off" placeholder="0.00"></div>
+            <div class="field"><label for="ru-amt">Amount (£)</label><input type="text" class="money" id="ru-amt" inputmode="numeric" autocomplete="off" placeholder="0.00"></div>
+          </div>
+          <div class="two">
+            <div class="field"><label for="ru-freq">How often</label><select id="ru-freq"><option value="week">A week</option><option value="month">A month</option><option value="year">A year</option></select></div>
+            <div class="field" style="align-self:end"><label class="su-tick" style="min-height:44px"><input type="checkbox" id="ru-vat"> VAT included</label></div>
           </div>
           <div class="two">
             <div class="field"><label for="ru-from">Starts</label><input type="date" id="ru-from"></div>
             <div class="field"><label for="ru-until">Until (optional)</label><input type="date" id="ru-until"></div>
           </div>
-          <p class="note" style="margin:0 0 10px">To change the amount from a certain date, end this rule the day before and add a new one.</p>
+          <p class="note" style="margin:0 0 10px" id="ru-note">To change the amount from a chosen date, use <b>Change amount</b> on the rule. Earlier days keep the old amount.</p>
           <button class="btn" id="ru-save" type="button">Save rule</button>
           <button class="btn ghost small" id="ru-cancel" type="button" hidden style="margin-top:10px;width:100%">Cancel editing</button>
         </div>
@@ -946,7 +984,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
       <div id="ts-list"></div>
     </div>
     <div class="card" id="st-card">
-      <h2>Taxi app statements and Heathrow drop-offs</h2><p class="help" style="margin:-4px 0 8px"><b>FreeNow, Gett, Uber, Curb, ComCab, Taxiworld and Heathrow drop-offs.</b> Their files go here, not in the bank box further down. <a href="/help.html#statements" target="_blank" rel="noopener">How to get each app's statements</a></p><details style="margin:-2px 0 10px"><summary style="cursor:pointer" class="note">Heathrow drop-offs paid by AutoPay from another card? Where to get the file</summary><p class="note" style="margin:6px 0 0">Go to <a href="https://www.heathrow.com/dropoff" target="_blank" rel="noopener noreferrer">heathrow.com/dropoff</a> → <b>Sign in</b> (personal or business account) → your trip / payment history → download it as CSV or Excel. Then choose that file here: each paid drop-off is added as a Parking / drop-off cost. Skip this if your drop-offs come out of the bank account you import.</p></details>
+      <h2>Taxi app statements and Heathrow drop-offs</h2><p class="help" style="margin:-4px 0 8px"><b id="st-apps">FreeNow, Gett, Uber, Curb, ComCab, Taxiworld and Heathrow drop-offs.</b> Their files go here, not in the bank box further down. <a href="/help.html#statements" target="_blank" rel="noopener">How to get each app's statements</a></p><details style="margin:-2px 0 10px"><summary style="cursor:pointer" class="note">Heathrow drop-offs paid by AutoPay from another card? Where to get the file</summary><p class="note" style="margin:6px 0 0">Go to <a href="https://www.heathrow.com/dropoff" target="_blank" rel="noopener noreferrer">heathrow.com/dropoff</a> → <b>Sign in</b> (personal or business account) → your trip / payment history → download it as CSV or Excel. Then choose that file here: each paid drop-off is added as a Parking / drop-off cost. Skip this if your drop-offs come out of the bank account you import.</p></details>
       <p class="help">Choose one or more statements: FreeNow's weekly PDFs, Gett's daily or weekly PDFs, Curb's reports (PDF, Excel or CSV), ComCab's driver statement and pay sheet, Uber's weekly statements (as many weeks as you like) or your Uber earnings CSV, your Heathrow drop-off account download (CSV or Excel), or Taxiworld's payment PDF. You can pick several at once. Cab Books works out which is which, checks the totals add up, and adds each job once. Reading the same statement again is safe.</p>
       <div class="field"><label for="st-file">Choose your files (PDF, Excel or CSV)</label><input type="file" id="st-file" multiple></div>
       <div class="field" style="margin-bottom:0"><label>When FreeNow or Gett say “cash”, the customer paid</label>
@@ -1087,6 +1125,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
 <div class="toast" id="toast" hidden></div>
 <div class="ovl" id="setovl" hidden role="dialog" aria-modal="true" aria-label="Settings"><div class="sheet"><div class="cardhead"><h2 style="margin:0">Settings</h2><button type="button" class="iconbtn" id="set-close" aria-label="Close settings">✕</button></div><div id="set-body"></div></div></div>
 <div class="ovl" id="welcome" hidden role="dialog" aria-modal="true" aria-labelledby="wl-t"><div class="sheet"><div id="wl-body"></div></div></div>
+<div class="ovl" id="setupovl" hidden role="dialog" aria-modal="true" aria-labelledby="su-t"><div class="sheet su-sheet" id="su-body"></div></div>
 <div class="ovl" id="opening" hidden role="dialog" aria-modal="true" aria-labelledby="op-t"><div class="sheet"><div id="op-body"></div></div></div>
 <div class="ovl" id="admovl" hidden role="dialog" aria-modal="true" aria-label="Admin"><div class="sheet" style="width:min(100%,760px)"><div id="adm-body"></div></div></div>
 <div class="ovl" id="rpovl" hidden role="dialog" aria-modal="true" aria-label="Receipt photo"><div class="sheet"><div id="rp-body"></div></div></div>
@@ -1114,7 +1153,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   function lsSet(k,v){try{localStorage.setItem(k,v)}catch(e){}}
 
   /* ---------- calculation ---------- */
-  var PK={taxiworld:1,helix:1,hips:1,uber:1,comcab:1,curb:1,freenow:1,gett:1};
+  var PK={taxiworld:1,helix:1,hips:1,uber:1,comcab:1,curb:1,freenow:1,gett:1,sumup:1,othercard:1};
   function pkey(name){var k=String(name||'').toLowerCase().replace(/\s+/g,'');return PK[k]?k:null}
   function eAmt(e){return (+e.amount||0)+(+e.extras||0)}
   /* A month's figure = loaded statement total + imported rows + manual entries not yet covered by records.
@@ -1210,7 +1249,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     var isPlan=C.planned[ci];
     var md=S.months[C.keys[ci]];
     var nl=C.nextLimit[ci+1];
-    var h=openingBanner();
+    var h=openingBanner()+vatRegCard();
     h+='<div class="card hero"><div class="row"><div class="label">Rolling 12 months to end of '+esc(mlabel(C.keys[ci]))+'</div><span class="pill '+s.c+'">'+s.t+(isPlan?' (plan)':'')+'</span></div>';
     h+='<div class="big">'+(head>=0?gbp0.format(head):'−'+gbp0.format(-head))+'</div>';
     h+='<div class="label">'+(head>=0?'left before the '+gbp0.format(st.threshold)+' VAT line':'over the VAT line')+'</div>';
@@ -1336,7 +1375,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     curb:['#00A86B','#FFFFFF'],curbflow:['#00A86B','#FFFFFF'],hips:['#E6007E','#FFFFFF'],comcab:['#1E2B5C','#FFFFFF'],helix:['#5A2D8C','#FFFFFF'],taxiworld:['#0B63B6','#FFFFFF'],blackcab:['#000000','#FF8A00']};
   function bkey(n){ return String(n||'').toLowerCase().replace(/\s+/g,''); }
   /* Names shown on screen where the saved name differs (saved names stay the same so old jobs still match). */
-  var PNAME={helix:'Helix Pay',curbflow:'Curb Flow',hips:'HIPS',freenow:'FreeNow'};
+  var PNAME={helix:'Helix Pay',curbflow:'Curb Flow',hips:'HIPS',freenow:'FreeNow',sumup:'SumUp',othercard:'Other card machine'};
   function pname(n){ return PNAME[bkey(n)]||n; }
   function popt(n,sel){ return '<option value="'+esc(n)+'"'+(sel?' selected':'')+'>'+esc(pname(n))+'</option>'; }
   function brand(n){ return BRAND[bkey(n)]||null; }
@@ -1402,6 +1441,8 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     {k:'cash',n:'Cash fares',need:'Any fares paid in cash that no app recorded.',chk:'Entered as jobs on the Today tab.'}
   ];
   var CL_ST={waiting:'Waiting',received:'Received',checked:'Checked'};
+  /* Only the apps this driver uses (Settings → Providers I use, or Set up my app). Bank and cash fares always. */
+  function closeSrcs(){ var P={freenow:'Freenow',gett:'Gett',curb:'Curb',uber:'Uber'}; return CLOSE_SRC.filter(function(x){ return !P[x.k]||provShown(P[x.k]); }); }
   function clRead(src,k){
     if(src!=='freenow'&&src!=='gett'&&src!=='curb') return '';
     var a=k+'-01', b=k+'-31', L=Object.keys(S.stmts||{}).map(function(i){return S.stmts[i]}).filter(function(s){ return pkey(s.prov)===src&&s.from&&s.to&&s.from<=b&&s.to>=a; });
@@ -1413,13 +1454,13 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   function renderClose(){
     var k=S.closeMonth||closeMonthDefault(); S.closeMonth=k;
     var c=(S.closes&&S.closes[k])||{}, src=c.src||{};
-    var done=CLOSE_SRC.filter(function(x){return src[x.k]&&src[x.k].s==='checked'}).length, all=CLOSE_SRC.length;
+    var SRCS=closeSrcs(), done=SRCS.filter(function(x){return src[x.k]&&src[x.k].s==='checked'}).length, all=SRCS.length;
     var pill=c.closed?'<span class="pill ok">Closed</span>':'<span class="pill amber">Estimate</span>';
     var h='<div class="card" id="close-card"><div class="cardhead"><h2>Monthly checks</h2>'+pill+'</div>';
     h+='<div class="nav"><button type="button" id="cl-prev" aria-label="Previous month">&#8249;</button><span class="ttl">'+esc(mlabel(k))+'</span><button type="button" id="cl-next" aria-label="Next month">&#8250;</button></div>';
     h+='<div class="cl-prog"><span>'+done+' of '+all+' sources checked</span>'+(c.closedAt?'<span>Closed '+esc(c.closedAt.slice(0,10))+'</span>':'')+'</div><div class="pbar"><i style="width:'+Math.round(done/all*100)+'%"></i></div>';
     if(!c.closed) h+='<p class="help" style="margin:10px 0 0">The month counts as an estimate until every source below is checked against the bank.</p>';
-    CLOSE_SRC.forEach(function(x){
+    SRCS.forEach(function(x){
       var v=src[x.k]||{}, s=v.s||'waiting';
       h+='<div class="cl-src"><div class="top"><span class="nm">'+(x.k==='bank'?'':pdot(x.k))+esc(x.n)+'</span></div>'
         +'<div class="need">'+esc(x.need)+'</div><div class="chk">Check: '+esc(x.chk)+'</div>'+clRead(x.k,k)
@@ -2274,16 +2315,18 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   }
 
   /* ---------- fees ---------- */
-  var PROVS=['Freenow','Gett','CurbFlow','ComCab','Jump','Uber','Curb','Taxiworld','Helix','HIPS','Blackcab','Other','Hand','Private'];
-  var PROV_OFF=['Taxiworld','Helix','HIPS','CurbFlow']; /* hidden until a driver switches them on in 'Providers I use' */
+  var PROVS=['Freenow','Gett','CurbFlow','ComCab','Jump','Uber','Curb','Taxiworld','Helix','HIPS','SumUp','OtherCard','Blackcab','Other','Hand','Private'];
+  var PROV_OFF=['Taxiworld','Helix','HIPS','CurbFlow','SumUp','OtherCard']; /* hidden until a driver switches them on in 'Providers I use' */
   /* Card payments = the card machine/system in the cab (Curb, Taxiworld, Helix Pay, HIPS). Curb Flow = Curb's job app (like FreeNow). */
-  var PGROUPS=[['Job apps',['Freenow','Gett','CurbFlow','Uber','Jump','ComCab','Blackcab','Other']],['Card machine in my cab',['Curb','Taxiworld','Helix','HIPS']],['Other fares',['Hand','Private']]];
-  var CARDSYS=['Curb','HIPS','Helix','Taxiworld'], CARDK={curb:1,hips:1,helix:1,taxiworld:1};
+  var PGROUPS=[['Job apps',['Freenow','Gett','CurbFlow','Uber','Jump','ComCab','Blackcab','Other']],['Card machine in my cab',['Curb','Taxiworld','Helix','HIPS','SumUp','OtherCard']],['Other fares',['Hand','Private']]];
+  var CARDSYS=['Curb','HIPS','Helix','Taxiworld','SumUp','OtherCard'], CARDK={curb:1,hips:1,helix:1,taxiworld:1,sumup:1,othercard:1};
+  /* 'None' in Set up my app: no card machine. Card fares then carry no card fee. */
+  function noCardMachine(){ return !!(S.setup&&S.setup.a&&S.setup.a.card==='None') && !CARDSYS.some(provShown); }
   function isCardK(k){ return !!CARDK[k]; }
   /* The driver's own card system: the first one switched on in 'Providers I use' (Curb if none). */
-  function cardSys(){ var c=CARDSYS.filter(provShown); return c[0]||'Curb'; }
+  function cardSys(){ var c=CARDSYS.filter(provShown); return c[0]||(noCardMachine()?'OtherCard':'Curb'); }
   /* Card fee as [% , £ per payment]. Curb charges 2.75% + 20p a payment (plus 25p a payout). */
-  function cardRate(p){ p=p||cardSys(); if(bkey(p)==='curb'){ var d=feeDefault('Curb','Card')||[2.75]; return [Math.abs(d[0]),0.20]; } var r=feeDefault(p,'Card')||[0,0]; return [Math.abs(+r[0]||0),Math.abs(+r[1]||0)]; }
+  function cardRate(p){ if(!p&&noCardMachine()) return [0,0]; p=p||cardSys(); if(bkey(p)==='curb'){ var d=feeDefault('Curb','Card')||[2.75]; return [Math.abs(d[0]),0.20]; } var r=feeDefault(p,'Card')||[0,0]; return [Math.abs(+r[0]||0),Math.abs(+r[1]||0)]; }
   function cardNote(){ var p=cardSys(), r=cardRate(p); return pname(p)+'’s '+(+r[0]||0)+'%'+((+r[1]||0)?' + '+Math.round(r[1]*100)+'p':'')+(r[0]||r[1]?'':' (set it in Fee defaults)'); }
   /* Providers added to the app after a driver saved their list (not in 'known'; 'Other' for lists saved before it came back) use their default. */
   function provNew(p){ var kn=S.provKnown; return kn ? kn.indexOf(p)<0 : p==='Other'; }
@@ -2304,12 +2347,12 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   }
   var PAYS=['Account','Card','Cash','Bank transfer'];
   /* Which payment types each provider allows (Matt, 27 Oct). Providers not listed allow all. */
-  var PAYRULE={freenow:['Account','Card','Cash'],gett:['Account','Card','Cash'],jump:['Card','Cash'],blackcab:['Card','Cash'],comcab:['Account','Card','Cash'],curb:['Card'],taxiworld:['Card'],helix:['Card'],hips:['Card'],curbflow:['Account','Card','Cash'],uber:['Account'],hand:['Card','Cash'],private:['Card','Bank transfer'],other:['Account','Card','Cash','Bank transfer']};
+  var PAYRULE={freenow:['Account','Card','Cash'],gett:['Account','Card','Cash'],jump:['Card','Cash'],blackcab:['Card','Cash'],comcab:['Account','Card','Cash'],curb:['Card'],taxiworld:['Card'],helix:['Card'],hips:['Card'],sumup:['Card'],othercard:['Card'],curbflow:['Account','Card','Cash'],uber:['Account'],hand:['Card','Cash'],private:['Card','Bank transfer'],other:['Account','Card','Cash','Bank transfer']};
   function paysFor(p){ return PAYRULE[bkey(p)]||PAYS; }
   /* The card machines this driver uses (Settings → Providers I use → Card machine in my cab); Curb if none. */
-  function cardSysAll(){ var c=CARDSYS.filter(provShown); return c.length?c:['Curb']; }
+  function cardSysAll(){ var c=CARDSYS.filter(provShown); return c.length?c:[noCardMachine()?'OtherCard':'Curb']; }
   /* 'Paid by' buttons: Card becomes one button per card machine (Curb card, HIPS card…). Saved as pay:'Card' + card:<machine>. */
-  function payOpts(p){ var out=[]; paysFor(p).forEach(function(v){ if(v==='Card' && !isCardK(bkey(p))) cardSysAll().forEach(function(c){ out.push({v:'Card',c:c,l:pname(c)+' card'}); }); else out.push({v:v,l:v}); }); return out; }
+  function payOpts(p){ var out=[]; paysFor(p).forEach(function(v){ if(v==='Card' && !isCardK(bkey(p))) cardSysAll().forEach(function(c){ out.push({v:'Card',c:c,l:bkey(c)==='othercard'?'Card':pname(c)+' card'}); }); else out.push({v:v,l:v}); }); return out; }
   /* Fee shown on the job form. Street/own jobs paid by card in the cab take the card machine's fee only.
      ComCab jobs paid by card take ComCab's commission (fare only) PLUS the card machine's fee (fare + extras) – Matt, 3 Nov 2026.
      App jobs (Gett, FreeNow…) paid by card in the cab take the app's commission PLUS the card machine's fee (Matt and Marcin, 31 Oct). */
@@ -2439,7 +2482,9 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
 
   /* ---------- day page ---------- */
   S.prov='Freenow'; S.pay='Account'; S.day=todayISO(); S.editId=null; S.addOpen=null;
-  var EXPCATS=['Car rental','Petrol','Electric charging','Parking / drop-off','Car wash','Cab repairs / parts','Cleaning / admin supplies','Union','Phone / broadband','Paid another driver (shared job)','Other'];
+  var EXPCATS=['Car rental','Cab finance','Petrol','Electric charging','Parking / drop-off','Car wash','Cab repairs / parts','Insurance','Cleaning / admin supplies','Union','Phone / broadband','Card machine fees','Radio / account fees','Accountant','Licence fees','Paid another driver (shared job)','Other'];
+  /* The categories above plus any of a driver's own, from regular expenses they added themselves (Set up my app). */
+  function expCats(){ var o=EXPCATS.slice(0,-1); Object.keys(S.rules||{}).forEach(function(id){ var c=S.rules[id]&&S.rules[id].category; if(c&&o.indexOf(c)<0&&c!=='Other') o.push(c); }); o.push('Other'); return o; }
   function dayLabel(iso){var p=iso.split('-'),d=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][dowOf(iso)],ML=['January','February','March','April','May','June','July','August','September','October','November','December'];return d+' '+(+p[2])+' '+ML[+p[1]-1]+(p[0]!==String(new Date().getFullYear())?' '+p[0]:'')}
   function dayData(iso){
     var C=compute(S.entries), EI=expImpMap(), D={rows:[],gross:0,fees:0,tips:0,pay:{},exp:[],expTotal:0,expEst:0};
@@ -2450,7 +2495,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
       else if(e.kind==='expense'){ if(expSuperseded(e,EI,false)) return; D.exp.push(e); D.expTotal+=+e.amount||0; if(e.src!=='import') D.expEst+=+e.amount||0; }
     });
     D.rows.sort(function(a,b){return (a.e.ts||0)-(b.e.ts||0)});
-    virtualExp(iso,iso,true).forEach(function(v){ D.exp.push({id:'v-'+v.rid+'-'+iso,category:v.category,amount:v.amount,virtual:true,note:v.rid==='homecharge'?'Home charging (a working day)':'Rule: '+gbp2.format((S.rules[v.rid]&&+S.rules[v.rid].amount)||0)+' a week'}); D.expTotal+=v.amount; D.expEst+=v.amount; });
+    virtualExp(iso,iso,true).forEach(function(v){ D.exp.push({id:'v-'+v.rid+'-'+iso,category:v.category,amount:v.amount,virtual:true,note:v.rid==='homecharge'?'Home charging (a working day)':'Rule: '+gbp2.format((S.rules[v.rid]&&+S.rules[v.rid].amount)||0)+' '+FQ_WORD[ruleFreq(S.rules[v.rid])]}); D.expTotal+=v.amount; D.expEst+=v.amount; });
     return D;
   }
   function taxRate(){ var A=agg(period({mode:'taxyear',off:0})), p=taxProfit(A); if(!(p>0)) return 0; return taxEst(p).total/p; }
@@ -2995,7 +3040,24 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     return !!(cov&&e.date<=cov);
   }
   function expCov(k){ var md=S.months[k]; if(!md) return ''; return md.expCovered||(md.open?'':k+'-31'); }
-  function weekActual(r,d){ var m=mondayOf(d), e=dayAdd(m,6); return S.entries.some(function(x){return x.kind==='expense'&&x.category===r.category&&x.date>=m&&x.date<=e}); }
+  /* Rules (settings in rules/<id>): {category, amount, freq 'week'|'month'|'year' (old rules: 'weekly'), start, end?, vat?, pauses:[{from,to}],
+     sk (the Set up my app answer it came from)}. The amount is spread as a daily figure. A real payment of the same category
+     in the same week, month or year (typed in or from the bank) replaces the rule for that time, so it is never counted twice. */
+  function ruleFreq(r){ var f=String(r&&r.freq||''); return /^month/.test(f)?'month':/^year/.test(f)?'year':'week'; }
+  function rulePerDay(r){ var a=+r.amount||0, f=ruleFreq(r); return f==='month'?a*12/365:f==='year'?a/365:a/7; }
+  var FQ_WORD={week:'a week',month:'a month',year:'a year'}, FQ_WEEK={week:1,month:12/52,year:1/52};
+  function rulePeriod(r,d){
+    var f=ruleFreq(r);
+    if(f==='month'){ var k=d.slice(0,7); return [k+'-01',eom(k)]; }
+    if(f==='year'){ var md=(r.start||d).slice(4), y=+d.slice(0,4), a=y+md; if(a>d) a=(y-1)+md; return [a,dayAdd((+a.slice(0,4)+1)+md,-1)]; }
+    var m=mondayOf(d); return [m,dayAdd(m,6)];
+  }
+  function periodLabel(r,p){ var f=ruleFreq(r); return f==='month'?mlabel(p[0].slice(0,7)):f==='year'?dlabel(p[0])+' to '+dlabel(p[1]):'the week of '+dlabel(p[0]); }
+  function periodActual(r,d,memo){ var p=rulePeriod(r,d), key=(r.category||'')+'|'+p[0]; if(memo&&key in memo) return memo[key];
+    var v=S.entries.some(function(x){return x.kind==='expense'&&x.category===r.category&&x.date>=p[0]&&x.date<=p[1]}); if(memo) memo[key]=v; return v; }
+  function weekActual(r,d){ return periodActual(r,d); }
+  function rulePaused(r,d){ return (r.pauses||[]).some(function(p){ return p&&p.from&&d>=p.from&&(!p.to||d<=p.to); }); }
+  function ruleLive(r,t){ t=t||todayISO(); return !!r&&r.active!==false&&!(r.end&&r.end<t); }
   /* ---------- Days worked and home charging (Matt, 10 Nov 2026) ----------
      A working day is a date with at least one real job (typed in, or from a statement), not practice and not a
      bank estimate (those are payment dates). Jobs before 5am count towards the day before, so a night shift is one day.
@@ -3025,33 +3087,107 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     if(chargeOn()){ var cf=from>S.charge.from?from:S.charge.from; if(cf<=to) workedIn(cf,to).forEach(function(d){ out.push({date:d,category:'Electric charging',amount:+S.charge.perDay,rid:'homecharge',virtual:true}); }); }
     Object.keys(S.rules).forEach(function(id){
       var r=S.rules[id]; if(!r||r.active===false) return; var amt=+r.amount||0; if(!(amt>0)||!r.start) return;
-      var a=from>r.start?from:r.start, z=(r.end&&r.end<to)?r.end:to, d=a, g=0;
+      var a=from>r.start?from:r.start, z=(r.end&&r.end<to)?r.end:to, d=a, g=0, pd=rulePerDay(r), memo={};
       while(d<=z && g++<800){
         var cov=expCov(d.slice(0,7));
-        if(!(!ignoreCov&&cov&&d<=cov) && !weekActual(r,d)) out.push({date:d,category:r.category,amount:amt/7,rid:id,virtual:true});
+        if(!(!ignoreCov&&cov&&d<=cov) && !rulePaused(r,d) && !periodActual(r,d,memo)) out.push({date:d,category:r.category,amount:pd,rid:id,virtual:true});
         d=dayAdd(d,1);
       }
     });
     return out;
   }
   function nextMonday(){ return mondayOf(todayISO()); }
+  /* Full books: has this rule's last whole week, month or year (up to the bank statement) gone out of the bank as expected? */
+  function ruleCheck(r){
+    if(S.mode==='track'||!S.bankCov||!r.start) return null;
+    var p=rulePeriod(r,S.bankCov); if(p[1]>S.bankCov) p=rulePeriod(r,dayAdd(p[0],-1));
+    if(p[0]<r.start||(r.end&&r.end<p[1])||rulePaused(r,p[0])) return null;
+    var paid=0, n=0; S.entries.forEach(function(x){ if(x.kind==='expense'&&x.src==='import'&&x.category===r.category&&x.date>=p[0]&&x.date<=p[1]){ paid+=+x.amount||0; n++; } });
+    var amt=+r.amount||0, lab=periodLabel(r,p);
+    if(!n) return {bad:true,t:'Not found in your bank for '+lab+'.'};
+    if(Math.abs(paid-amt)>Math.max(1,amt*0.02)) return {bad:true,t:'Your bank shows '+gbp2.format(paid)+' for '+lab+', not '+gbp2.format(amt)+'.'};
+    return {bad:false,t:'Matched to your bank for '+lab+'.'};
+  }
+  S.ruOpen=null;
   function renderRules(){
     var el=$('ru-list'); if(!el) return;
+    rxCheck();
     if(!S.db){ el.innerHTML=''; return; }
-    var ids=Object.keys(S.rules).sort(function(a,b){return (S.rules[a].start||'')<(S.rules[b].start||'')?-1:1}), h='';
+    var cs=$('ru-cat'); if(cs){ var cv=cs.value, cats=expCats(); if(cs.options.length!==cats.length){ cs.innerHTML=cats.map(function(x){return '<option>'+esc(x)+'</option>'}).join(''); if(cv) cs.value=cv; } }
+    var ae=document.activeElement; if(ae&&el.contains(ae)&&/INPUT|SELECT/.test(ae.tagName)) return;
+    var t=todayISO(), ids=Object.keys(S.rules).sort(function(a,b){return (S.rules[a].start||'')<(S.rules[b].start||'')?-1:1}), h='', live=0;
     if(!ids.length) h='<p class="note" style="margin:0">No rules yet.</p>';
     ids.forEach(function(id){
-      var r=S.rules[id], w=+r.amount||0;
-      h+='<div class="logitem"><div><div>'+esc(r.category)+'</div><div class="d">'+gbp2.format(w)+' a week · '+gbp2.format(w/7)+' a day · from '+esc(dlabel(r.start))+(r.end?' until '+esc(dlabel(r.end)):'')+'</div>'
-        +'<button class="rc" type="button" data-ruedit="'+esc(id)+'">Edit</button><button class="del'+(ruArmed===id?' arm':'')+'" style="display:inline-block" type="button" data-rudel="'+esc(id)+'">'+(ruArmed===id?'Tap again to delete':'Delete')+'</button></div></div>';
+      var r=S.rules[id], w=+r.amount||0, f=ruleFreq(r), on=ruleLive(r,t); if(on) live++;
+      var pz=(r.pauses||[]).filter(function(p){ return p&&p.from&&(!p.to||p.to>=t); }), ck=on?ruleCheck(r):null, op=S.ruOpen&&S.ruOpen.id===id?S.ruOpen.kind:'';
+      h+='<div class="logitem"><div style="min-width:0;flex:1"><div>'+esc(r.category)+(r.vat?' <span class="badge">VAT incl.</span>':'')+'</div><div class="d">'+gbp2.format(w)+' '+FQ_WORD[f]+(f==='week'?' · '+gbp2.format(w/7)+' a day':' · about '+gbp2.format(w*FQ_WEEK[f])+' a week')+' · from '+esc(dlabel(r.start))+(r.end?' until '+esc(dlabel(r.end)):'')+'</div>'
+        +pz.map(function(p){ return '<div class="d" style="color:var(--warn)">Paused '+esc(dlabel(p.from))+(p.to?' to '+esc(dlabel(p.to)):'')+'</div>'; }).join('')
+        +(ck?'<div class="ru-flag" style="color:'+(ck.bad?'var(--warn)':'var(--ok)')+'">'+(ck.bad?'⚠ ':'✓ ')+esc(ck.t)+'</div>':'')
+        +(on?'<button class="rc" type="button" data-ruchg="'+esc(id)+'">Change amount</button><button class="rc" type="button" data-rupz="'+esc(id)+'">'+(pz.length?'Pauses':'Pause')+'</button>':'')
+        +'<button class="rc" type="button" data-ruedit="'+esc(id)+'">Edit</button><button class="del'+(ruArmed===id?' arm':'')+'" style="display:inline-block" type="button" data-rudel="'+esc(id)+'">'+(ruArmed===id?'Tap again to delete':'Delete')+'</button>';
+      if(op==='chg') h+='<div class="ru-inline"><div class="field"><label for="ruc-amt">New amount (£) '+FQ_WORD[f]+'</label><input type="text" class="money" id="ruc-amt" inputmode="numeric" autocomplete="off" placeholder="0.00"></div><div class="field"><label for="ruc-from">From</label><input type="date" id="ruc-from" value="'+esc(t>r.start?t:dayAdd(r.start,1))+'"></div>'
+        +'<button class="btn small" type="button" data-ruchgsave="'+esc(id)+'">Save new amount</button><button class="btn ghost small" type="button" data-ruclose="1">Cancel</button></div><p class="note" style="margin-top:6px">Days before that date keep '+gbp2.format(w)+'.</p>';
+      if(op==='pz') h+=pz.map(function(p){ var i=(r.pauses||[]).indexOf(p); return '<div class="d" style="margin-top:6px">'+esc(dlabel(p.from))+(p.to?' to '+esc(dlabel(p.to)):'')+' <button class="rc" type="button" data-rupzdel="'+esc(id)+'|'+i+'">Remove this pause</button></div>'; }).join('')
+        +'<div class="ru-inline"><div class="field"><label for="rup-from">Pause from</label><input type="date" id="rup-from" value="'+esc(t)+'"></div><div class="field"><label for="rup-to">Back on</label><input type="date" id="rup-to" value="'+esc(dayAdd(t,13))+'"></div>'
+        +'<button class="btn small" type="button" data-rupzsave="'+esc(id)+'">Save pause</button><button class="btn ghost small" type="button" data-ruclose="1">Cancel</button></div><p class="note" style="margin-top:6px">For holidays: nothing is added between those dates. A payment that still goes out of your bank is still counted.</p>';
+      h+='</div></div>';
     });
     el.innerHTML=h;
-    var rc=$('ru-count'); if(rc) rc.textContent=ids.length?ids.length+' active':'none set';
+    Array.prototype.forEach.call(el.querySelectorAll('input.money'),moneyInput);
+    var rc=$('ru-count'); if(rc) rc.textContent=live?live+' active':'none set';
     Array.prototype.forEach.call(el.querySelectorAll('[data-ruedit]'),function(b){ b.addEventListener('click',function(){ editRule(b.getAttribute('data-ruedit')); }); });
     Array.prototype.forEach.call(el.querySelectorAll('[data-rudel]'),function(b){ b.addEventListener('click',function(){ delRule(b.getAttribute('data-rudel')); }); });
+    Array.prototype.forEach.call(el.querySelectorAll('[data-ruchg]'),function(b){ b.addEventListener('click',function(){ var id=b.getAttribute('data-ruchg'); S.ruOpen=S.ruOpen&&S.ruOpen.id===id&&S.ruOpen.kind==='chg'?null:{id:id,kind:'chg'}; renderRules(); var x=$('ruc-amt'); if(x) x.focus(); }); });
+    Array.prototype.forEach.call(el.querySelectorAll('[data-rupz]'),function(b){ b.addEventListener('click',function(){ var id=b.getAttribute('data-rupz'); S.ruOpen=S.ruOpen&&S.ruOpen.id===id&&S.ruOpen.kind==='pz'?null:{id:id,kind:'pz'}; renderRules(); }); });
+    Array.prototype.forEach.call(el.querySelectorAll('[data-ruclose]'),function(b){ b.addEventListener('click',function(){ S.ruOpen=null; renderRules(); }); });
+    Array.prototype.forEach.call(el.querySelectorAll('[data-ruchgsave]'),function(b){ b.addEventListener('click',function(){ var id=b.getAttribute('data-ruchgsave'), amt=mv('ruc-amt'), d=$('ruc-from').value;
+      if(!(amt>0)){ toast('Type the new amount.'); return; } if(!d){ toast('Choose the date it changes.'); return; }
+      b.disabled=true; ruleChange(id,{amount:amt},d).then(function(){ S.ruOpen=null; toast('New amount from '+dlabel(d)+': '+gbp2.format(amt)); renderRules(); }).catch(fail).then(function(){ b.disabled=false; }); }); });
+    Array.prototype.forEach.call(el.querySelectorAll('[data-rupzsave]'),function(b){ b.addEventListener('click',function(){ var id=b.getAttribute('data-rupzsave'), r=S.rules[id], a=$('rup-from').value, z=$('rup-to').value;
+      if(!a){ toast('Choose the first day of the pause.'); return; } if(z&&z<=a){ toast('The day you’re back is before the pause starts.'); return; }
+      var d=Object.assign({},r); d.pauses=(r.pauses||[]).concat([{from:a,to:z?dayAdd(z,-1):''}]); d.ts=Date.now();
+      S.db.collection('rules').doc(id).set(d).then(function(){ S.ruOpen=null; toast(r.category+' paused from '+dlabel(a)); }).catch(fail); }); });
+    Array.prototype.forEach.call(el.querySelectorAll('[data-rupzdel]'),function(b){ b.addEventListener('click',function(){ var p=b.getAttribute('data-rupzdel').split('|'), r=S.rules[p[0]]; if(!r) return;
+      var d=Object.assign({},r); d.pauses=(r.pauses||[]).filter(function(x,i){ return i!==+p[1]; }); d.ts=Date.now();
+      S.db.collection('rules').doc(p[0]).set(d).then(function(){ toast('Pause removed'); }).catch(fail); }); });
   }
-  function resetRuleForm(){ S.ruleEdit=null; $('ru-cat').value='Car rental'; $('ru-amt').value=''; $('ru-from').value=nextMonday(); $('ru-until').value=''; $('ru-sum').textContent='Add a rule'; $('ru-cancel').hidden=true; $('ru-save').textContent='Save rule'; }
-  function editRule(id){ var r=S.rules[id]; if(!r) return; S.ruleEdit=id; $('ru-cat').value=r.category; setMoney('ru-amt',r.amount); $('ru-from').value=r.start||''; $('ru-until').value=r.end||''; $('ru-sum').textContent='Edit rule'; $('ru-cancel').hidden=false; $('ru-save').textContent='Update rule'; $('ru-form').open=true; $('ru-form').scrollIntoView({behavior:'smooth',block:'center'}); }
+  /* Change a rule from a date without touching the past: the rule ends the day before and a new one starts that day.
+     A rule that hasn't started by then is simply updated. Returns the new rule's id. */
+  function ruleChange(id,ch,from){
+    var r=S.rules[id]; if(!r) return Promise.resolve(id);
+    var nr=Object.assign({},r,ch,{ts:Date.now()});
+    if(!r.start||from<=r.start){ return S.db.collection('rules').doc(id).set(nr).then(function(){ return id; }); }
+    var ended=Object.assign({},r,{end:dayAdd(from,-1),ts:Date.now()}), ref=S.db.collection('rules').doc();
+    nr.start=from; if(r.end&&r.end>=from) nr.end=r.end; else delete nr.end;
+    nr.pauses=(r.pauses||[]).filter(function(p){ return !p.to||p.to>=from; });
+    return S.db.collection('rules').doc(id).set(ended).then(function(){ return ref.set(nr); }).then(function(){ return ref.id; });
+  }
+  /* End a rule the day before a date (or remove it if it hasn't started yet). Days before keep their amounts. */
+  function ruleEnd(id,from){
+    var r=S.rules[id]; if(!r) return Promise.resolve();
+    if(!r.start||r.start>=from) return S.db.collection('rules').doc(id).delete();
+    return S.db.collection('rules').doc(id).set(Object.assign({},r,{end:dayAdd(from,-1),ts:Date.now()}));
+  }
+  /* Optional weekly one-tap check (Set up my app): did the regular expenses go out as usual? settings/regcheck {week, ok}. */
+  S.regchk=null;
+  function rxCheck(){
+    var el=$('rx-check'); if(!el) return;
+    var on=S.db&&S.setup&&S.setup.a&&S.setup.a.weekly, t=todayISO(), wk=mondayOf(t), n=Object.keys(S.rules||{}).filter(function(id){ var r=S.rules[id]; return ruleLive(r,t)&&r.start<wk; }).length;
+    if(!on||!n||(S.regchk&&S.regchk.week===wk)){ el.hidden=true; el.innerHTML=''; return; }
+    if(el.innerHTML) { el.hidden=false; return; }
+    el.innerHTML='<h2 style="margin:0 0 4px">Regular expenses</h2><p class="help">Did your regular expenses go out as usual this week? ('+n+' set up)</p>'
+      +'<div class="two"><button class="btn" type="button" data-rx="yes">Yes, as usual</button><button class="btn ghost" type="button" data-rx="no">Something changed</button></div>';
+    el.hidden=false;
+  }
+  document.addEventListener('click',function(ev){ var b=ev.target.closest&&ev.target.closest('[data-rx]'); if(!b||!S.db) return;
+    var ok=b.getAttribute('data-rx')==='yes', wk=mondayOf(todayISO());
+    S.regchk={week:wk,ok:ok}; S.db.collection('settings').doc('regcheck').set({week:wk,ok:ok,ts:Date.now()}).catch(fail);
+    var el=$('rx-check'); if(el){ el.hidden=true; el.innerHTML=''; }
+    if(ok) toast('Thanks. See you next week.');
+    else { var c=$('ru-card'); if(c){ c.open=true; c.scrollIntoView({behavior:'smooth',block:'start'}); } toast('Use Change amount, Pause or Edit on the one that changed.'); }
+  });
+  function resetRuleForm(){ S.ruleEdit=null; $('ru-cat').value='Car rental'; $('ru-amt').value=''; $('ru-freq').value='week'; $('ru-vat').checked=false; $('ru-from').value=nextMonday(); $('ru-until').value=''; $('ru-sum').textContent='Add a rule'; $('ru-cancel').hidden=true; $('ru-save').textContent='Save rule'; }
+  function editRule(id){ var r=S.rules[id]; if(!r) return; S.ruleEdit=id; $('ru-cat').value=r.category; setMoney('ru-amt',r.amount); $('ru-freq').value=ruleFreq(r); $('ru-vat').checked=!!r.vat; $('ru-from').value=r.start||''; $('ru-until').value=r.end||''; $('ru-sum').textContent='Edit rule'; $('ru-cancel').hidden=false; $('ru-save').textContent='Update rule'; $('ru-form').open=true; $('ru-form').scrollIntoView({behavior:'smooth',block:'center'}); }
   function delRule(id){
     if(ruArmed!==id){ ruArmed=id; renderRules(); clearTimeout(delRule._t); delRule._t=setTimeout(function(){ruArmed=null;renderRules()},3000); return; }
     ruArmed=null; S.db.collection('rules').doc(id).delete().then(function(){toast('Rule deleted')}).catch(fail);
@@ -3059,14 +3195,23 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   function saveRule(){
     if(!S.db){ toast('Sign in to save.'); return; }
     var amt=mv('ru-amt'), from=$('ru-from').value, until=$('ru-until').value;
-    if(!(amt>0)){ toast('Enter the weekly amount.'); return; }
+    if(!(amt>0)){ toast('Enter the amount.'); return; }
     if(!from){ toast('Choose a start date.'); return; }
     if(until && until<from){ toast('The end date is before the start date.'); return; }
-    var data={category:$('ru-cat').value,amount:Math.round(amt*100)/100,freq:'weekly',start:from,active:true,ts:Date.now()};
-    if(until) data.end=until;
-    var ref=S.ruleEdit?S.db.collection('rules').doc(S.ruleEdit):S.db.collection('rules').doc();
+    var fq=$('ru-freq').value||'week', old=S.ruleEdit&&S.rules[S.ruleEdit];
+    var data=Object.assign({},old||{},{category:$('ru-cat').value,amount:Math.round(amt*100)/100,freq:fq,start:from,active:true,vat:$('ru-vat').checked,ts:Date.now()});
+    if(until) data.end=until; else delete data.end;
     $('ru-save').disabled=true;
-    ref.set(data).then(function(){ toast('Rule saved: '+gbp2.format(amt)+' a week'); resetRuleForm(); $('ru-form').open=false; }).catch(fail).then(function(){$('ru-save').disabled=false});
+    var t=todayISO(), job;
+    /* A new amount or frequency on a rule that has already run starts today; earlier days keep the old amount. */
+    if(old&&old.start===from&&from<t&&((+old.amount||0)!==data.amount||ruleFreq(old)!==fq)&&data.category===old.category){
+      var keep=Object.assign({},data); delete keep.start;
+      job=ruleChange(S.ruleEdit,keep,t).then(function(){ toast('New amount from today. Earlier days keep '+gbp2.format(+old.amount||0)+'.'); });
+    } else {
+      var ref=S.ruleEdit?S.db.collection('rules').doc(S.ruleEdit):S.db.collection('rules').doc();
+      job=ref.set(data).then(function(){ toast('Rule saved: '+gbp2.format(amt)+' '+FQ_WORD[ruleFreq(data)]); });
+    }
+    job.then(function(){ resetRuleForm(); $('ru-form').open=false; }).catch(fail).then(function(){$('ru-save').disabled=false});
   }
 
   /* ---------- import ---------- */
@@ -3234,7 +3379,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     if(IN.dup) h+='<p class="note">'+IN.dup+' already brought in.</p>';
     return h+'</div>';
   }
-  function bkCats(){ return EXPCATS.concat(['ignore','later']); }
+  function bkCats(){ return expCats().concat(['ignore','later']); }
   function bkLabel(c){ return c==='ignore'?'Personal / ignore':c==='later'?'Not sure – sort out later':c; }
   /* Money in that isn't from a taxi app (Matt, 3 Nov 2026). Only 'private' and 'refund' change the books. */
   var INCATS=[['later','Not sure – sort out later'],['private','Private job not logged yet (counts for VAT)'],['paid','Payment for a job already in my books'],['share','Money passed between drivers'],['refund','Refund of a business cost'],['ignore','Personal / my own transfer']];
@@ -3879,6 +4024,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   function hmrcLine(cat){
     var c=String(cat||'');
     if(/union|ltda|association|subscri/i.test(c)) return 'union';
+    if(/card machine/i.test(c)) return HM_OTH;
     if(/rent|car|petrol|fuel|diesel|charg|park|drop|wash|valet|toll|congest|insur|repair|tyre|servic|\bmot\b/i.test(c)) return HM_CAR;
     if(/phone|broadband|mobile|internet|admin|station|office|postage/i.test(c)) return HM_OFF;
     return HM_OTH;
@@ -5164,7 +5310,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     var h='<div class="card" id="bar-card"><h2>Bottom bar</h2><p class="help">Tick the buttons you want along the bottom of the screen. To change the order, drag ☰ up or down, or use the arrows. You can also hold a button on the bottom bar and slide it left or right.</p><ul class="barlist" id="barlist">';
     var o=barOrder();
     o.forEach(function(k,i){ var dis=track&&BAR_FULLONLY.indexOf(k)>=0, on=barOn(k)&&!dis;
-      h+='<li data-bk="'+k+'"><span class="bh" aria-hidden="true">☰</span><span class="bn'+(on?'':' off')+'">'+esc(barName(k))+(dis?' <span class="note">(Full books)</span>':'')+'</span>'
+      h+='<li data-bk="'+k+'"><span class="bh" aria-hidden="true">☰</span><span class="bn'+(on?'':' off')+'">'+esc(barName(k))+(dis?' <span class="note">(Full only)</span>':'')+'</span>'
         +'<button type="button" class="btn ghost small" data-barmv="'+k+'|-1" aria-label="Move '+esc(barName(k))+' up"'+(i===0?' disabled':'')+'>▲</button>'
         +'<button type="button" class="btn ghost small" data-barmv="'+k+'|1" aria-label="Move '+esc(barName(k))+' down"'+(i===o.length-1?' disabled':'')+'>▼</button>'
         +'<button type="button" class="btn ghost small" data-barpick="'+k+'" aria-pressed="'+on+'" aria-label="'+(on?'Hide ':'Show ')+esc(barName(k))+'"'+(dis?' disabled':'')+'>'+(on?'✓':'')+'</button></li>'; });
@@ -5256,25 +5402,25 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
   }
   function modeButtons(cur){
     return '<div class="modepick">'
-      +'<button type="button" data-mode="full" aria-pressed="'+(cur==='full')+'"><b>Full books</b><span>Daily jobs plus statements, bank imports, monthly checks, receipts and the job log.</span></button>'
-      +'<button type="button" data-mode="track" aria-pressed="'+(cur==='track')+'"><b>Just tracking</b><span>Daily jobs and expenses, your VAT position and reports. Statements and imports are hidden.</span></button>'
+      +'<button type="button" data-mode="full" aria-pressed="'+(cur==='full')+'"><b>Full</b><span>Daily jobs plus statements, bank imports, monthly checks, receipts and the job log.</span></button>'
+      +'<button type="button" data-mode="track" aria-pressed="'+(cur==='track')+'"><b>Basic</b><span>Daily jobs and expenses, your VAT position and reports. Statements and imports are hidden.</span></button>'
       +'</div>';
   }
   function renderModeCard(){
-    return '<div class="card"><h2>How you use Cab Books</h2>'+modeButtons(S.mode||'full')
-      +'<p class="note">You can switch at any time. Nothing is deleted; hidden tabs come back when you choose Full books.</p>'
+    return renderSetupCard()+'<div class="card"><h2>How you use Cab Books</h2>'+modeButtons(S.mode||'full')
+      +'<p class="note">You can switch at any time. Nothing is deleted; hidden tabs come back when you choose Full.</p>'
       +'<p class="privnote" style="margin-top:10px">Your figures are private to you. Nobody else using Cab Books can see them.</p></div>';
   }
   function curMonthKey(){ var d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); }
   function openWelcome(){
-    var ov=$('welcome'); if(!ov.hidden) return;
+    var ov=$('welcome'); if(!ov.hidden||!$('setupovl').hidden) return;
     S.wl={mode:null};
     $('wl-body').innerHTML='<h2 id="wl-t">Welcome to Cab Books</h2>'
       +'<p class="privnote">Your books are private. Only you can see the jobs, money and reports you put in here.</p>'
-      +'<div class="field" style="margin:0"><label for="wl-name">Your first name (shown as the driver on your receipts)</label><input type="text" id="wl-name" maxlength="30" autocomplete="given-name" required></div>'
-      +'<div><label style="margin-bottom:8px">How would you like to use it?</label>'+modeButtons(null)+'</div>'
+      +'<div class="field" style="margin:0"><label for="wl-name">Your first name (shown as the driver on your receipts)</label><input type="text" id="wl-name" maxlength="30" autocomplete="given-name" required value="'+esc(S.drivers&&S.drivers[0]&&S.drivers[0]!=='Me'?S.drivers[0]:'')+'"></div>'
       +'<div class="field" style="margin:0"><label for="wl-start">First month you are recording</label><input type="month" id="wl-start" value="'+curMonthKey()+'" style="width:100%;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:11px 12px;min-height:44px;color:var(--ink)"></div>'
-      +'<button type="button" class="btn" id="wl-go" disabled>Start</button>';
+      +'<p class="help" style="margin:0">Next, a short checklist sets the app up around how you work.</p>'
+      +'<button type="button" class="btn" id="wl-go">Next</button>';
     ov.hidden=false;
   }
   function setMode(m){
@@ -5290,29 +5436,333 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
       $('wl-go').disabled=false; return;
     }
     if(m===S.mode) return;
-    setMode(m).then(function(){ toast(m==='track'?'Just tracking: statements and imports hidden':'Full books: all tabs shown'); }).catch(fail);
+    setMode(m).then(function(){ toast(m==='track'?'Basic: statements and imports hidden':'Full: all tabs shown'); }).catch(fail);
   });
   document.addEventListener('click',function(ev){
     if(!(ev.target&&ev.target.id==='wl-go')) return;
     var nm=($('wl-name').value||'').trim(), st=$('wl-start').value||curMonthKey(), m=S.wl&&S.wl.mode;
     if(!nm){ toast('Type your first name.'); $('wl-name').focus(); return; }
-    if(!m){ toast('Choose how you want to use it.'); return; }
     if(!/^\d{4}-\d{2}$/.test(st)) st=curMonthKey();
-    var g=$('wl-go'); g.disabled=true; g.textContent='Setting up…';
+    var g=$('wl-go'); g.disabled=true; g.textContent='Saving…';
     var cs=S.db.collection('settings');
     var jobs=cs.doc('main').set({threshold:DEF.threshold,amberPct:DEF.amberPct,redPct:DEF.redPct,start:st,fees:{}})
-      .then(function(){ return nm?cs.doc('drivers').set({names:[nm]}):null; })
-      .then(function(){ return setMode(m); });
-    jobs.then(function(){ $('welcome').hidden=true; toast('All set. Add your first job on Today.'); showTab('today'); })
-      .catch(function(e){ g.disabled=false; g.textContent='Start'; fail(e); });
+      .then(function(){ if(nm) S.drivers=[nm]; return nm?cs.doc('drivers').set({names:[nm]}):null; });
+    jobs.then(function(){ $('welcome').hidden=true; openSetup(); })
+      .catch(function(e){ g.disabled=false; g.textContent='Next'; fail(e); });
   });
+
+  /* ---------- Set up my app: the new-driver checklist (Matt, 11 Nov 2026) ----------
+     One page a new driver goes down on first sign-in (after the welcome); any driver can re-run it from Settings.
+     Seven questions: Basic or Full, apps and accounts, card machine and its fee, VAT, the cab (rent or finance, electric),
+     regular expenses, and what to see (bottom bar tools and phone alerts). Pressing "Set up my app" writes the existing
+     settings (mode, providers, fees, rules, charging, tabs, alerts) and keeps the answers in settings/setup {a, done, ts}.
+     Changing an answer never deletes history: unticked apps are hidden (their jobs stay), a regular expense that changes
+     or stops is ended the day before the change and a new rule starts that day. Existing accounts open with their current
+     settings already ticked, and are never sent through it. */
+  S.setup=null; S.su=null;
+  var SU_APPS=[['Freenow','FreeNow'],['Gett','Gett'],['Uber','Uber'],['ComCab','ComCab'],['Other','Other account work']];
+  var SU_CARDS=[['Curb','Curb'],['Taxiworld','Taxiworld'],['Helix','Helix Pay'],['SumUp','SumUp'],['OtherCard','Other'],['None','None']];
+  var SU_TOOLS=[['trains','Trains'],['tube','Tube'],['tonight','Events tonight'],['flights','Airport arrivals'],['ranks','Taxi ranks'],['toilets','Toilets'],['fare','Fare calculator']];
+  var SU_ALERTS=[['trains','Train delays'],['events','Events finishing'],['tax','Tax payment dates']];
+  var SU_EXP=[
+    {k:'union',n:'Union or trade body',note:'LTDA, Unite, RMT',cat:'Union',fq:'month'},
+    {k:'ins',n:'Insurance',note:'If you pay it yourself',cat:'Insurance',fq:'month'},
+    {k:'phone',n:'Phone contract',note:'Business share only',cat:'Phone / broadband',fq:'month'},
+    {k:'cardm',n:'Card machine monthly fee',note:'Rental or subscription',cat:'Card machine fees',fq:'month'},
+    {k:'radio',n:'Radio circuit or account fees',note:'',cat:'Radio / account fees',fq:'week'},
+    {k:'acct',n:'Accountant',note:'',cat:'Accountant',fq:'year'},
+    {k:'lic',n:'Licence renewals',note:'Taxi licence, vehicle licence',cat:'Licence fees',fq:'year'}
+  ];
+  var SU_CAB={rent:{cat:'Car rental',fq:'week'},fin:{cat:'Cab finance',fq:'month'}};
+  /* Statement guides (help.html) for the sources Cab Books reads; the rest come in from the bank statement. */
+  var SU_GUIDE={Freenow:'st-freenow',Gett:'st-gett',Uber:'st-uber',ComCab:'statements',Curb:'st-curb',Taxiworld:'statements'};
+  var r2s=function(v){ return Math.round((+v||0)*100)/100; };
+
+  /* The live rule an answer stands for: one the checklist made (sk), or an older rule of the same category. */
+  function suRuleId(sk,cat){
+    var t=todayISO(), best=null;
+    Object.keys(S.rules||{}).forEach(function(id){ var r=S.rules[id]; if(!ruleLive(r,t)) return;
+      if(r.sk===sk||(!r.sk&&r.category===cat)){ if(!best||(r.sk===sk&&S.rules[best].sk!==sk)||((r.start||'')>(S.rules[best].start||'')&&(r.sk===sk)===(S.rules[best].sk===sk))) best=id; } });
+    return best;
+  }
+  function suCardRate(c){
+    if(!c||c==='None') return [null,null];
+    if(c==='Curb'){ var d=feeDefault('Curb','Card')||[2.75]; return [Math.abs(+d[0]||0)||2.75,20]; }
+    var r=feeDefault(c,'Card')||[0,0]; return [(+r[0]||null),(+r[1]?Math.round(+r[1]*100):null)];
+  }
+  /* Answers to start from: the saved ones, brought up to date with the driver's current settings and rules. */
+  function suPrefill(){
+    var a=(S.setup&&S.setup.a)?JSON.parse(JSON.stringify(S.setup.a)):{}, old=!!S.mode, t=todayISO();
+    if(old) a.ver=S.mode==='track'?'basic':'full';
+    if(old) a.apps=SU_APPS.map(function(x){return x[0]}).filter(provShown);
+    if(old){ var c=['Curb','Taxiworld','Helix','SumUp','OtherCard'].filter(provShown)[0]; a.card=c||(a.card==='None'?'None':null); }
+    if(a.card&&a.card!=='None'){ var cr=suCardRate(a.card); a.cpc=cr[0]; a.cp=cr[1]; }
+    if(old&&!a.vat) a.vat='close';
+    /* cab and regular expenses always come from the rules as they are now */
+    var rid=suRuleId('rent','Car rental'), fid=suRuleId('fin','Cab finance');
+    if(rid&&ruleFreq(S.rules[rid])==='week'){ a.cab='rent'; a.rent=+S.rules[rid].amount||0; }
+    else if(fid&&ruleFreq(S.rules[fid])==='month'){ a.cab='finance'; a.fin=+S.rules[fid].amount||0; }
+    else if(a.cab==='rent'||a.cab==='finance'){ a.cab=old?null:a.cab; }
+    if(chargeOn()) a.ev='home';
+    a.exps={};
+    SU_EXP.forEach(function(x){ var id=suRuleId(x.k,x.cat), r=id&&S.rules[id]; a.exps[x.k]=r?{on:true,amt:+r.amount||0,fq:ruleFreq(r),vat:!!r.vat}:{on:false,amt:0,fq:x.fq,vat:false}; });
+    a.own=[]; Object.keys(S.rules||{}).forEach(function(id){ var r=S.rules[id]; if(ruleLive(r,t)&&/^own/.test(r.sk||'')) a.own.push({k:r.sk,name:r.category,on:true,amt:+r.amount||0,fq:ruleFreq(r),vat:!!r.vat}); });
+    if(old) a.tools=SU_TOOLS.map(function(x){return x[0]}).filter(barOn);
+    else if(!a.tools) a.tools=['trains','tube','tonight','ranks','toilets','fare'];
+    if(!a.alerts) a.alerts=(S.al&&S.al.on?['trains']:[]).concat(['tax']);
+    else { var i=a.alerts.indexOf('trains'); if(S.al&&S.al.on&&i<0) a.alerts.push('trains'); if(S.al&&!S.al.on&&i>=0) a.alerts.splice(i,1); }
+    a.from=t;
+    return a;
+  }
+  function suExp(a,k){ if(a.exps[k]) return a.exps[k]; for(var i=0;i<(a.own||[]).length;i++) if(a.own[i].k===k) return a.own[i]; return null; }
+  function suAnswered(a){
+    return {ver:!!a.ver, apps:(a.apps||[]).length>0, card:!!a.card, vat:!!a.vat, cab:!!a.cab&&!!a.ev,
+      exp:SU_EXP.some(function(x){return a.exps[x.k]&&a.exps[x.k].on})||(a.own||[]).some(function(o){return o.on}), tools:(a.tools||[]).length>0};
+  }
+  function suChips(f,list,sel,label){
+    return '<div class="chips" role="group" aria-label="'+esc(label)+'">'+list.map(function(x){ var on=sel.indexOf(x[0])>=0;
+      return '<button type="button" data-su="pick" data-f="'+f+'" data-v="'+esc(x[0])+'" aria-pressed="'+on+'">'+(on?'✓ ':'')+esc(x[1])+'</button>'; }).join('')+'</div>';
+  }
+  function suMoney(k,label,v){
+    return '<div class="field" style="margin:12px 0 0"><label for="su-'+k+'">'+esc(label)+' (£)</label><input type="text" class="money" id="su-'+k+'" data-sf="'+k+'" inputmode="numeric" autocomplete="off" placeholder="0.00" value="'+(+v>0?(+v).toFixed(2):'')+'"></div>';
+  }
+  function suExpRow(k,name,note,e,own){
+    var h='<div class="su-exp'+(e.on?' on':'')+'"><label><input type="checkbox" data-sf="x:'+k+':on"'+(e.on?' checked':'')+'><span>'+esc(own&&e.name?e.name:name)+(note?'<small>'+esc(note)+'</small>':'')+'</span></label>';
+    if(e.on) h+='<div class="su-expd">'+(own?'<input type="text" data-sf="x:'+k+':name" maxlength="40" placeholder="What is it?" aria-label="What is it?" value="'+esc(e.name||'')+'" style="grid-column:1/-1">':'')
+      +'<input type="text" class="money" data-sf="x:'+k+':amt" inputmode="numeric" autocomplete="off" placeholder="0.00" aria-label="Amount (£)" value="'+(+e.amt>0?(+e.amt).toFixed(2):'')+'">'
+      +'<select data-sf="x:'+k+':fq" aria-label="How often">'+['week','month','year'].map(function(f){ return '<option value="'+f+'"'+(e.fq===f?' selected':'')+'>'+FQ_WORD[f]+'</option>'; }).join('')+'</select>'
+      +'<label class="su-tick"><input type="checkbox" data-sf="x:'+k+':vat"'+(e.vat?' checked':'')+'> VAT included</label></div>';
+    return h+'</div>';
+  }
+  function suStep(k,n,title,hint,body){
+    return '<li class="su-step" data-step="'+k+'"><span class="su-num" aria-hidden="true">'+n+'</span><h3>'+esc(title)+'</h3>'+(hint?'<p class="help">'+hint+'</p>':'')+body+'</li>';
+  }
+  function suRender(keepScroll){
+    var el=$('su-body'), a=S.su.a, old=!!S.mode, sc=$('su-scroll'), top=keepScroll&&sc?sc.scrollTop:0;
+    if(S.su.view==='sum'){ el.innerHTML=suSummary(a); if($('su-scroll')) $('su-scroll').scrollTop=0; return; }
+    var h='<div class="su-scroll" id="su-scroll"><div class="cardhead"><h2 id="su-t" style="margin:0">Set up your app</h2>'+(old?'<button type="button" class="iconbtn" data-su="close" aria-label="Close">✕</button>':'')+'</div>'
+      +'<p class="help" style="margin:6px 0 0">Tick what applies to you. Cab Books sets itself up around your answers, and you can change any of it later in Settings → Set up my app.'+(old?' Your current settings are already ticked. Nothing you have already recorded is changed or deleted.':'')+'</p><ol class="su-steps">';
+    h+=suStep('ver',1,'How do you want to keep your books?','You can move from Basic to Full later without losing anything.',
+      '<div class="modepick" role="group" aria-label="Basic or Full">'+[['basic','Basic','You type in your fares and expenses. The app tracks your earnings, VAT and tax from what you enter.'],['full','Full','You also add your bank and app statements. The app checks every payment against your bank and closes each month.']]
+        .map(function(x){ return '<button type="button" data-su="pick" data-f="ver" data-v="'+x[0]+'" aria-pressed="'+(a.ver===x[0])+'"><b>'+x[1]+'</b><span>'+x[2]+'</span></button>'; }).join('')+'</div>');
+    h+=suStep('apps',2,'Which apps and accounts do you work for?','Hand (street hails) and Private are always included. Apps you leave unticked are hidden from your buttons, Import and monthly checks. Jobs you already have keep their app.',
+      suChips('apps',SU_APPS,a.apps||[],'Apps and accounts'));
+    var fee='';
+    if(a.card&&a.card!=='None'){ var curb=a.card==='Curb';
+      fee='<div class="field" style="margin:12px 0 0"><label id="su-feel">Fee per card payment</label><div class="su-fees" role="group" aria-labelledby="su-feel"><input type="number" inputmode="decimal" step="0.01" min="0" data-sf="cpc" value="'+(a.cpc==null?'':esc(a.cpc))+'" placeholder="0.00" aria-label="Percentage fee"><span>% +</span>'
+        +'<input type="number" inputmode="numeric" step="1" min="0" data-sf="cp" value="'+(a.cp==null?'':esc(a.cp))+'" placeholder="0" aria-label="Pence per payment"'+(curb?' disabled':'')+'><span>p</span></div>'
+        +(curb?'<p class="note">Curb’s 20p a payment is built in.</p>':'')+'</div>'; }
+    h+=suStep('card',3,'Which card machine do you use?','Its fee is taken off each card fare, so “what you keep” is right.',suChips('card',SU_CARDS,a.card?[a.card]:[],'Card machine')+fee);
+    h+=suStep('vat',4,'Are you registered for VAT?','This sets how the VAT tracker works for you.',suChips('vat',[['no','No'],['close','No, but I’m getting close'],['yes','Yes']],a.vat?[a.vat]:[],'VAT'));
+    var cabx=a.cab==='rent'?suMoney('rent','Weekly rent',a.rent):a.cab==='finance'?suMoney('fin','Monthly payment',a.fin):'';
+    if(a.cab==='rent'||a.cab==='finance') cabx+='<p class="note">Added to your expenses automatically, like the regular expenses below.</p>';
+    var evx='';
+    if(a.ev==='home') evx=chargeOn()?'<p class="note" style="color:var(--ok)">✓ Home charging is on: '+gbp2.format(+S.charge.perDay)+' for each day you work. Change it in Settings → Home charging.</p>'
+      :suMoney('night','What a night’s charge at home costs',a.night)+'<p class="note">Added as an Electric charging expense on each day you work. Leave it empty to set it later in Settings → Home charging.</p>';
+    h+=suStep('cab',5,'Your cab','',suChips('cab',[['rent','I rent it'],['finance','On finance'],['own','I own it outright']],a.cab?[a.cab]:[],'Your cab')+cabx
+      +'<label style="margin-top:14px">Is it electric?</label>'+suChips('ev',[['home','Yes, I charge at home too'],['public','Yes, public chargers only'],['no','No']],a.ev?[a.ev]:[],'Is it electric?')+evx);
+    var ex='';
+    SU_EXP.forEach(function(x){ ex+=suExpRow(x.k,x.n,x.note,a.exps[x.k],false); });
+    (a.own||[]).forEach(function(o){ ex+=suExpRow(o.k,'Your own expense','',o,true); });
+    ex+='<button type="button" class="su-add" data-su="addown">+ Add your own</button>';
+    ex+='<label class="su-tick" style="margin-top:14px"><input type="checkbox" data-sf="weekly"'+(a.weekly?' checked':'')+'> Ask me once a week if they went out as usual</label>';
+    if(old&&Object.keys(S.rules||{}).some(function(id){ return ruleLive(S.rules[id]); })) ex+='<div class="field" style="margin:14px 0 0"><label for="su-from">Changes to amounts start from</label><input type="date" id="su-from" data-sf="from" value="'+esc(a.from||todayISO())+'"><p class="note">Days before that keep the amounts they had.</p></div>';
+    h+=suStep('exp',6,'Regular expenses','Tick each one and enter the amount once. Cab Books adds it to your expenses for you, so you never type it in again. Type amounts as everywhere else: 14800 is £148.00. Pause one for a holiday, or change its amount from a date, under Today → Expense rules.',ex);
+    h+=suStep('tools',7,'What would you like to see?','These go on your bottom bar. Untick anything you won’t use.',suChips('tools',SU_TOOLS,a.tools||[],'Tools')
+      +'<label style="margin-top:14px">Send me phone alerts for</label>'+suChips('alerts',SU_ALERTS,a.alerts||[],'Phone alerts')
+      +'<p class="note">Train delay alerts work now: turn them on for this phone in Settings → Train alerts. Alerts for events finishing and tax payment dates are on the way, and your choice is saved for when they arrive.</p>');
+    h+='</ol></div><div class="su-foot"><button type="button" class="btn" data-su="go">Set up my app<span class="su-count" id="su-count"></span></button></div>';
+    el.innerHTML=h;
+    Array.prototype.forEach.call(el.querySelectorAll('input.money'),moneyInput);
+    suMarks();
+    if(keepScroll&&$('su-scroll')) $('su-scroll').scrollTop=top;
+  }
+  function suMarks(){
+    var A=suAnswered(S.su.a), n=0;
+    Array.prototype.forEach.call(document.querySelectorAll('#su-body .su-step'),function(x){ var d=!!A[x.getAttribute('data-step')]; x.classList.toggle('done',d); if(d) n++; });
+    var c=$('su-count'); if(c) c.textContent=n+' of 7 answered';
+  }
+  function suFocus(sel){ var x=$('su-body').querySelector(sel); if(x) try{ x.focus({preventScroll:true}); }catch(e){ x.focus(); } }
+  function openSetup(){
+    if(!S.db){ toast('Sign in to set up your app.'); return; }
+    S.su={a:suPrefill(),view:'form'}; $('setupovl').hidden=false; suRender(false);
+    var b=$('su-body').querySelector('button'); if(b) b.focus();
+  }
+  function closeSetup(){ $('setupovl').hidden=true; S.su=null; if(!S.mode&&typeof applyMode==='function') applyMode(); }
+  function renderSetupCard(){
+    var d=S.setup&&S.setup.done;
+    return '<div class="card" id="su-card"><h2>Set up my app</h2><p class="help">'+(d?'The checklist you went through when you started. Go through it again to change your apps, card machine, VAT, cab, regular expenses or tools. Nothing you have already recorded is changed or deleted.'
+      :'One page of ticks that sets Cab Books up around how you work: your apps, card machine, VAT, cab, regular expenses and tools. Your current settings are already ticked.')+'</p><button class="btn ghost" type="button" data-su="open">'+(d?'Go through it again':'Set up my app')+'</button></div>';
+  }
+  /* Regular expenses the answers ask for, as rules. */
+  function suWant(a){
+    var L=[];
+    if(a.cab==='rent'&&+a.rent>0) L.push({sk:'rent',cat:'Car rental',amount:r2s(a.rent),freq:'week',vat:false,name:'Cab rent'});
+    if(a.cab==='finance'&&+a.fin>0) L.push({sk:'fin',cat:'Cab finance',amount:r2s(a.fin),freq:'month',vat:false,name:'Cab finance'});
+    SU_EXP.forEach(function(x){ var e=a.exps[x.k]; if(e&&e.on&&+e.amt>0) L.push({sk:x.k,cat:x.cat,amount:r2s(e.amt),freq:e.fq||x.fq,vat:!!e.vat,name:x.n}); });
+    (a.own||[]).forEach(function(o){ var n=String(o.name||'').trim(); if(o.on&&+o.amt>0&&n) L.push({sk:o.k,cat:n,amount:r2s(o.amt),freq:o.fq||'month',vat:!!o.vat,name:n}); });
+    return L;
+  }
+  function suCheck(a){
+    if(!a.ver) return ['ver','Choose Basic or Full first.'];
+    if(a.cab==='rent'&&!(+a.rent>0)) return ['cab','Type your weekly rent, or choose another answer.'];
+    if(a.cab==='finance'&&!(+a.fin>0)) return ['cab','Type your monthly finance payment, or choose another answer.'];
+    for(var i=0;i<SU_EXP.length;i++){ var e=a.exps[SU_EXP[i].k]; if(e&&e.on&&!(+e.amt>0)) return ['exp','Type the amount for '+SU_EXP[i].n.toLowerCase()+', or untick it.']; }
+    for(var j=0;j<(a.own||[]).length;j++){ var o=a.own[j]; if(o.on&&!String(o.name||'').trim()) return ['exp','Say what your own expense is, or untick it.']; if(o.on&&!(+o.amt>0)) return ['exp','Type the amount for '+o.name+', or untick it.']; }
+    if(a.card&&a.card!=='None'&&a.cpc!=null&&(+a.cpc<0||+a.cpc>20)) return ['card','The card fee looks wrong. It’s usually between 1% and 5%.'];
+    return null;
+  }
+  /* Write everything the answers set up. Each step is a normal settings write, so the app updates as they land. */
+  function suApply(a){
+    var cs=S.db.collection('settings'), t=todayISO(), from=(a.from&&a.from>=S.settings.start+'-01')?a.from:t, old=!!S.mode, jobs=[];
+    if(!old) from=t;
+    /* 1. Basic or Full */
+    jobs.push(function(){ return setMode(a.ver==='basic'?'track':'full'); });
+    /* 2. Apps and card machine → Providers I use. Hand and Private always. Providers the checklist doesn't ask about keep their setting. */
+    jobs.push(function(){
+      var mine=['Freenow','Gett','Uber','ComCab','Other','Curb','Taxiworld','Helix','SumUp','OtherCard','Hand','Private'];
+      var keep=old?PROVS.filter(provShown).filter(function(p){return mine.indexOf(p)<0}):[];
+      var want=keep.concat(a.apps||[]).concat(a.card&&a.card!=='None'?[a.card]:[]).concat(['Hand','Private']);
+      var sh=PROVS.filter(function(p){return want.indexOf(p)>=0});
+      S.shown=sh; S.provKnown=PROVS.slice(); if(typeof buildChips==='function') buildChips();
+      return cs.doc('providers').set({shown:sh,known:PROVS.slice()});
+    });
+    /* 3. Card machine fee. Jobs already logged keep the fee they were saved with; a new rate applies from today. */
+    jobs.push(function(){
+      if(!a.card||a.card==='None'||a.cpc==null) return null;
+      var k=bkey(a.card), pc=Math.abs(+a.cpc||0), add=k==='curb'?feeBase('curb')[1]:Math.abs(+a.cp||0)/100, cur=feeDefault(a.card,'Card')||[0,0];
+      if(Math.abs(cur[0]-pc)<0.0001&&(k==='curb'||Math.abs(cur[1]-add)<0.0001)) return null;
+      var fees=Object.assign({},S.settings.fees||{}), used=S.entriesAll.some(function(e){ return e.kind==='fare'&&(bkey(e.card||'')===k||bkey(e.provider)===k); });
+      if(!used) fees[k]={pct:pc,add:add,hist:[]};
+      else { var b=feeBase(k), H=feeHist(k).filter(function(h){return h.from<t}).map(function(h){return {from:h.from,pct:+h.pct||0,add:+h.add||0}}); H.push({from:t,pct:pc,add:add}); fees[k]={pct:b[0],add:b[1],hist:H}; }
+      var st=S.settings; st.fees=fees;
+      return cs.doc('main').set({threshold:st.threshold,amberPct:st.amberPct,redPct:st.redPct,start:st.start,fees:fees});
+    });
+    /* 4. Cab rent or finance, and regular expenses → expense rules */
+    jobs.push(function(){
+      var W=suWant(a), done={}, P=Promise.resolve();
+      W.forEach(function(w){ P=P.then(function(){
+        var id=suRuleId(w.sk,w.cat); if(id) done[id]=1;
+        var data={category:w.cat,amount:w.amount,freq:w.freq,vat:w.vat,sk:w.sk,active:true};
+        if(!id) return S.db.collection('rules').doc().set(Object.assign(data,{start:from,ts:Date.now()}));
+        var r=S.rules[id];
+        if((+r.amount||0)===w.amount&&ruleFreq(r)===w.freq){ if(!!r.vat===w.vat&&r.sk===w.sk) return null; return S.db.collection('rules').doc(id).set(Object.assign({},r,{vat:w.vat,sk:w.sk,ts:Date.now()})); }
+        return ruleChange(id,{amount:w.amount,freq:w.freq,vat:w.vat,sk:w.sk},from).then(function(nid){ done[nid]=1; });
+      }); });
+      /* answers now unticked: end their rule the day before (the days before keep it) */
+      return P.then(function(){
+        var keys=['rent','fin'].concat(SU_EXP.map(function(x){return x.k})), ends=[];
+        keys.forEach(function(k){ var cat=k==='rent'?'Car rental':k==='fin'?'Cab finance':SU_EXP.filter(function(x){return x.k===k})[0].cat, id=suRuleId(k,cat);
+          if(id&&!done[id]&&!W.some(function(w){return w.sk===k})) ends.push(id); });
+        Object.keys(S.rules||{}).forEach(function(id){ var r=S.rules[id]; if(ruleLive(r,t)&&/^own/.test(r.sk||'')&&!done[id]&&!W.some(function(w){return w.sk===r.sk})) ends.push(id); });
+        return Promise.all(ends.map(function(id){ return ruleEnd(id,from); }));
+      });
+    });
+    /* 5. Electric, charging at home → Home charging (a night's cost on each working day) */
+    jobs.push(function(){
+      if(a.ev!=='home'||chargeOn()||!(+a.night>0)) return null;
+      var v={perDay:r2s(a.night),from:t}; S.charge=v; return cs.doc('charging').set(Object.assign({ts:Date.now()},v));
+    });
+    /* 6. Tools → the bottom bar (the books buttons stay as they are) */
+    jobs.push(function(){
+      var tools=a.tools||[], base=(S.bar||BAR_DEFAULT).filter(function(k){return BAR_TOOLS.indexOf(k)<0});
+      S.bar=barOrder().filter(function(k){ return base.indexOf(k)>=0||tools.indexOf(k)>=0; }); applyMode();
+      return cs.doc('tabs').set({shown:S.bar.slice(),order:barOrder(),ts:Date.now()});
+    });
+    /* 7. Train delay alerts */
+    jobs.push(function(){ var on=(a.alerts||[]).indexOf('trains')>=0; if(!!(S.al&&S.al.on)!==on) alSave({on:on}); return null; });
+    /* 8. Keep the answers */
+    jobs.push(function(){ var keep=JSON.parse(JSON.stringify(a)); delete keep.from; S.setup={a:keep,done:true,v:1,ts:Date.now()}; return cs.doc('setup').set(S.setup); });
+    return jobs.reduce(function(p,f){ return p.then(f); },Promise.resolve());
+  }
+  function suSummary(a){
+    var full=a.ver==='full', apps=a.apps||[], W=suWant(a), weekly=W.reduce(function(s,w){ return s+w.amount*FQ_WEEK[w.freq]; },0);
+    var box=function(t,b){ return '<div class="su-out"><h3>'+esc(t)+'</h3>'+b+'</div>'; }, li=function(x){ return '<li>'+x+'</li>'; };
+    var h='<div class="su-scroll" id="su-scroll"><h2 id="su-t" style="margin:0">Your app is ready</h2><p class="help" style="margin:6px 0 0">Here’s how Cab Books is set up for you. Change anything in Settings → Set up my app.</p>';
+    h+=box((full?'Full':'Basic')+' version',full?'Your figures are checked against your bank and statements, and each month closes once every source is in.':'You type in each fare on Today. Your VAT, earnings and tax are worked out from what you enter.');
+    h+=box('Buttons on Today','<ul>'+apps.map(function(p){ return li(esc(p==='Other'?'Other (account work)':pname(p))); }).join('')+li('Hand')+li('Private')+'</ul>'+(apps.indexOf('Other')>=0?'<p class="note">Other is for account work outside the apps. Add the account name as the journey on each job.</p>':''));
+    if(a.card&&a.card!=='None'){ var cn=a.card==='OtherCard'?'Your card machine':pname(a.card); h+=box('Card fees',esc(cn)+': '+(+a.cpc||0)+'%'+(a.card==='Curb'?' + 20p':(+a.cp?' + '+(+a.cp)+'p':''))+' taken off each card fare, so “what you keep” is right.'); }
+    else if(a.card==='None') h+=box('Card fees','No card machine, so no card fees are taken off.');
+    var th=gbp0.format(S.settings.threshold);
+    h+=box('VAT tracker',a.vat==='yes'?'You’re VAT registered, so the '+th+' threshold gauge doesn’t apply to you. A VAT returns mode is being built. Until then your takings and costs are all in Reports.'
+      :a.vat==='close'?'Watching your rolling 12 months against the '+th+' threshold, with how much room you have each coming month (Position).'
+      :'Keeping a quiet eye on your rolling 12 months, with a warning if you start to get close to '+th+'.');
+    h+=box('Added automatically',(W.length?'<ul>'+W.map(function(w){ return li(esc(w.name)+': '+gbp2.format(w.amount)+' '+FQ_WORD[w.freq]+(w.vat?' (VAT included)':'')); }).join('')+'</ul><div class="su-tot"><span>About each week</span><span class="num">'+gbp2.format(weekly)+'</span></div>':'<p class="note" style="margin:0">No regular expenses yet. Add them any time under Today → Expense rules.</p>')
+      +(a.ev==='home'?(chargeOn()?'<p class="note">Home charging: '+gbp2.format(+S.charge.perDay)+' on each day you work, as Electric charging.</p>':'<p class="note">Home charging: set what a night’s charge costs in Settings → Home charging, and it’s added on each day you work.</p>'):'')
+      +(full&&W.length?'<p class="note">Each one is matched to its bank payment, and flagged under Expense rules if it’s missing or a different amount. It’s never counted twice.</p>':''));
+    var tl=SU_TOOLS.filter(function(x){return (a.tools||[]).indexOf(x[0])>=0}).map(function(x){return x[1]}), al=SU_ALERTS.filter(function(x){return (a.alerts||[]).indexOf(x[0])>=0}).map(function(x){return x[1]});
+    h+=box('Your bottom bar',tl.length?'<ul>'+tl.map(function(x){return li(esc(x))}).join('')+'</ul>':'<p class="note" style="margin:0">No tools. Add them any time in Settings → Bottom bar.</p>')
+      +(al.length?'':'');
+    if(al.length) h+=box('Phone alerts',esc(al.join(', '))+'.'+(al.indexOf('Train delays')>=0?' To get train alerts when Cab Books is closed, turn them on for this phone in Settings → Train alerts.':''));
+    var g=function(id,t){ return '<a href="/help.html#'+id+'" target="_blank" rel="noopener">'+esc(t)+'</a>'; };
+    if(full){
+      var src=apps.filter(function(p){return SU_GUIDE[p]}).concat(a.card&&SU_GUIDE[a.card]?[a.card]:[]), bankOnly=apps.concat(a.card?[a.card]:[]).filter(function(p){ return !SU_GUIDE[p]&&p!=='None'&&p!=='Other'; });
+      h+=box('Statements you’ll need','<ul>'+li(g('bank','Bank statement (CSV)'))+src.map(function(p){ return li(g(SU_GUIDE[p],pname(p)+' statements')); }).join('')+'</ul>'
+        +(bankOnly.length?'<p class="note">'+esc(bankOnly.map(function(p){return p==='OtherCard'?'Your card machine':pname(p)}).join(', '))+': payments are picked up from your bank statement.</p>':'')
+        +'<p class="note">Only the guides for what you ticked are shown.</p>');
+    } else {
+      h+=box('Your guides','<ul>'+li(g('daily','Adding fares and expenses every day'))+li(g('receipts','Receipt photos'))+li(g('fix','Fixing mistakes'))+'</ul>');
+    }
+    h+='</div><div class="su-foot"><div class="two"><button type="button" class="btn ghost" data-su="back">Change my answers</button><button type="button" class="btn" data-su="done">Start</button></div></div>';
+    return h;
+  }
+  document.addEventListener('click',function(ev){
+    var b=ev.target.closest&&ev.target.closest('[data-su]'); if(!b) return;
+    var k=b.getAttribute('data-su');
+    if(k==='open'){ if(!$('setovl').hidden) closeSettings(); openSetup(); return; }
+    if(!S.su) return;
+    var a=S.su.a;
+    if(k==='close'){ closeSetup(); return; }
+    if(k==='pick'){
+      var f=b.getAttribute('data-f'), v=b.getAttribute('data-v');
+      if(f==='apps'||f==='tools'||f==='alerts'){ var L=a[f]=(a[f]||[]).slice(), i=L.indexOf(v); if(i>=0) L.splice(i,1); else L.push(v); }
+      else { a[f]=v; if(f==='card'){ var r=suCardRate(v); a.cpc=r[0]; a.cp=r[1]; } }
+      suRender(true); suFocus('[data-su="pick"][data-f="'+f+'"][data-v="'+v+'"]'); return;
+    }
+    if(k==='addown'){ var n=1; while(suExp(a,'own'+n)) n++; a.own=(a.own||[]).concat([{k:'own'+n,name:'',on:true,amt:0,fq:'month',vat:false}]); suRender(true); suFocus('[data-sf="x:own'+n+':name"]'); return; }
+    if(k==='go'){
+      var bad=suCheck(a); if(bad){ toast(bad[1]); var st=$('su-body').querySelector('[data-step="'+bad[0]+'"]'); if(st) st.scrollIntoView({behavior:'smooth',block:'start'}); return; }
+      b.disabled=true; b.firstChild.textContent='Setting up…';
+      suApply(a).then(function(){ if(!S.su) return; S.su.view='sum'; suRender(false); var d=$('su-body').querySelector('[data-su="done"]'); if(d) d.focus(); })
+        .catch(function(e){ fail(e); b.disabled=false; b.firstChild.textContent='Set up my app'; });
+      return;
+    }
+    if(k==='back'){ S.su={a:suPrefill(),view:'form'}; suRender(false); return; }
+    if(k==='done'){ closeSetup(); showTab('today'); toast('All set. Add your first job on Today.'); }
+  });
+  function suField(el,evType){
+    if(!S.su||!el.hasAttribute('data-sf')) return;
+    var f=el.getAttribute('data-sf'), a=S.su.a, chk=el.type==='checkbox';
+    if(chk&&evType!=='change') return;
+    var v=chk?el.checked:el.value;
+    if(f.indexOf('x:')===0){ var p=f.split(':'), e=suExp(a,p[1]); if(!e) return;
+      e[p[2]]=p[2]==='amt'?(+v||0):v;
+      if(p[2]==='on'){ suRender(true); suFocus('[data-sf="'+f+'"]'); return; }
+      if(p[2]==='name'){ var lab=el.closest('.su-exp').querySelector('label span'); if(lab&&lab.firstChild) lab.firstChild.textContent=v||'Your own expense'; }
+    }
+    else if(f==='cpc'||f==='cp') a[f]=v===''?null:Math.abs(+v||0);
+    else if(f==='rent'||f==='fin'||f==='night') a[f]=+v||0;
+    else a[f]=v;
+    suMarks();
+  }
+  document.addEventListener('input',function(ev){ if(ev.target&&ev.target.closest&&ev.target.closest('#setupovl')) suField(ev.target,'input'); });
+  document.addEventListener('change',function(ev){ if(ev.target&&ev.target.closest&&ev.target.closest('#setupovl')) suField(ev.target,'change'); });
+  /* Import: name only the statement sources this driver uses. */
+  function stAppsText(){ var el=$('st-apps'); if(!el) return;
+    var L=['Freenow','Gett','Uber','Curb','ComCab','Taxiworld'].filter(provShown).map(pname).concat(['Heathrow drop-offs']);
+    el.textContent=(L.length>1?L.slice(0,-1).join(', ')+' and '+L[L.length-1]:L[0])+'.'; }
+  /* Position: a driver who said they're VAT registered */
+  function vatRegCard(){
+    if(!(S.setup&&S.setup.a&&S.setup.a.vat==='yes')) return '';
+    return '<div class="card" style="border-left:4px solid var(--accent)"><h2>You’re VAT registered</h2><p class="help" style="margin:0">The threshold below doesn’t apply to you, but your rolling turnover is still shown. A VAT returns mode is being built. Until then, your takings and costs are in Reports. Not registered after all? Change it in Settings → Set up my app.</p></div>';
+  }
 
   function bkStatus(){ var el=$('bk-status'); if(!el) return;
     var inc=0,exp=0,last=''; (S.entries||[]).forEach(function(e){ if(e.src!=='import') return; if(e.kind==='expense'){ exp++; } else if(e.est==='bank'&&!e.superseded){ inc++; } else return; if(e.date>last) last=e.date; });
     var tsn=Object.keys(S.tosort||{}).length;
     el.innerHTML=(tsn?'<b style="color:var(--warn,#d98b00)">'+tsn+' bank line'+(tsn===1?'':'s')+' to sort out</b> – see the top of this page. ':'')+(S.bankCov?'<b style="color:var(--ok)">✓ Bank statement received.</b> Your books include bank lines up to <b>'+esc(dlabel(S.bankCov))+'</b>: '+inc+' payment'+(inc===1?'':'s')+' from taxi apps and '+exp+' expense'+(exp===1?'':'s')+'. To add more, choose a newer statement below.':'<b>No bank statement brought in yet.</b> Choose your CSV, check the columns, then tap <b>Import</b> at the bottom. Nothing is saved until you tap Import.'); }
   function showTab(t){
-    if(t==='import') setTimeout(function(){ bkStatus(); ihRender(); },0);
+    if(t==='import') setTimeout(function(){ bkStatus(); ihRender(); stAppsText(); },0);
     if(t!=='import') S.forceImport=false;
     if(S.mode==='track'&&FULLTABS.indexOf(t)>=0&&!(t==='import'&&S.forceImport)) t='today';
     S.tab=t; lsSet('cb-tab',t); if(t==='log') setTimeout(renderLog,0); if(t==='tools') setTimeout(renderTools,0);
@@ -6444,7 +6894,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{background:
     function onErr(name){return function(e){ $('sync').textContent='Could not load '+name; }}
     unsubs.push(db.collection('settings').onSnapshot(function(snap){
       snap.docs.forEach(function(d){ if(d.id==='stopts'&&d.exists){ S.stopts=d.data()||{}; stSyncVia(); } if(d.id==='tipstats'&&d.exists){ S.tipstats=d.data(); } if(d.id==='business'&&d.exists){ S.biz=d.data()||{}; } if(d.id==='practice'){ S.practice=!!(d.exists&&d.data().on); } if(d.id==='drivers'&&d.exists){ var nm=d.data().names; if(Array.isArray(nm)&&nm.length) S.drivers=nm; } if(d.id==='providers'&&d.exists){ var sv=d.data().shown, kn=d.data().known; S.shown=Array.isArray(sv)&&sv.length?sv:null; S.provKnown=Array.isArray(kn)?kn:null; if(S.shown&&S.shown.indexOf(S.prov)<0&&!S.editId){ S.prov=S.shown[0]; if(typeof applyFeeDefaults==='function') applyFeeDefaults(); } if(typeof buildChips==='function') buildChips(); } if(d.id==='bank'&&d.exists){ S.bankCov=d.data().covered||''; if(typeof bkStatus==='function') bkStatus(); } if(d.id==='main'&&d.exists){ var v=d.data(); S.settings=Object.assign({},DEF,{threshold:+v.threshold||DEF.threshold,amberPct:+v.amberPct||DEF.amberPct,redPct:+v.redPct||DEF.redPct,start:v.start||DEF.start,fees:v.fees||{}}); } });
-      var md=null; snap.docs.forEach(function(d){ if(d.id==='look'&&d.exists){ var lk=(d.data()||{}).theme; if(lk&&lk!==S.look) applyLook(lk); } if(d.id==='opening'&&d.exists) S.opening=d.data()||{}; if(d.id==='tax'&&d.exists) S.tax=d.data()||{}; if(d.id==='mode'&&d.exists){ var mv=(d.data()||{}).mode; if(mv==='full'||mv==='track') md=mv; } if(d.id==='extras'&&d.exists){ var xl=(d.data()||{}).list; S.exList=Array.isArray(xl)?xl:null; if(typeof exRender==='function') exRender(); } if(d.id==='tabs'&&d.exists){ var tv=(d.data()||{}).shown, to=(d.data()||{}).order; S.bar=barFix(tv); S.barOrder=Array.isArray(to)&&to.length?to:null; } if(d.id==='charging'&&d.exists){ S.charge=d.data()||null; if(typeof renderAll==='function') setTimeout(renderAll,0); } if(d.id==='remind'&&d.exists){ S.rem=Object.assign({},REM_DEF,d.data()||{}); if(typeof remSync==='function') remSync(); } if(d.id==='alerts'&&d.exists){ var av=d.data()||{}; S.al={on:av.on!==false,min:+av.min||4,express:av.express!==false,off:Array.isArray(av.off)?av.off:[],tube:av.tube!==false,tlines:Array.isArray(av.tlines)?av.tlines:AL_TLINES.slice()}; if(typeof alRender==='function') alRender(); } }); S.mode=md||null; S.loaded.settings=true; applyMode(); renderAll();
+      var md=null; snap.docs.forEach(function(d){ if(d.id==='look'&&d.exists){ var lk=(d.data()||{}).theme; if(lk&&lk!==S.look) applyLook(lk); } if(d.id==='opening'&&d.exists) S.opening=d.data()||{}; if(d.id==='tax'&&d.exists) S.tax=d.data()||{}; if(d.id==='setup'&&d.exists) S.setup=d.data()||null; if(d.id==='regcheck'&&d.exists) S.regchk=d.data()||null; if(d.id==='mode'&&d.exists){ var mv=(d.data()||{}).mode; if(mv==='full'||mv==='track') md=mv; } if(d.id==='extras'&&d.exists){ var xl=(d.data()||{}).list; S.exList=Array.isArray(xl)?xl:null; if(typeof exRender==='function') exRender(); } if(d.id==='tabs'&&d.exists){ var tv=(d.data()||{}).shown, to=(d.data()||{}).order; S.bar=barFix(tv); S.barOrder=Array.isArray(to)&&to.length?to:null; } if(d.id==='charging'&&d.exists){ S.charge=d.data()||null; if(typeof renderAll==='function') setTimeout(renderAll,0); } if(d.id==='remind'&&d.exists){ S.rem=Object.assign({},REM_DEF,d.data()||{}); if(typeof remSync==='function') remSync(); } if(d.id==='alerts'&&d.exists){ var av=d.data()||{}; S.al={on:av.on!==false,min:+av.min||4,express:av.express!==false,off:Array.isArray(av.off)?av.off:[],tube:av.tube!==false,tlines:Array.isArray(av.tlines)?av.tlines:AL_TLINES.slice()}; if(typeof alRender==='function') alRender(); } }); S.mode=md||null; S.loaded.settings=true; applyMode(); renderAll();
     },onErr('settings')));
     unsubs.push(db.collection('months').onSnapshot(function(snap){
       var o={}; snap.docs.forEach(function(d){ if(d.exists) o[d.id]=d.data(); }); S.months=o; S.loaded.months=true; renderAll(); $('sync').textContent=S.syncLabel||'Saved to your account';

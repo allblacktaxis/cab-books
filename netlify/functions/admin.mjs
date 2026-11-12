@@ -43,7 +43,7 @@ export function summarise(accounts, docs, phones, now) {
     return {
       email: a.email || '', name: Array.isArray(names) && names.length ? names[0] : (a.displayName || ''),
       created: Number(a.createdAt) || 0, lastSignIn: a.lastRefreshAt ? Date.parse(a.lastRefreshAt) : Number(a.lastLoginAt) || 0,
-      lastSeen, mode: mode === 'track' ? 'Just tracking' : mode === 'full' ? 'Full books' : 'Not set up yet',
+      lastSeen, mode: mode === 'track' ? 'Basic' : mode === 'full' ? 'Full' : 'Not set up yet',
       phoneAlerts: phones[uid] || 0, device: seen.device || '', disabled: !!a.disabled, subscription: 'Free'
     };
   }).sort((x, y) => (y.lastSeen || y.lastSignIn) - (x.lastSeen || x.lastSignIn));
