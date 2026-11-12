@@ -3712,6 +3712,19 @@ html{overscroll-behavior-x:none}
     });
     return L;
   }
+  /* Warning bar at the top of the app: from the day before until the strike ends at noon (dismissable). */
+  function rmtAlerts(){
+    var t=todayISO(), hr=new Date().getHours(), out=[];
+    RMT_STRIKES.forEach(function(s){
+      var e=isoAdd(s,1), k='rmt:'+s, txt=null;
+      var sd=DN[dowOf(s)]+' '+dlabel(s).replace(/ \d{4}$/,''), ed=DN[dowOf(e)]+' '+dlabel(e).replace(/ \d{4}$/,'');
+      if(t===isoAdd(s,-1)) txt='RMT strike tomorrow: 24 hours from 12:00 noon '+sd+' to 12:00 noon '+ed+'. Expect busy roads.';
+      else if(t===s) txt='RMT strike today: 24 hours from 12:00 noon to 12:00 noon tomorrow ('+ed+'). Expect busy roads.';
+      else if(t===e&&hr<12) txt='RMT strike on until 12:00 noon today. Expect busy roads.';
+      if(txt&&!(S.alHide&&S.alHide[k]!=null)) out.push({k:k,n:0,rmt:true,t:txt});
+    });
+    return out;
+  }
   function dayNotices(iso){
     var w=dowOf(iso), L=[];
     var src='Household Division calendar (checked 25 Oct 2026)';
@@ -4892,10 +4905,10 @@ html{overscroll-behavior-x:none}
   function alShown(a){ var h=S.alHide[a.k]; return !(h!=null&&a.n<h+(a.tube?1:3)); }
   function alRender(){
     var el=$('alertbar'); if(!el) return;
-    var L=FX_CFG?alList():[];
+    var L=rmtAlerts().concat(FX_CFG?alList():[]);
     if(!L.length){ el.hidden=true; el.innerHTML=''; return; }
     el.innerHTML=L.map(function(a){ return '<div class="al"><span><b>⚠</b> '+esc(a.t)+'</span><button type="button" class="iconbtn" style="min-width:36px;min-height:36px;font-size:14px" data-alhide="'+esc(a.k)+'" data-aln="'+a.n+'" aria-label="Dismiss">✕</button></div>'; }).join('')
-      +'<div class="row">'+(L.some(function(a){return !a.tube;})?'<button type="button" class="btn small" id="al-go">Check trains</button>':'')+(L.some(function(a){return a.tube;})?' <button type="button" class="btn small" id="al-gotube">Check tube</button>':'')+'</div>';
+      +'<div class="row">'+(L.some(function(a){return !a.tube&&!a.rmt;})?'<button type="button" class="btn small" id="al-go">Check trains</button>':'')+(L.some(function(a){return a.tube;})?' <button type="button" class="btn small" id="al-gotube">Check tube</button>':'')+'</div>';
     el.hidden=false;
   }
   function alPrune(){ var d=S.tr.data, tb=S.tb&&S.tb.data, ch=false; Object.keys(S.alHide).forEach(function(k){
@@ -4912,7 +4925,7 @@ html{overscroll-behavior-x:none}
         +(A.tube!==false?'<div class="chips tight" role="group" aria-label="Tube lines" style="margin-top:8px">'+AL_TL.map(function(l){ var on=(A.tlines||AL_TLINES).indexOf(l[0])>=0; return '<button type="button" data-altl="'+l[0]+'" aria-pressed="'+on+'">'+(on?'✓ ':'')+esc(l[1])+'</button>'; }).join('')+'</div>':'');
     }
     if(A.on) h+=pushCard();
-    h+='<p class="note">'+(S.tr.err==='not_set_up'?'Station and airport train alerts start once the National Rail data is connected; tube alerts already work. ':'')+'While Cab Books is open, warnings also show at the top of the screen.</p>';
+    h+='<p class="note">'+(S.tr.err==='not_set_up'?'Station and airport train alerts start once the National Rail data is connected; tube alerts already work. ':'')+'While Cab Books is open, warnings also show at the top of the screen. With phone alerts on, you also get a heads-up at 6pm the evening before an RMT strike.</p>';
     return h+'</div>';
   }
   function alSave(ch){
@@ -5027,6 +5040,7 @@ html{overscroll-behavior-x:none}
     if(t.id==='al-go'||t.id==='al-gotube'){ var tg=t.id==='al-go'?'trains':'tube'; S.tool=tg; S.toolSolo=true; lsSet('cb-tool',tg); showTab('tools'); return; }
   });
   setInterval(function(){ if(S.al.on&&FX_CFG&&!document.hidden){ trLoad(170000); if(S.al.tube!==false) tbLoad(170000); alPrune(); } },60000);
+  setInterval(function(){ if(!document.hidden) alRender(); },60000); setTimeout(alRender,0); /* RMT strike bar for every driver */
   document.addEventListener('visibilitychange',function(){ if(!document.hidden&&S.al.on&&FX_CFG){ trLoad(170000); if(S.al.tube!==false) tbLoad(170000); } });
   setTimeout(function(){ if(S.al.on&&FX_CFG){ trLoad(false); if(S.al.tube!==false) tbLoad(false); } },4000);
 
@@ -6039,7 +6053,7 @@ html{overscroll-behavior-x:none}
   $('ik-fare').addEventListener('click',function(){setIKind('fare')}); $('ik-expense').addEventListener('click',function(){setIKind('expense')});
   $('i-save').addEventListener('click',saveImport);
   try{ var qtool=new URLSearchParams(location.search).get('tool'); if(qtool&&['fare','tonight','flights','ranks','toilets','tube','trains'].indexOf(qtool)>=0){ S.tool=qtool; S.toolSolo=true; lsSet('cb-tool',qtool); lsSet('cb-tab','tools'); if(history.replaceState) history.replaceState(null,'',location.pathname); } }catch(e){}
-  try{ var qtab=new URLSearchParams(location.search).get('tab'); if(qtab==='import'){ lsSet('cb-tab','import'); if(history.replaceState) history.replaceState(null,'',location.pathname); } }catch(e){}
+  try{ var qtab=new URLSearchParams(location.search).get('tab'); if(qtab==='import'||qtab==='today'){ lsSet('cb-tab',qtab); if(history.replaceState) history.replaceState(null,'',location.pathname); } }catch(e){}
   var st0=lsGet('cb-tab'); if(st0==='tools') S.toolSolo=true; showTab(['today','position','receipts','reports','months','log','tools','import'].indexOf(st0)>=0?st0:'today');
   renderAll();
 
