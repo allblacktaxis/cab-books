@@ -797,6 +797,10 @@ details.sgrp details.sgrp{background:var(--bg)}
 @keyframes bardemo{0%,15%{transform:translateX(0) scale(1)}25%{transform:translateX(0) scale(1.12)}60%,75%{transform:translateX(116px) scale(1.12)}85%,100%{transform:translateX(116px) scale(1)}}
 .helpcontact{user-select:all;font-weight:600}
 input[type=file]{max-width:100%}
+/* No sideways wobble on iPhone: clip the content areas only, never html/body, so the bottom bar stays put */
+.wrap{overflow-x:clip;max-width:100%}
+.ovl .sheet{overflow-x:hidden}
+.su-scroll{overflow-x:hidden}
 .ru-inline{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;align-items:end}
 .ru-inline .field{margin:0}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
