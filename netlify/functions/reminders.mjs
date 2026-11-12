@@ -1,7 +1,7 @@
 // Cab Books – weekly statement reminder on drivers' phones (to-do item 10, Matt 10 Nov 2026).
 // One reminder a week, on the day and hour each driver picks (default Wednesday 10am, London time): "Time to bring in
-// this week's statements", naming only the apps that driver uses, plus the bank CSV for Full books. On the first of
-// that weekday in a month it also asks for last month's Curb report. Tapping it opens the Import tab.
+// this week's statements", naming only the apps that driver uses, plus, on the first of that weekday in a month, last
+// month's bank CSV (Full books) and last month's Curb report. Tapping it opens the Import tab.
 // Uses the same phone sign-up as train alerts (users/<uid>/push/<device>); the reminder settings are in its "remind"
 // field ({on, dow 0-6 Sun-Sat, hour 0-23, apps:[names], bank}). Sent at most once a day per phone (remindSent).
 // Runs every hour. Needs FIREBASE_SERVICE_ACCOUNT (already set).
@@ -26,7 +26,7 @@ export function reminderFor(r, now) {
   const weekly = apps.filter(a => !/^curb$/i.test(a)), curb = apps.some(a => /^curb$/i.test(a)) && now.dom <= 7;
   const parts = [];
   if (weekly.length) parts.push(`this week's ${list(weekly)} statement${weekly.length > 1 ? 's' : ''}`);
-  if (r.bank !== false) parts.push('your bank CSV');
+  if (r.bank !== false && now.dom <= 7) parts.push("last month's bank statement (CSV)"); /* once a month (Matt, 12 Nov 2026) */
   if (!parts.length && !curb) parts.push("this week's statements");
   let body = parts.length ? `Bring in ${list(parts)}.` : '';
   if (curb) body += (body ? ' ' : '') + "Also last month's Curb report.";

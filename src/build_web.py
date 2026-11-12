@@ -116,9 +116,6 @@ rep("Receipts are saved to your Claude account.</div>", "Sign in to Cab Books to
 # ---------------------------------------------------------------- per-driver: no owner special case on the web
 rep("S.mode=md||(S.isOwner?'full':null);", "S.mode=md||null;")
 rep("var needWelcome=!S.isOwner&&S.loaded.settings&&!S.mode;", "var needWelcome=S.loaded.settings&&!S.mode;")
-rep("+(S.isOwner?'':'<p class=\"privnote\" style=\"margin-top:10px\">Your figures are private to you. Nobody else using Cab Books can see them.</p>')+'</div>';",
-    "+'<p class=\"privnote\" style=\"margin-top:10px\">Your figures are private to you. Nobody else using Cab Books can see them.</p></div>';")
-rep("h=renderModeCard()+renderLookCard()", "h=renderAccountCard()+renderModeCard()+renderLookCard()")
 rep('<button type="button" class="gear" id="gear"', '<style>@media (max-width:359px){#acctbtn span{display:none}}</style><button type="button" class="gear" id="acctbtn" aria-label="Your account" hidden>\U0001F464\uFE0E<span>Account</span></button><button type="button" class="gear" id="gear"')
 
 # ---------------------------------------------------------------- boot: Firebase instead of Claude
@@ -327,7 +324,7 @@ BOOT = r"""  /* ---------- website plumbing: Firebase sign-in + each driver's pr
   document.addEventListener('click',function(ev){ var id=ev.target&&ev.target.id; if(id==='del-keep'&&S.uid){ var b=ev.target; b.disabled=true;
       S.fs.collection('users').doc(S.uid).collection('meta').doc('deletion').delete().then(function(){ delBanner(0); toast('Your account will be kept.'); }).catch(function(){ b.disabled=false; toast('Could not do that. Check your connection and try again.'); }); }
     else if(id==='del-out'&&S.auth){ S.auth.signOut(); } });
-  function openAccount(){ S.acctOpen={}; openSettings(); setTimeout(function(){ var c=$('acct-card'); if(c) c.scrollIntoView({block:'start'}); },30); }
+  function openAccount(){ S.acctOpen={}; S.sgOpen.acct=true; openSettings(); setTimeout(function(){ var c=$('acct-card'); if(c) c.scrollIntoView({block:'start'}); },30); }
   document.addEventListener('toggle',function(ev){ var d=ev.target; if(d&&d.getAttribute&&d.getAttribute('data-acct')) S.acctOpen[d.getAttribute('data-acct')]=d.open; },true);
   document.addEventListener('click',function(ev){
     var t=ev.target&&ev.target.closest?ev.target.closest('button'):null, id=t&&t.id; if(!id) return;
