@@ -6387,9 +6387,17 @@ html{overscroll-behavior-x:none}
     S0.credits=g(/Total credits\s+£\s?(-?[\d,.]+)/); S0.outstanding=g(/Outstanding amount previous invoices\s+£\s?(-?[\d,.]+)/);
     S0.cashTours=-g(/Total cash tours\s+£\s?(-?[\d,.]+)/); S0.payout=g(/Total payout amount\s+£\s?(-?[\d,.]+)/);
     S0.payDate=S0.issued?addDays(S0.issued,2):(S0.to?addDays(S0.to,2):'');
-    var calc=r2(S0.total-S0.fees+S0.credits+S0.outstanding-S0.cashTours);
-    S0.checks.push(chk(near(calc,S0.payout),'Tours '+gbp2.format(S0.total)+' − fees '+gbp2.format(S0.fees)+(S0.credits?' + credits '+gbp2.format(S0.credits):'')+(S0.outstanding?' '+(S0.outstanding<0?'−':'+')+' carried from last week '+gbp2.format(Math.abs(S0.outstanding)):'')+' − cash tours '+gbp2.format(S0.cashTours)+' = payout '+gbp2.format(S0.payout)));
+    /* "Airport fee" (Matt, 13 Nov 2026): the airport charge passengers pay on airport jobs, on top of the tour value.
+       It's income (the drop-off/parking charge itself is a cost from Heathrow or the bank). Part of it can be inside
+       "Total cash tours" when the passenger paid it in cash. Any other line making up "Total gross pay" is kept too. */
+    S0.airport=g(/Airport fee\s+£\s?(-?[\d,.]+)/);
+    var gross=/Total gross pay\s+£\s?(-?[\d,.]+)/.exec(txt); S0.otherPay=gross?r2(stMoney(gross[1])-(S0.total-S0.fees+S0.credits+S0.airport)):0;
+    if(Math.abs(S0.otherPay)<0.01) S0.otherPay=0;
+    var calc=r2(S0.total-S0.fees+S0.credits+S0.airport+S0.otherPay+S0.outstanding-S0.cashTours);
+    S0.checks.push(chk(near(calc,S0.payout),'Tours '+gbp2.format(S0.total)+' − fees '+gbp2.format(S0.fees)+(S0.credits?' + credits '+gbp2.format(S0.credits):'')+(S0.airport?' + airport fees '+gbp2.format(S0.airport):'')+(S0.otherPay?' + other '+gbp2.format(S0.otherPay):'')+(S0.outstanding?' '+(S0.outstanding<0?'−':'+')+' carried from last week '+gbp2.format(Math.abs(S0.outstanding)):'')+' − cash tours '+gbp2.format(S0.cashTours)+' = payout '+gbp2.format(S0.payout)));
     if(S0.credits) S0.extras.push({id:'fncr-'+S0.ref,date:S0.to,label:'FreeNow credits (incentives, referrals)',amount:S0.credits});
+    if(S0.airport) S0.extras.push({id:'fnap-'+S0.ref,date:S0.to,label:'FreeNow airport fees paid by passengers',amount:S0.airport});
+    if(S0.otherPay) S0.extras.push({id:'fnot-'+S0.ref,date:S0.to,label:'FreeNow other pay on the statement',amount:S0.otherPay});
     return S0;
   }
   function fnInvoice(L,name){
@@ -7088,7 +7096,9 @@ html{overscroll-behavior-x:none}
         if(existing[x.id]||have[x.id]){ plan.dup++; return; } existing[x.id]=1;
         if(x.weak&&dailyGett.some(function(g){ return g.from>=s.from&&g.to<=s.to; })) return;
         var lt=stLoadedTo(s.prov,monthOf(x.date)); if(lt&&x.date<=lt){ plan.loaded++; return; }
-        plan.extras.push({id:x.id,data:{kind:'fare',src:'import',stmt:rec.id,provider:s.prov,date:x.date,m:monthOf(x.date),pay:'Account',amount:r2(x.amount),extras:0,tips:0,commission:0,feeFixed:0,note:x.label,ts:Date.now()}});
+        /* an airport fee paid on a FreeNow 'cash' job that was really paid by card in the cab is already in Curb's report */
+        var xa=r2(x.amount-(x.cashPart&&viaCard?x.cashPart:0)); if(!xa) return;
+        plan.extras.push({id:x.id,data:{kind:'fare',src:'import',stmt:rec.id,provider:s.prov,date:x.date,m:monthOf(x.date),pay:'Account',amount:xa,extras:0,tips:0,commission:0,feeFixed:0,note:x.label+(xa!==r2(x.amount)?' (the '+gbp2.format(x.cashPart)+' paid on cash jobs is in your card machine report)':''),ts:Date.now()}});
       });
     });
     R.forEach(function(s){ if(s.err) return; (s.costs||[]).forEach(function(x){
@@ -7157,7 +7167,9 @@ html{overscroll-behavior-x:none}
       /* FreeNow: tie a tour overview to the payment overview for the same week */
       R.forEach(function(s){ if(s.prov!=='Freenow'||s.kind!=='payment') return; var t=R.filter(function(x){return x.prov==='Freenow'&&x.kind==='tours'&&x.from===s.from&&x.to===s.to})[0];
         if(t){ var cashT=t.jobs.filter(function(j){return j.cash}).reduce(function(a,j){return a+j.fare+j.tip},0);
-          s.checks.push(chk(near(t.total,s.total)&&near(cashT,s.cashTours),'Matches the tour overview: '+gbp2.format(t.total)+' of tours, '+gbp2.format(cashT)+' cash'));
+          var apc=r2(s.cashTours-cashT), apOk=near(cashT,s.cashTours)||(apc>0&&apc<=(s.airport||0)+0.01);
+          if(apOk&&apc>0.005) s.extras.forEach(function(x){ if(/^fnap-/.test(x.id)) x.cashPart=apc; });
+          s.checks.push(chk(near(t.total,s.total)&&apOk,'Matches the tour overview: '+gbp2.format(t.total)+' of tours, '+gbp2.format(cashT)+' cash'+(apOk&&apc>0.005?' (+ '+gbp2.format(apc)+' airport fee paid in cash)':'')));
           var feeT=t.jobs.reduce(function(a,j){return a+j.fee},0), diff=r2(s.fees-feeT);
           if(Math.abs(diff)>0&&Math.abs(diff)<=0.05&&t.jobs.length){ t.jobs[t.jobs.length-1].fee=r2(t.jobs[t.jobs.length-1].fee+diff); }
           s.checks.push(chk(near(s.fees,t.jobs.reduce(function(a,j){return a+j.fee},0)),'Fees per tour add up to '+gbp2.format(s.fees)+' incl. VAT')); }
