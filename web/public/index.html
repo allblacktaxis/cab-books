@@ -2445,7 +2445,7 @@ html{overscroll-behavior-x:none}
   }
   function feeTxt(p,f){ var parts=[]; if(p) parts.push(p+'%'); if(f) parts.push((p?'+ ':'')+(f<1?Math.round(f*100)+'p':gbp2.format(f))); return parts.join(' ')||'no fee'; }
   function fixPay(){ var ok=paysFor(S.prov); if(ok.indexOf(S.pay)<0) S.pay=ok[0]; }
-  var DEFFEES={taxiworld:[4,0],helix:[1.75,0],hips:[3,0.20],uber:[0,0],comcab:[20,0],curb:[2.75,0.25],freenow:[20,0],gett:[20,0]};
+  var DEFFEES={taxiworld:[4,0],helix:[1.75,0],hips:[3,0.20],uber:[0,0],comcab:[18,0],curb:[2.75,0.25],freenow:[20,0],gett:[20,0]};
   /* Rate changes with a 'from' date: settings/main fees[k].hist = [{from:'YYYY-MM-DD',pct,add}] (rate from that date on).
      fees[k].pct/add = the rate before the first change (or the only rate). Built-in: FreeNow 18% to 14 Sep 2026, 20% from 15 Sep. */
   var DEFHIST={freenow:{base:[18,0],hist:[{from:'2026-09-15',pct:20,add:0}]}};
@@ -6534,9 +6534,16 @@ html{overscroll-behavior-x:none}
     S1.checks.push(chk(true,S1.jobs.length+' card payments, '+gbp2.format(S1.total)+' in total.'));
     return S1;
   }
-  /* ---- ComCab (Marcin, 31 Oct): weekly Driver Statement PDF (the payment, with charges and cab rent)
-     and the Pay Sheet spreadsheet (job by job). Street hails paid by card carry only the card fee
-     (2.5% + VAT on the fare, not tips, plus 20p a job incl. VAT); cab rent is a cost taken off the payout. */
+  /* ---- ComCab (Marcin, 31 Oct; Matt, 13 Nov 2026, checked against weeks 1 and 40 of 2026): weekly Driver Statement PDF
+     (the payment, with charges and cab rent) and the Pay Sheet spreadsheet (job by job). ComCab is three things: cab rent
+     ("LEVC Rental"), app jobs ("… 15 Subscription" = 15% + VAT commission) and card payments (2.5% + VAT on the card amount,
+     never on tips, plus 20p a card job incl. VAT). Kinds of job on the pay sheet:
+       Account – ComCab pays it all; 15% + VAT.
+       Cash Taxicard – ComCab pays "Fare Amount", the passenger pays the rest in cash to the driver; 15% + VAT on the full fare.
+       Credit Card Taxicard – "Fare Amount" is the full fare, the passenger's card part goes through ComCab; 15% + VAT on the
+         full fare plus 2.5% + VAT and 20p on the card part.
+       Credit Card Streethail – passenger off the street paying by card; 2.5% + VAT on the fare (not the tip) plus 20p.
+     The statement's Fares (and the PDF's trip "Total") include tips but not the cash a Taxicard passenger paid. */
   function ccNum(s){ return stMoney(String(s).replace(/[^\d.,()-]/g,'')); }
   function ccStmt(L,name){
     var txt=L.join('\n'), no=(/Statement Number:\s*(\S+)/.exec(txt)||[])[1]||('cc-'+hash(txt));
@@ -6550,7 +6557,7 @@ html{overscroll-behavior-x:none}
       if(sec==='FARES'&&m){ if(/^Total Fares/i.test(m[1])) fareTot=ccNum(m[4]); else fares+=ccNum(m[4]); return; }
       if(sec==='CHARGES'&&m){ var lab=m[1].trim(), v=Math.abs(ccNum(m[4]));
         if(/^Total Charges/i.test(lab)){ chgTot=v; return; }
-        if(/rental|\brent\b|hire|subscription|lease/i.test(lab)){ rent+=v; S0.costs.push({id:S0.costs.some(function(x){return x.category==='Car rental'})?'ccr-'+hash(no+'|'+lab):'ccrent-'+no,date:S0.to||S0.from,category:'Car rental',amount:r2(v),note:lab+' ('+gbp2.format(-ccNum(m[2]))+' + VAT '+gbp2.format(-ccNum(m[3]))+'), taken off ComCab statement '+no}); }
+        if(/rental|\brent\b|hire|lease/i.test(lab)&&!/subscription|commission|per job|card/i.test(lab)){ rent+=v; S0.costs.push({id:S0.costs.some(function(x){return x.category==='Car rental'})?'ccr-'+hash(no+'|'+lab):'ccrent-'+no,date:S0.to||S0.from,category:'Car rental',amount:r2(v),note:lab+' ('+gbp2.format(-ccNum(m[2]))+' + VAT '+gbp2.format(-ccNum(m[3]))+'), taken off ComCab statement '+no}); }
         else fees+=v; return; }
       var o=/^(.+?)\s{2,}(-?[\d,]+\.\d\d)$/.exec(t);
       if(sec==='OTHER'&&o&&!/^Total Other/i.test(o[1])&&ccNum(o[2])){ var ov=Math.abs(ccNum(o[2])); other+=ov; S0.costs.push({id:'cco-'+hash(no+'|'+o[1]),date:S0.to||S0.from,category:'Other',amount:r2(ov),note:o[1].trim()+', taken off ComCab statement '+no}); }
@@ -6567,14 +6574,14 @@ html{overscroll-behavior-x:none}
     S0.total=r2(fareTot!=null?fareTot:fares); S0.fees=r2(fees); S0.rent=r2(rent);
     /* card fees per job from the PDF alone: % share on the fare, the per-job charge split evenly (the Pay Sheet, if added, gives exact ones) */
     var jf=S0.jobs.reduce(function(a,j){return a+j.fare},0);
-    if(S0.jobs.length&&jf){ var pct=0, per=0; L.forEach(function(l){ var m=/^(.+?)\s{2,}(-?[\d,]+\.\d\d)\s{2,}(-?[\d,]+\.\d\d)\s{2,}(-?[\d,]+\.\d\d)$/.exec(l.trim()); if(!m) return; if(/per job/i.test(m[1])) per+=Math.abs(ccNum(m[4])); else if(/%|commission/i.test(m[1])) pct+=Math.abs(ccNum(m[4])); });
+    if(S0.jobs.length&&jf){ var pct=0, per=0; L.forEach(function(l){ var m=/^(.+?)\s{2,}(-?[\d,]+\.\d\d)\s{2,}(-?[\d,]+\.\d\d)\s{2,}(-?[\d,]+\.\d\d)$/.exec(l.trim()); if(!m) return; if(/per job/i.test(m[1])) per+=Math.abs(ccNum(m[4])); else if(/%|commission|subscription/i.test(m[1])) pct+=Math.abs(ccNum(m[4])); });
       S0.jobs.forEach(function(j){ j.fee=r2(j.fare/jf*pct+per/S0.jobs.length); });
       var d=r2(fees-S0.jobs.reduce(function(a,j){return a+j.fee},0)); S0.jobs[S0.jobs.length-1].fee=r2(S0.jobs[S0.jobs.length-1].fee+d); }
     var jt=r2(S0.jobs.reduce(function(a,j){return a+j.fare+j.tip+(j.extras||0)},0));
     if(S0.jobs.length) S0.checks.push(chk(near(jt,S0.total),S0.jobs.length+' trips add up to the fares of '+gbp2.format(S0.total)));
-    if(chgTot!=null) S0.checks.push(chk(near(fees+rent,chgTot),'Charges: card fees '+gbp2.format(fees)+(rent?' + cab rent '+gbp2.format(rent):'')+' = '+gbp2.format(chgTot)));
+    if(chgTot!=null) S0.checks.push(chk(near(fees+rent,chgTot),'Charges: commission and card fees '+gbp2.format(fees)+(rent?' + cab rent '+gbp2.format(rent):'')+' = '+gbp2.format(chgTot)));
     if(bal!=null){ var calc=r2(S0.total-fees-rent-other-S0.saving+S0.bf);
-      S0.checks.push(chk(near(calc,bal),'Fares '+gbp2.format(S0.total)+' − card fees '+gbp2.format(fees)+(rent?' − rent '+gbp2.format(rent):'')+(other?' − other '+gbp2.format(other):'')+(S0.saving?' − savings '+gbp2.format(S0.saving):'')+(S0.bf?' '+(S0.bf<0?'−':'+')+' brought forward '+gbp2.format(Math.abs(S0.bf)):'')+' = '+(bal<0?'you owe ComCab ':'ComCab pays ')+gbp2.format(Math.abs(bal)))); }
+      S0.checks.push(chk(near(calc,bal),'Fares '+gbp2.format(S0.total)+' − commission and card fees '+gbp2.format(fees)+(rent?' − rent '+gbp2.format(rent):'')+(other?' − other '+gbp2.format(other):'')+(S0.saving?' − savings '+gbp2.format(S0.saving):'')+(S0.bf?' '+(S0.bf<0?'−':'+')+' brought forward '+gbp2.format(Math.abs(S0.bf)):'')+' = '+(bal<0?'you owe ComCab ':'ComCab pays ')+gbp2.format(Math.abs(bal)))); }
     if(S0.saving) S0.checks.push(chk(true,'Savings scheme '+gbp2.format(S0.saving)+' is your money put aside, not a cost.'));
     return S0;
   }
@@ -6589,10 +6596,15 @@ html{overscroll-behavior-x:none}
       var jd=r[c('job date')], d='', tm='';
       if(jd instanceof Date){ d=stCell(jd); tm=pad(jd.getHours())+':'+pad(jd.getMinutes()); } else { d=stDMY(String(jd)); tm=(/(\d\d:\d\d)/.exec(String(jd))||[])[1]||''; }
       var type=String(r[c('job type')]||'').trim(), cashPaid=v(r,'passenger paid by cash'), ccPaid=v(r,'passenger paid by cc');
-      var pay=cashPaid>0?'Cash':(/credit card|card/i.test(type)||ccPaid>0?'Card':'Account');
-      var fare=r2(v(r,'fare amount')+v(r,'extras amount')+v(r,'waiting amount')+v(r,'premium amount')), tip=r2(v(r,'tips amount')+v(r,'account gratuity amount'));
-      var fee=r2((Math.abs(v(r,'credit card percentage'))+Math.abs(v(r,'commission paid'))+Math.abs(v(r,'cash booking fee')))*1.2+Math.abs(v(r,'credit card amount')));
-      S1.jobs.push({id:'cc-'+jn,ref:jn,date:d,time:tm,type:type,method:type,pay:pay,cash:pay==='Cash',fare:fare,tip:tip,extras:r2(v(r,'expenses amount')),fee:fee});
+      var taxi=/taxicard/i.test(type), street=/street/i.test(type), cardJob=/credit card|card/i.test(type)&&!taxi||street;
+      /* the fare is the whole journey: what ComCab pays plus any cash the Taxicard passenger handed over */
+      var fare=r2(v(r,'fare amount')+cashPaid+v(r,'extras amount')+v(r,'waiting amount')+v(r,'premium amount')), tip=r2(v(r,'tips amount')+v(r,'account gratuity amount'));
+      var comm=r2(Math.abs(v(r,'commission paid'))*1.2), card=r2(Math.abs(v(r,'credit card percentage'))*1.2+Math.abs(v(r,'credit card amount'))), bf=r2(Math.abs(v(r,'cash booking fee'))*1.2);
+      var fee=r2(comm+card+bf);
+      var kind=street?'Street hail (card)':taxi?(cashPaid>0?'Taxicard (part cash)':ccPaid>0?'Taxicard (part card)':'Taxicard'):/account/i.test(type)?'Account':type||'Job';
+      var how=[]; if(cashPaid>0) how.push(gbp2.format(r2(fare-cashPaid))+' from ComCab, '+gbp2.format(cashPaid)+' cash from the passenger'); else if(taxi&&ccPaid>0) how.push(gbp2.format(ccPaid)+' of it paid by the passenger’s card');
+      if(comm) how.push('commission '+gbp2.format(comm)); if(card) how.push('card fee '+gbp2.format(card));
+      S1.jobs.push({id:'cc-'+jn,ref:jn,date:d,time:tm,type:kind,method:how.join(' · '),pay:cardJob?'Card':'Account',cash:false,cashPart:cashPaid>0?r2(cashPaid):0,fare:fare,tip:tip,extras:r2(v(r,'expenses amount')),fee:fee,comm:comm,cardFee:r2(card+bf)});
     }
     var hj=-1; for(;i<rows.length;i++){ if(String(rows[i][0]).trim()==='Job Number'){ hj=i; break; } }
     if(hj>=0){ var AH=rows[hj].map(function(x){return String(x).toLowerCase().trim()}), ca=AH.indexOf('adjustment'), cd=AH.indexOf('job date'), cc=AH.indexOf('commission paid');
@@ -6601,8 +6613,13 @@ html{overscroll-behavior-x:none}
         S1.extras.push({id:'ccadj-'+an+'-'+Math.round(amt*100),date:ad||(S1.jobs.length?S1.jobs[S1.jobs.length-1].date:''),label:'ComCab adjustment '+an+(cc>=0&&stMoney(a[cc])?' (commission '+gbp2.format(Math.abs(stMoney(a[cc]))*1.2)+')':''),amount:r2(amt-(cc>=0?Math.abs(stMoney(a[cc]))*1.2:0))}); } }
     if(!S1.jobs.length&&!S1.extras.length) return null;
     var ds=S1.jobs.map(function(j){return j.date}).sort(); S1.from=ds[0]||''; S1.to=ds[ds.length-1]||'';
-    S1.total=r2(S1.jobs.reduce(function(a,j){return a+j.fare+j.tip+(j.extras||0)},0));
-    S1.checks.push(chk(true,S1.jobs.length+' jobs, '+gbp2.format(S1.total)+' with tips; card fees '+gbp2.format(S1.jobs.reduce(function(a,j){return a+j.fee},0))+' incl. VAT.'));
+    /* total = what ComCab pays for (matches the statement's Fares); cash Taxicard passengers paid the driver direct */
+    S1.cashTot=r2(S1.jobs.reduce(function(a,j){return a+(j.cashPart||0)},0));
+    S1.total=r2(S1.jobs.reduce(function(a,j){return a+j.fare+j.tip+(j.extras||0)},0)-S1.cashTot);
+    var nk={}; S1.jobs.forEach(function(j){ nk[j.type]=(nk[j.type]||0)+1; });
+    S1.checks.push(chk(true,S1.jobs.length+' jobs: '+Object.keys(nk).map(function(k){return nk[k]+' '+k}).join(', ')+'.'));
+    S1.checks.push(chk(true,'Commission '+gbp2.format(S1.jobs.reduce(function(a,j){return a+j.comm},0))+', card fees '+gbp2.format(S1.jobs.reduce(function(a,j){return a+j.cardFee},0))+' (both incl. VAT). No commission on tips.'));
+    if(S1.cashTot) S1.checks.push(chk(true,gbp2.format(S1.cashTot)+' paid in cash by Taxicard passengers is counted in your fares (it isn’t in ComCab’s payment).'));
     return S1;
   }
   /* ---- Uber (Matt, 10 Nov 2026): weekly statement PDFs and his earnings CSV (week,processed,type,trip_date,trip_time,amount).
@@ -7024,6 +7041,7 @@ html{overscroll-behavior-x:none}
           pay:j.pay||(s.prov==='Curb'?'Card':(j.cash?'Cash':'Account')),amount:j.fare,extras:j.extras||0,tips:j.tip,commission:0,feeFixed:Math.abs(+j.fee||0),
           note:(j.type&&j.type!=='Tour'&&j.type!=='Ride'&&j.type!=='Card payment'?j.type+' · ':'')+(s.prov==='Curb'?'':j.method),ts:Date.now()};
         if(j.card) e.card=j.card;
+        if(j.cashPart) e.cashPart=j.cashPart;
         if(j.ubk){ e.ubk=j.ubk; if(j.bonus) e.bonus=j.bonus; if(j.tipOnly) e.tipOnly=true; if(j.adj) e.adj=true; }
         if(j.cash&&(s.prov==='Freenow'||s.prov==='Gett')&&viaCard){ e.cashFare=j.fare; e.amount=0; e.viaCard=true; e.note='Paid by card in the cab: '+gbp2.format(j.fare)+' counted in Curb’s report'; plan.cashFares+=j.fare; plan.cashN++; }
         plan.add.push({id:j.id,data:e});
@@ -7114,7 +7132,7 @@ html{overscroll-behavior-x:none}
         s.jobs=[]; var ft=r2(t.jobs.reduce(function(a,j){return a+j.fee},0)), d=r2(s.fees-ft);
         if(Math.abs(d)>0&&Math.abs(d)<=0.10&&t.jobs.length) t.jobs[t.jobs.length-1].fee=r2(t.jobs[t.jobs.length-1].fee+d);
         s.checks.push(chk(near(t.total,s.total),'Matches the pay sheet: '+t.jobs.length+' jobs, '+gbp2.format(t.total)));
-        s.checks.push(chk(Math.abs(d)<=0.10,'Card fees per job add up to '+gbp2.format(s.fees)+' incl. VAT'+(Math.abs(d)>0.10?' (pay sheet says '+gbp2.format(ft)+')':''))); });
+        s.checks.push(chk(Math.abs(d)<=0.10,'Commission and card fees per job add up to '+gbp2.format(s.fees)+' incl. VAT'+(Math.abs(d)>0.10?' (pay sheet says '+gbp2.format(ft)+')':''))); });
       R.forEach(function(s){ if(s.prov!=='Curb'||s.kind!=='settlement') return; var t=R.filter(function(x){return x.prov==='Curb'&&x.kind==='tours'})[0]; if(!t) return;
         var J=t.jobs.filter(function(j){ return j.date<s.to&&j.date>=addDays(s.from,-4); }), tot=r2(J.reduce(function(a,j){return a+j.fare+j.tip},0)), fee=r2(J.reduce(function(a,j){return a+j.fee},0));
         s.checks.push(chk(Math.abs(tot-s.sub)<1,'Card payments to '+dlabel(addDays(s.to,-1))+' ('+gbp2.format(tot)+') match what Curb paid out on ('+gbp2.format(s.sub)+')'));
