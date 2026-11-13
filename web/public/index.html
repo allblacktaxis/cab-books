@@ -1487,14 +1487,40 @@ html{overscroll-behavior-x:none}
     {k:'gett',n:'Gett',need:'Daily statement for every Gett payment in the month. Weekly and quarterly are checks only.',chk:'Each "Payment to You" equals its bank credit. Fees taken from the statement, never calculated.'},
     {k:'curb',n:'Curb',need:'Settlement (payout) report and card transaction report to month end.',chk:'Settlement totals equal Curb bank credits (2.75% + 20p a job + 25p a payout).'},
     {k:'uber',n:'Uber',need:'Uber’s weekly statements covering the month, loaded on the Import tab (fares, tips, Quest, promotions and referrals come from them, counted by trip date).',chk:'Each weekly payout equals its bank credit (paid Monday, lands Tuesday or Wednesday).'},
+    {k:'comcab',n:'ComCab',need:'The driver statement PDF and the pay sheet spreadsheet for every week in the month, loaded together on the Import tab.',chk:'Each week’s payment equals its bank credit (paid around the Friday after the week). Rent you paid ComCab by card matches a “Payment Received” on a later statement.'},
+    {k:'taxiworld',n:'Taxiworld',need:'Every “Payment from Taxiworld” PDF in the month.',chk:'Each net payment equals its bank credit on the day it was paid.'},
     {k:'cash',n:'Cash fares',need:'Any fares paid in cash that no app recorded.',chk:'Entered as jobs on the Today tab.'}
   ];
   var CL_ST={waiting:'Waiting',received:'Received',checked:'Checked'};
   /* Only the apps this driver uses (Settings → Providers I use, or Set up my app). Bank and cash fares always. */
-  function closeSrcs(k){ var P={freenow:'Freenow',gett:'Gett',curb:'Curb',uber:'Uber'}, ms=(k||monthOf(todayISO()))+'-01';
+  function closeSrcs(k){ var P={freenow:'Freenow',gett:'Gett',curb:'Curb',uber:'Uber',comcab:'ComCab',taxiworld:'Taxiworld'}, ms=(k||monthOf(todayISO()))+'-01';
     return CLOSE_SRC.filter(function(x){ return !P[x.k]||provShown(P[x.k])||(x.k==='curb'&&cardHist().some(function(h){ return h.card==='Curb'&&h.until>=ms; })); }); }
+  /* Statement payments against the bank (Matt, 13 Nov 2026): every payment an app's statements say it made in the month,
+     and whether that money is in the bank statement you brought in: same amount, within a few days. Bank payments from that
+     app with no statement are listed too. */
+  function clBank(src,k){
+    if(src==='bank'||src==='cash') return '';
+    var a=k+'-01', b=k+'-31', pays=[];
+    Object.keys(S.stmts||{}).forEach(function(i){ var s=S.stmts[i]; if(pkey(s.prov)!==src) return;
+      (s.payouts||(s.payout!=null&&s.payDate?[{d:s.payDate,amt:s.payout}]:[])).forEach(function(p){ if(p.d>=a&&p.d<=b&&(+p.amt||0)>0.005) pays.push({d:p.d,amt:r2(+p.amt)}); }); });
+    var seen={}; pays=pays.filter(function(p){ var x=p.d+'|'+p.amt; if(seen[x]) return false; seen[x]=1; return true; }).sort(function(x,y){return x.d<y.d?-1:1});
+    var bank=(S.entriesRaw||[]).filter(function(e){ return e.kind==='fare'&&e.src==='import'&&e.est==='bank'&&pkey(e.provider)===src&&e.date>=addDays(a,-5)&&e.date<=addDays(b,7); }), used={};
+    var bankTo=S.bankCov||'';
+    if(!pays.length&&!bank.some(function(e){return e.date>=a&&e.date<=b})) return '';
+    var rows=pays.map(function(p){
+      var m=bank.filter(function(e){ var n=bankNet(e); return !used[e.id]&&n!=null&&near(n,p.amt)&&e.date>=addDays(p.d,-3)&&e.date<=addDays(p.d,5); })[0];
+      if(m){ used[m.id]=1; return {ok:1,t:gbp2.format(p.amt)+' due '+dlabel(p.d)+': in your bank on '+dlabel(m.date)}; }
+      if(!bankTo||bankTo<addDays(p.d,5)) return {wait:1,t:gbp2.format(p.amt)+' due '+dlabel(p.d)+': your bank statement doesn’t reach this date yet'};
+      return {bad:1,t:gbp2.format(p.amt)+' due '+dlabel(p.d)+': not found in your bank'};
+    });
+    bank.forEach(function(e){ if(used[e.id]||e.date<a||e.date>b) return; var n=bankNet(e); rows.push({bad:1,t:(n!=null?gbp2.format(n):'A payment')+' in your bank on '+dlabel(e.date)+': no statement for it yet'}); });
+    var nOk=rows.filter(function(r){return r.ok}).length, nBad=rows.filter(function(r){return r.bad}).length, nW=rows.filter(function(r){return r.wait}).length;
+    var head=nBad?'\u26A0 '+nBad+' payment'+(nBad>1?'s':'')+' don’t match the bank'+(nOk?' ('+nOk+' do)':''):nW?(nOk?'\u2713 '+nOk+' found in your bank, ':'')+nW+' waiting for your bank statement':(nOk===1?'\u2713 The payment was found in your bank':'\u2713 All '+nOk+' payments found in your bank');
+    return '<details class="clbank" style="margin:6px 0 0"'+(nBad?' open':'')+'><summary class="chk" style="cursor:pointer;color:'+(nBad?'var(--warn,#d98b00)':nW?'var(--muted)':'var(--ok)')+'">'+head+'</summary>'
+      +rows.map(function(r){ return '<div class="note" style="margin:2px 0 0 14px;color:'+(r.ok?'var(--ok)':r.bad?'var(--warn,#d98b00)':'var(--muted)')+'">'+(r.ok?'\u2713 ':r.bad?'\u26A0 ':'\u2026 ')+esc(r.t)+'</div>'; }).join('')+'</details>';
+  }
   function clRead(src,k){
-    if(src!=='freenow'&&src!=='gett'&&src!=='curb') return '';
+    if(src!=='freenow'&&src!=='gett'&&src!=='curb'&&src!=='uber'&&src!=='comcab'&&src!=='taxiworld') return '';
     var a=k+'-01', b=k+'-31', L=Object.keys(S.stmts||{}).map(function(i){return S.stmts[i]}).filter(function(s){ return pkey(s.prov)===src&&s.from&&s.to&&s.from<=b&&s.to>=a; });
     if(!L.length) return '';
     var to=L.reduce(function(m,s){return s.to>m?s.to:m},''), pays=L.filter(function(s){return s.kind==='payment'||s.kind==='settlement'}).length;
@@ -1513,7 +1539,7 @@ html{overscroll-behavior-x:none}
     SRCS.forEach(function(x){
       var v=src[x.k]||{}, s=v.s||'waiting';
       h+='<div class="cl-src"><div class="top"><span class="nm">'+(x.k==='bank'?'':pdot(x.k))+esc(x.n)+'</span></div>'
-        +'<div class="need">'+esc(x.need)+'</div><div class="chk">Check: '+esc(x.chk)+'</div>'+clRead(x.k,k)
+        +'<div class="need">'+esc(x.need)+'</div><div class="chk">Check: '+esc(x.chk)+'</div>'+clRead(x.k,k)+clBank(x.k,k)
         +'<div class="cl-seg" role="group" aria-label="'+esc(x.n)+' status">'
         +['waiting','received','checked'].map(function(o){return '<button type="button" class="'+o.charAt(0).replace('w','w')+'" data-cs="'+x.k+'|'+o+'" aria-pressed="'+(s===o)+'"'+(c.closed?' disabled':'')+'>'+CL_ST[o]+'</button>'}).join('')
         +'</div><div style="display:flex;gap:8px;align-items:center"><input type="text" id="cn-'+k+'-'+x.k+'" data-cn="'+x.k+'" maxlength="200" placeholder="Note (e.g. runs to 23 Oct)" value="'+esc(v.note||'')+'"'+(c.closed?' disabled':'')+' style="flex:1;min-width:0">'
