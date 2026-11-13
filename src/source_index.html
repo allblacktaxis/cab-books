@@ -6738,7 +6738,11 @@ html{overscroll-behavior-x:none}
     var seen={}, gross=0;
     L.forEach(function(l){
       var m=/^(\d{1,2} [A-Za-z]{3} \d{4})\s+(\d\d:\d\d)\s+([A-Za-z][A-Za-z ]*?)\s+(£\s?[\d,]+\.\d\d|-)\s+(£\s?[\d,]+\.\d\d|-)\s+(£\s?[\d,]+\.\d\d)$/.exec(l.trim());
-      if(!m) return;
+      /* "Refund to passenger  -£22.80" (Matt, 13 Nov 2026): money given back off the card, so it comes off the takings */
+      if(!m){ var rf=/^(\d{1,2} [A-Za-z]{3} \d{4})\s+(\d\d:\d\d)\s+(Refund[A-Za-z ]*?)\s+-\s?£\s?([\d,]+\.\d\d)$/i.exec(l.trim());
+        if(rf){ var rd=stLong(rf[1]), ra=-stMoney(rf[4]), rid='tw-'+rd.replace(/-/g,'')+'-'+rf[2].replace(':','')+'-r'+Math.round(-ra*100);
+          if(!seen[rid]){ seen[rid]=1; S0.jobs.push({id:rid,ref:'',date:rd,time:rf[2],type:'Refund to passenger',method:'Refund to passenger on the Taxiworld card machine',pay:'Card',cash:false,fare:ra,tip:0,fee:0,prov:'Taxiworld',card:'Taxiworld',refund:true}); gross+=ra; } }
+        return; }
       var d=stLong(m[1]), type=m[3].trim(), fare=stMoney(m[4]), tip=stMoney(m[5]), tot=stMoney(m[6]);
       var id='tw-'+d.replace(/-/g,'')+'-'+m[2].replace(':','')+'-'+Math.round(tot*100); if(seen[id]) return; seen[id]=1;
       var jump=/^jump/i.test(type);
@@ -6750,14 +6754,17 @@ html{overscroll-behavior-x:none}
     var fees=Math.abs(stMoney((/Card transaction fees\s+(-?\s?£\s?-?[\d,]+\.\d\d)/.exec(txt)||/Card fees\s+(-?\s?£\s?-?[\d,]+\.\d\d)/.exec(txt)||[])[1]||''));
     var net=stMoney((/Net payment:?\s+(£\s?[\d,]+\.\d\d)/.exec(txt)||[])[1]||'');
     gross=r2(gross); S0.total=gross; S0.fees=r2(fees);
-    if(fees&&gross){ var used=0; S0.jobs.forEach(function(j,i){ var t=j.fare+j.tip; j.fee=i===S0.jobs.length-1?r2(fees-used):r2(fees*t/gross); used=r2(used+j.fee); }); }
+    /* the card fee was charged on the payments themselves, so it's shared across those, not the refunds */
+    var PJ=S0.jobs.filter(function(j){return !j.refund}), pg=PJ.reduce(function(a,j){return a+j.fare+j.tip},0);
+    if(fees&&pg){ var used=0; PJ.forEach(function(j,i){ var t=j.fare+j.tip; j.fee=i===PJ.length-1?r2(fees-used):r2(fees*t/pg); used=r2(used+j.fee); }); }
     if(net){ S0.payout=r2(net); S0.payDate=paid||(S0.to?addDays(S0.to,1):''); }
     S0.ref='taxiworld-'+(S0.payDate||S0.to)+'-'+Math.round(net*100);
     if(tl) S0.checks.push(chk(near(gross,stMoney(tl[3])),S0.jobs.length+' card payments add up to the statement total of '+gbp2.format(stMoney(tl[3]))));
     else S0.checks.push(chk(true,S0.jobs.length+' card payments, '+gbp2.format(gross)+' in total.'));
     if(net) S0.checks.push(chk(near(gross-fees,net),'Total '+gbp2.format(gross)+' − card fees '+gbp2.format(fees)+' = payment '+gbp2.format(net)+(paid?' on '+fmtD(paid):'')));
     var nj=S0.jobs.filter(function(j){return j.prov==='Jump'}).length; if(nj) S0.checks.push(chk(true,nj+' Jump job'+(nj===1?'':'s')+' paid on the card machine, filed under Jump.'));
-    if(gross) S0.checks.push(chk(true,'Card fee '+(fees/gross*100).toFixed(2)+'% of the total, shared across the jobs.'));
+    var nr=S0.jobs.filter(function(j){return j.refund}); if(nr.length) S0.checks.push(chk(true,'Refund to passenger '+gbp2.format(-nr.reduce(function(a,j){return a+j.fare},0))+' taken off your takings.'));
+    if(pg) S0.checks.push(chk(true,'Card fee '+(fees/pg*100).toFixed(2)+'% of the card payments, shared across the jobs.'));
     return S0;
   }
   /* ---- A Cab Books data file (.json, e.g. statements Claude converted for a driver): bring its jobs and costs in like a statement (Marcin, 2 Nov). */
