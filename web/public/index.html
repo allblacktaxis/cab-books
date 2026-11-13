@@ -6681,10 +6681,10 @@ html{overscroll-behavior-x:none}
      (entries with bonus:'Quest' etc.). Uber takes no commission from black cab drivers.
      Bank: Uber pays a week's balance on the Monday the week ends (lands Mon–Thu), so each week's payout is that week's total. */
   var UB_T={fare:'Fare',tip:'Tip',quest:'Quest',promotion:'Promotion',referral:'Referral'};
-  function ubType(s){ s=String(s||'').toLowerCase(); if(/tip/.test(s)) return 'Tip'; if(/quest/.test(s)) return 'Quest'; if(/referr/.test(s)) return 'Referral'; if(/promo|boost|incentive|bonus|surge/.test(s)) return 'Promotion'; if(/transfer|payout|cash ?out/.test(s)) return 'Payout'; return 'Fare'; }
+  function ubType(s){ s=String(s||'').toLowerCase(); if(/toll|reimburs|expense/.test(s)) return 'Reimb'; if(/tip/.test(s)) return 'Tip'; if(/quest/.test(s)) return 'Quest'; if(/referr/.test(s)) return 'Referral'; if(/promo|boost|incentive|bonus|surge/.test(s)) return 'Promotion'; if(/transfer|payout|cash ?out/.test(s)) return 'Payout'; return 'Fare'; }
   function ubJobs(ev,S0){
     /* ev: [{type,tdate,ttime,amt,what,proc}] -> S0.jobs (fares with their tips, tip-only lines, bonuses) */
-    var seen={}, trips={}, T={fare:0,nf:0,tip:0,tipEarly:0,bon:{}};
+    var seen={}, trips={}, T={fare:0,nf:0,tip:0,tipEarly:0,bon:{},reimb:0};
     function key(e){ var k='ub'+e.type.charAt(0).toLowerCase()+'-'+e.tdate.replace(/-/g,'')+'-'+(e.ttime||'0000').replace(':','')+'-'+Math.round(e.amt*100); seen[k]=(seen[k]||0)+1; return seen[k]>1?k+'-'+seen[k]:k; }
     ev.forEach(function(e){ e.key=key(e); });
     ev.forEach(function(e){ if(e.type!=='Fare') return;
@@ -6694,6 +6694,9 @@ html{overscroll-behavior-x:none}
       var j=e.ttime&&trips[e.tdate+' '+e.ttime];
       if(j){ j.tip=r2(j.tip+e.amt); j.ubk.push(e.key); }
       else S0.jobs.push({id:e.key,ubk:[e.key],ref:'',date:e.tdate,time:e.ttime||'',type:'Tip',method:'Tip'+(e.proc&&e.proc!==e.tdate?' (paid '+dlabel(e.proc)+')':''),pay:'Account',cash:false,fare:0,tip:r2(e.amt),fee:0,tipOnly:true}); });
+    /* "Toll - Support": Uber paying back a toll the driver paid (Matt, 13 Nov 2026, week of 7 Sep 2026). Income, not a trip. */
+    ev.forEach(function(e){ if(e.type!=='Reimb') return; T.reimb+=e.amt;
+      S0.jobs.push({id:e.key,ubk:[e.key],ref:'',date:e.tdate,time:e.ttime||'',type:'Uber toll repaid',method:e.what||'Toll',pay:'Account',cash:false,fare:r2(e.amt),tip:0,fee:0,adj:true}); });
     ev.forEach(function(e){ if(e.type!=='Quest'&&e.type!=='Promotion'&&e.type!=='Referral') return; T.bon[e.type]=(T.bon[e.type]||0)+e.amt;
       S0.jobs.push({id:e.key,ubk:[e.key],ref:'',date:e.tdate,time:e.ttime||'',type:'Uber '+e.type,method:e.what&&ubType(e.what)===e.type&&e.what!==e.type?e.what:'',pay:'Account',cash:false,fare:r2(e.amt),tip:0,fee:0,bonus:e.type}); });
     return T;
@@ -6720,9 +6723,18 @@ html{overscroll-behavior-x:none}
        and the "from previous weeks" breakdown repeats the same words (Matt's 2-9 Mar statement) */
     var summ=txt.split(/Breakdown of Your earnings/)[0];
     var earn=stMoney(((/Your earnings and entitlements\s+(-?\s?£\s?-?[\d,]+\.\d\d)/.exec(summ)||[])[1]||'').replace(/\s/g,'')), prev=money(/Events from previous weeks\s+(-?\s?£\s?-?[\d,]+\.\d\d)/)||0;
-    S0.total=r2(earn+prev);
+    var reimb=stMoney(((/Refunds & Expenses\s+(-?\s?£\s?-?[\d,]+\.\d\d)/.exec(txt.split(/\n\s*Breakdown of /)[0])||[])[1]||'').replace(/\s/g,''));
+    S0.total=r2(earn+prev+reimb);
+    /* A trip charged, reversed and charged again with the tip folded in (27 Mar 2026: £26.20, −£26.20, then £28.20): Uber's
+       breakdown counts the extra as a tip. Move it from the fare to the tip on that trip so fares match the trip payments. */
+    (function(){ var bd=(txt.split(/\n\s*Breakdown of Your earnings and entitlements\s*\n/)[1]||'').split(/\n\s*Breakdown of|\n\s*Transactions/)[0];
+      var bt=stMoney(((/\n\s*Tip\s+(-?\s?£\s?-?[\d,]+\.\d\d)/.exec('\n'+bd)||[])[1]||'').replace(/\s/g,'')), tpay=stMoney(((/Trip payment\s+(-?\s?£\s?-?[\d,]+\.\d\d)/.exec(bd)||[])[1]||'').replace(/\s/g,''));
+      var d=r2(bt-(T.tip-T.tipEarly)); if(!(d>0)||!tpay||!near(T.fare-d,tpay)) return;
+      var F=S0.jobs.filter(function(j){return j.type==='Ride'}), neg={}; F.forEach(function(j){ if(j.fare<0) neg[j.date+' '+j.time]=1; });
+      var c=F.filter(function(j){ return neg[j.date+' '+j.time]&&j.fare>=d; }).sort(function(a,b){return b.fare-a.fare})[0]||F.filter(function(j){return j.fare>=d}).slice(-1)[0];
+      if(!c) return; c.fare=r2(c.fare-d); c.tip=r2(c.tip+d); T.fare=r2(T.fare-d); T.tip=r2(T.tip+d); })();
     var nt=S0.jobs.filter(function(j){return !j.tipOnly&&!j.bonus&&!j.adj}).length;
-    S0.checks.push(chk(near(sum,S0.total),T.nf+' fare'+(T.nf===1?'':'s')+' '+gbp2.format(T.fare)+', tips '+gbp2.format(T.tip-T.tipEarly)+(T.tipEarly?' + '+gbp2.format(T.tipEarly)+' for trips in earlier weeks':'')+(ubBonTxt(T.bon)?', '+ubBonTxt(T.bon):'')+' = '+gbp2.format(sum)+(near(sum,S0.total)?'':' (statement says '+gbp2.format(S0.total)+')')));
+    S0.checks.push(chk(near(sum,S0.total),T.nf+' fare'+(T.nf===1?'':'s')+' '+gbp2.format(T.fare)+', tips '+gbp2.format(T.tip-T.tipEarly)+(T.tipEarly?' + '+gbp2.format(T.tipEarly)+' for trips in earlier weeks':'')+(ubBonTxt(T.bon)?', '+ubBonTxt(T.bon):'')+(T.reimb?', toll repaid '+gbp2.format(T.reimb):'')+' = '+gbp2.format(sum)+(near(sum,S0.total)?'':' (statement says '+gbp2.format(S0.total)+')')));
     var tp=money(/Trip payment\s+(-?\s?£\s?-?[\d,]+\.\d\d)/);
     /* Uber sometimes takes a service fee (and tax on it) out of a trip's payment: the trips then add up to less than the
        breakdown's trip payment. Bring the trips up to the full payment and count the difference as a fee (Matt's 19-26 Jan statement). */
