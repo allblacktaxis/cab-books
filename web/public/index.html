@@ -6556,6 +6556,10 @@ html{overscroll-behavior-x:none}
      The statement's Fares (and the PDF's trip "Total") include tips but not the cash a Taxicard passenger paid. */
   function ccNum(s){ return stMoney(String(s).replace(/[^\d.,()-]/g,'')); }
   function ccStmt(L,name){
+    /* a long charge name can wrap: "Payment Received (Account Settlement -" / "345.00  0.00  345.00" / "pi_…)" (week 15 of 2026).
+       Put a line that is only the three amounts back onto the name above it. */
+    L=L.reduce(function(o,l){ var t=l.trim(), pv=o.length?o[o.length-1].trim():'';
+      if(/^-?[\d,]+\.\d\d\s{2,}-?[\d,]+\.\d\d\s{2,}-?[\d,]+\.\d\d$/.test(t)&&pv&&!/\d\.\d\d\s*$/.test(pv)&&!/^(FARES|CHARGES|BALANCE|SAVINGS|OTHER|PAYMENT|TRIP)\b/.test(pv)) o[o.length-1]=pv+'  '+t; else o.push(l); return o; },[]);
     var txt=L.join('\n'), no=(/Statement Number:\s*(\S+)/.exec(txt)||[])[1]||('cc-'+hash(txt));
     var per=/_(\d{4}-\d{2}-\d{2})_(\d{4}-\d{2}-\d{2})/.exec(no), upto=stDMY((/Cleared trips (?:up )?to:?\s*(\d\d\/\d\d\/\d{4})/.exec(txt)||[])[1]);
     var S0={prov:'ComCab',kind:'payment',label:'ComCab driver statement',ref:'comcab-'+no,stno:no,from:per?per[1]:'',to:upto||(per?addDays(per[2],-1):''),jobs:[],extras:[],costs:[],checks:[],file:name};
