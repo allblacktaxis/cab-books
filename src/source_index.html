@@ -411,6 +411,8 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 #d-form #j-save{min-height:42px;padding:8px 16px}
 #c-prov,#c-pay{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 #c-prov button,#c-pay button{width:100%;min-height:48px;padding:8px 6px;display:flex;align-items:center;justify-content:center;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* long 'Paid by' names (ComCab card, Bank transfer) shrink and may wrap to two lines instead of being cut off (Matt, 13 Nov 2026) */
+#c-pay button.long{font-size:clamp(11px,3.4vw,14px);line-height:1.15;white-space:normal;overflow-wrap:anywhere;letter-spacing:-.01em}
 
 /* ===== Modern refresh (27 Oct): borderless surfaces, larger radii, sentence case, icon tab bar ===== */
 body{font-size:15px;letter-spacing:-.005em}
@@ -2639,7 +2641,7 @@ html{overscroll-behavior-x:none}
     $('c-prov').innerHTML=PROVS.filter(function(p){return (provShown(p)&&!isCardK(bkey(p)))||p===S.prov}).map(function(p){return '<button type="button"'+pchip(p)+' data-prov="'+p+'" aria-pressed="'+(p===S.prov)+'">'+(p===S.prov?'\u2713 ':'')+(bkey(p)==='hand'?pdot(p):'')+esc(pname(p))+'</button>'}).join('');
     fixPay();
     if(S.pay==='Card' && cardSysAll().indexOf(S.card)<0) S.card=cardSys();
-    $('c-pay').innerHTML=payOpts(S.prov).map(function(o){ var on=o.v===S.pay&&(!o.c||o.c===S.card); return '<button type="button" data-pay="'+o.v+'"'+(o.c?' data-card="'+o.c+'"':'')+' aria-pressed="'+on+'">'+(on?'\u2713 ':'')+esc(o.l)+'</button>'}).join('');
+    $('c-pay').innerHTML=payOpts(S.prov).map(function(o){ var on=o.v===S.pay&&(!o.c||o.c===S.card); return '<button type="button" data-pay="'+o.v+'"'+(o.c?' data-card="'+o.c+'"':'')+(String(o.l).length>8?' class="long"':'')+' aria-pressed="'+on+'">'+(on?'\u2713 ':'')+esc(o.l)+'</button>'}).join('');
     Array.prototype.forEach.call($('c-prov').querySelectorAll('button'),function(b){ b.addEventListener('click',function(){ S.prov=b.getAttribute('data-prov'); applyFeeDefaults(); buildChips(); updatePreview(); jobToTop(); }); });
     Array.prototype.forEach.call($('c-pay').querySelectorAll('button'),function(b){ b.addEventListener('click',function(){ S.pay=b.getAttribute('data-pay'); if(b.getAttribute('data-card')) S.card=b.getAttribute('data-card'); applyFeeDefaults(); buildChips(); updatePreview(); if(!S.editId){ jobToTop(); fareFocus(); } }); });
   }
