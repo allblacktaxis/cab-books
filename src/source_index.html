@@ -1187,6 +1187,8 @@ html{overscroll-behavior-x:none}
       if(e.src==='import'){ act[e.m]=(act[e.m]||0)+eAmt(e); stat[e.id]='actual'; return; }
       var ck=bkey(e.provider), cm=pkey(e.card||'')||'curb';
       var p=pkey(e.provider)||(e.pay==='Card'&&(ck==='hand'?cm:(cm==='taxiworld'&&(ck==='jump'||ck==='blackcab'||ck==='other')?cm:null)))||null, md=S.months[e.m], cov='';
+      /* the HIPS card machine is ComCab's (shown as ComCab, Matt 13 Nov 2026): ComCab's statement covers those card jobs */
+      if(p==='hips') p='comcab';
       if(p){
         cov=imp[e.m+'|'+p]||'';
         if(md){ var c=md.covered&&md.covered[p]; if(!c && !md.open) c=e.m+'-31'; if(c&&c>cov) cov=c; }
@@ -1363,10 +1365,10 @@ html{overscroll-behavior-x:none}
   var MKC=['#FF8A00','#5BA8E0','#9D8AF0','#E06A8C','#3FB47E','#E0884A','#6FB3C4','#A39E93'];
   /* Provider colours: each app's own colours (approximate), name always shown beside them. */
   var BRAND={freenow:['#E4003D','#FFFFFF'],gett:['#FFD200','#111111'],uber:['#000000','#FFFFFF'],jump:['#111111','#FFD400'],
-    curb:['#00A86B','#FFFFFF'],curbflow:['#00A86B','#FFFFFF'],hips:['#E6007E','#FFFFFF'],comcab:['#1E2B5C','#FFFFFF'],helix:['#5A2D8C','#FFFFFF'],taxiworld:['#0B63B6','#FFFFFF'],blackcab:['#000000','#FF8A00']};
+    curb:['#00A86B','#FFFFFF'],curbflow:['#00A86B','#FFFFFF'],hips:['#1E2B5C','#FFFFFF'],comcab:['#1E2B5C','#FFFFFF'],helix:['#5A2D8C','#FFFFFF'],taxiworld:['#0B63B6','#FFFFFF'],blackcab:['#000000','#FF8A00']};
   function bkey(n){ return String(n||'').toLowerCase().replace(/\s+/g,''); }
   /* Names shown on screen where the saved name differs (saved names stay the same so old jobs still match). */
-  var PNAME={helix:'Helix Pay',curbflow:'Curb Flow',hips:'HIPS',freenow:'FreeNow',sumup:'SumUp',othercard:'Other card provider',hand:'Street'};
+  var PNAME={helix:'Helix Pay',curbflow:'Curb Flow',hips:'ComCab',freenow:'FreeNow',sumup:'SumUp',othercard:'Other card provider',hand:'Street'};
   function pname(n){ var k=bkey(n); if(k==='othercard'&&S.setup&&S.setup.a&&S.setup.a.cardName) return S.setup.a.cardName; return PNAME[k]||n; }
   function popt(n,sel){ return '<option value="'+esc(n)+'"'+(sel?' selected':'')+'>'+esc(pname(n))+'</option>'; }
   function brand(n){ return BRAND[bkey(n)]||null; }
@@ -5536,7 +5538,7 @@ html{overscroll-behavior-x:none}
      Existing accounts open with their current settings ticked and are never sent through it. */
   S.setup=null; S.su=null;
   var SU_APPS=[['Freenow','FreeNow'],['Gett','Gett'],['CurbFlow','Curb Flow'],['Uber','Uber'],['Jump','Jump'],['ComCab','ComCab'],['Blackcab','Blackcab'],['Other','Other account work']];
-  var SU_CARDS=[['Curb','Curb'],['HIPS','HIPS'],['Taxiworld','Taxiworld'],['Helix','Helix Pay'],['SumUp','SumUp'],['OtherCard','Other']];
+  var SU_CARDS=[['Curb','Curb'],['HIPS','ComCab'],['Taxiworld','Taxiworld'],['Helix','Helix Pay'],['SumUp','SumUp'],['OtherCard','Other']];
   var SU_CARDK=SU_CARDS.map(function(x){return x[0]});
   var SU_BAR=[['Your books',['today','position','reports','receipts','months','log','import']],['Live updates',['trains','tube','tonight','flights']],['Finding places',['ranks','toilets']],['Tools',['fare']]];
   var SU_BARNAME={today:'Today',position:'Position',reports:'Reports',receipts:'Receipts',months:'Data',log:'Log',import:'Import',trains:'Trains',tube:'Tube',tonight:'Events tonight',flights:'Airport arrivals',ranks:'Taxi ranks',toilets:'Toilets',fare:'Fare calculator'};
@@ -5664,7 +5666,7 @@ html{overscroll-behavior-x:none}
       else card+='<button type="button" class="linkbtn" data-su="backup" style="margin-top:8px">+ Add a backup provider</button>';
       if(suCardChanged(a)) card+='<div class="field" style="margin:14px 0 0"><label for="su-cfrom">When did this change?</label><input type="date" id="su-cfrom" data-sf="cardFrom" value="'+esc(a.cardFrom||t)+'"><p class="note">Fares before this date keep the provider and fee they had. Fares from this date use the new ones.</p></div>';
     }
-    h+=suStep('card',num.card,'Which card payment provider do you use?','The company that takes card payments in your cab, such as Curb or HIPS. Its fee is taken off each card fare, so “what you keep” is right.',suChips('card',SU_CARDS,a.card?[a.card]:[],'Card payment provider')+card);
+    h+=suStep('card',num.card,'Which card payment provider do you use?','The company that takes card payments in your cab, such as Curb or ComCab. Its fee is taken off each card fare, so “what you keep” is right.',suChips('card',SU_CARDS,a.card?[a.card]:[],'Card payment provider')+card);
     h+=suStep('vat',num.vat,'Are you registered for VAT?','This sets how the VAT tracker works for you.',suChips('vat',[['no','No'],['close','No, but I’m getting close'],['yes','Yes']],a.vat?[a.vat]:[],'VAT'));
     var pr=(S.opening&&S.opening.done)?'<p class="note" style="color:var(--ok)">✓ Your earlier takings are in. Change them in Settings → Changes to your setup → VAT and tax.</p>'
       :suChips('prior',[['yes','Yes'],['no','No, I’ve just started']],a.prior?[a.prior]:[],'Driving before Cab Books')+(a.prior==='yes'?'<button type="button" class="btn ghost" data-op="open" style="margin-top:12px">Add my earlier takings</button><p class="note">Add what you took each month. It only takes a minute.</p>':'');
