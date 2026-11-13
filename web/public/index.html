@@ -1026,7 +1026,7 @@ html{overscroll-behavior-x:none}
       <p class="help">Choose one or more statements: FreeNow's weekly PDFs, Gett's daily or weekly PDFs, Curb's reports (PDF, Excel or CSV), ComCab's driver statement and pay sheet, Uber's weekly statements (as many weeks as you like) or your Uber earnings CSV, your Heathrow drop-off account download (CSV or Excel), or Taxiworld's payment PDF. You can pick several at once. Cab Books works out which is which, checks the totals add up, and adds each job once. Reading the same statement again is safe.</p>
       <div class="field"><label for="st-file">Choose your files (PDF, Excel or CSV)</label><input type="file" id="st-file" multiple></div>
       <div class="field" style="margin-bottom:0"><label>When FreeNow or Gett say “cash”, the customer paid</label>
-        <div class="seg" role="group" aria-label="Cash jobs were paid"><button type="button" data-stvia="card" aria-pressed="true">By card in my cab (Curb)</button><button type="button" data-stvia="cash" aria-pressed="false">In real cash</button></div></div>
+        <div class="seg" role="group" aria-label="Cash jobs were paid"><button type="button" data-stvia="card" aria-pressed="true">By card in my cab</button><button type="button" data-stvia="cash" aria-pressed="false">In real cash</button></div></div>
       <div id="st-res"></div>
       <div style="height:12px"></div>
       <button class="btn" id="st-save" type="button" hidden>Add to my books</button>
@@ -4290,7 +4290,7 @@ html{overscroll-behavior-x:none}
       doc.line(L,Y-4,R,Y-4); trow(['Total',gbp2.format(tt.t),gbp2.format(tt.p),gbp2.format(tt.f),gbp2.format(tt.e),gbp2.format(tt.r),''],true);
       doc.setFontSize(10);
     }
-    if(K.prov.length){ head('Where the fares came from'); K.prov.forEach(function(p){ row(p.l,gbp2.format(p.v)+'   '+(K.A.turn>0?(p.v/K.A.turn*100).toFixed(0):'0')+'%',{line:1}); }); para('Card payments taken in the cab go through Curb. Private receipts count only your own jobs; shares collected for other drivers are left out.'); }
+    if(K.prov.length){ head('Where the fares came from'); K.prov.forEach(function(p){ row(p.l,gbp2.format(p.v)+'   '+(K.A.turn>0?(p.v/K.A.turn*100).toFixed(0):'0')+'%',{line:1}); }); para('Card payments taken in the cab are counted from your card machine. Private receipts count only your own jobs; shares collected for other drivers are left out.'); }
     head('VAT');
     para('Not VAT registered. Highest rolling 12-month turnover during the year: '+gbp2.format(K.vatMax)+(K.vatAt?' (12 months to '+mlabel(K.vatAt)+')':'')+', against the '+gbp0.format(S.settings.threshold)+' registration threshold. Tips are not counted for VAT.',10);
     head('For your accountant');
@@ -7091,7 +7091,7 @@ html{overscroll-behavior-x:none}
         if(j.card) e.card=j.card;
         if(j.cashPart) e.cashPart=j.cashPart;
         if(j.ubk){ e.ubk=j.ubk; if(j.bonus) e.bonus=j.bonus; if(j.tipOnly) e.tipOnly=true; if(j.adj) e.adj=true; }
-        if(j.cash&&(s.prov==='Freenow'||s.prov==='Gett')&&viaCard){ e.cashFare=j.fare; e.amount=0; e.viaCard=true; e.note='Paid by card in the cab: '+gbp2.format(j.fare)+' counted in Curb’s report'; plan.cashFares+=j.fare; plan.cashN++; }
+        if(j.cash&&(s.prov==='Freenow'||s.prov==='Gett')&&viaCard){ e.cashFare=j.fare; e.amount=0; e.viaCard=true; e.note='Paid by card in the cab: '+gbp2.format(j.fare)+' counted in your card machine report'; plan.cashFares+=j.fare; plan.cashN++; }
         plan.add.push({id:j.id,data:e});
         if(j.bonus){ P.bon[j.bonus]=(P.bon[j.bonus]||0)+e.amount; } else { if(!j.tipOnly&&!j.adj) P.n++; P.fare+=e.amount; } P.tip+=e.tips; P.fee+=j.fee;
       });
@@ -7144,7 +7144,7 @@ html{overscroll-behavior-x:none}
       if(pfs.length){ var pft=pfs.reduce(function(s,x){return s+x.data.feeFixed},0); h+='<div class="kv"><span class="k">Curb payout fees, 25p a payout ('+pfs.length+' month'+(pfs.length>1?'s':'')+')</span><span class="v">'+gbp2.format(pft)+' cost</span></div>'; }
       if(plan.del&&plan.del.length) h+='<p class="note"><b>Refreshes '+plan.del.length+' Uber line'+(plan.del.length===1?'':'s')+'</b> brought in earlier without their trip dates: they are replaced by the lines above, dated by trip.</p>';
       if(!plan.add.length&&!plan.extras.length&&!plan.costs.length) h+='<p class="note" style="margin:0">Nothing new: '+(plan.dup?'these jobs are already in your books.':'no jobs in these files.')+'</p>';
-      if(plan.cashN) h+='<p class="note">'+plan.cashN+' job'+(plan.cashN>1?'s':'')+' marked “cash” ('+gbp2.format(plan.cashFares)+') were paid by card in the cab, so the money is counted once, in Curb’s report. The app fees on them still count as a cost.</p>';
+      if(plan.cashN) h+='<p class="note">'+plan.cashN+' job'+(plan.cashN>1?'s':'')+' marked “cash” ('+gbp2.format(plan.cashFares)+') were paid by card in the cab, so the money is counted once, in your card machine report. The app fees on them still count as a cost.</p>';
       if(plan.bankRepl.length){ var bt=plan.bankRepl.reduce(function(s,e){return s+eAmt(e)},0); h+='<p class="note">Replaces '+plan.bankRepl.length+' estimate'+(plan.bankRepl.length>1?'s':'')+' from your bank statement ('+gbp2.format(bt)+') with the exact figures.</p>'; }
       if(plan.dup) h+='<p class="note">'+plan.dup+' already in your books, skipped.</p>';
       var ubM={}; plan.add.forEach(function(x){ if(x.data.provider==='Uber'&&S.months[x.data.m]&&!S.months[x.data.m].opening) ubM[x.data.m]=1; });
