@@ -6641,7 +6641,9 @@ html{overscroll-behavior-x:none}
       for(var k=hj+1;k<rows.length;k++){ var a=rows[k], an=String(a[0]).trim(); if(!an) continue; var amt=ca>=0?stMoney(a[ca]):0; if(!amt) continue;
         var ad=a[cd] instanceof Date?stCell(a[cd]):stDMY(String(a[cd]||''));
         S1.extras.push({id:'ccadj-'+an+'-'+Math.round(amt*100),date:ad||(S1.jobs.length?S1.jobs[S1.jobs.length-1].date:''),label:'ComCab adjustment '+an+(cc>=0&&stMoney(a[cc])?' (commission '+gbp2.format(Math.abs(stMoney(a[cc]))*1.2)+')':''),amount:r2(amt-(cc>=0?Math.abs(stMoney(a[cc]))*1.2:0))}); } }
-    if(!S1.jobs.length&&!S1.extras.length) return null;
+    /* a week with no jobs (weeks 4 and 10 of 2026): recognised, nothing to add; the PDF carries that week's rent */
+    if(!S1.jobs.length&&!S1.extras.length){ var pp=/_(\d{4}-\d{2}-\d{2})_(\d{4}-\d{2}-\d{2})/.exec(no);
+      S1.empty=true; S1.from=pp?pp[1]:''; S1.to=pp?addDays(pp[2],-1):''; S1.total=0; S1.checks.push(chk(true,'No jobs this week, so nothing to add from the pay sheet. Add the PDF statement for the same week: it has the rent and any payments.')); return S1; }
     var ds=S1.jobs.map(function(j){return j.date}).sort(); S1.from=ds[0]||''; S1.to=ds[ds.length-1]||'';
     /* total = what ComCab pays for (matches the statement's Fares); cash Taxicard passengers paid the driver direct */
     S1.cashTot=r2(S1.jobs.reduce(function(a,j){return a+(j.cashPart||0)},0));
@@ -7057,7 +7059,7 @@ html{overscroll-behavior-x:none}
     var seenStmt={}, viaCard=stViaCard(), ubHave=ubKeys(ubRef);
     var dailyGett=R.filter(function(s){return s.prov==='Gett'&&s.kind==='payment'}).concat(stList().filter(function(s){return s.prov==='Gett'&&s.kind==='payment'}));
     R.forEach(function(s){
-      if(s.err||seenStmt[s.ref]) return; seenStmt[s.ref]=1;
+      if(s.err||s.empty||seenStmt[s.ref]) return; seenStmt[s.ref]=1;
       var rec={id:'st-'+hash(s.ref),prov:s.prov,kind:s.kind,label:s.label,ref:s.ref,from:s.from||'',to:s.to||'',file:s.file,total:s.total!=null?r2(s.total):null,fees:s.fees!=null?r2(s.fees):null,hasJobs:s.jobs.length>0,jobs:s.jobs.length,ts:Date.now()};
       if(s.payout!=null&&s.payDate){ rec.payout=r2(s.payout); rec.payDate=s.payDate; }
       if(s.payouts) rec.payouts=s.payouts.map(function(p){return {d:p.d,amt:p.amt,payFee:p.payFee||0}});
@@ -7159,7 +7161,7 @@ html{overscroll-behavior-x:none}
         if(inv) inv.checks.push(chk(near(inv.fees,s.fees)&&near(inv.credits||0,s.credits||0),'Agrees with the payment overview'));
       });
       /* ComCab: the pay sheet gives the exact job-by-job fees; the PDF gives the payout, charges and rent */
-      R.forEach(function(s){ if(s.prov!=='ComCab'||s.kind!=='payment') return; var t=R.filter(function(x){return x.prov==='ComCab'&&x.kind==='tours'&&x.stno===s.stno})[0]; if(!t) return;
+      R.forEach(function(s){ if(s.prov!=='ComCab'||s.kind!=='payment') return; var t=R.filter(function(x){return x.prov==='ComCab'&&x.kind==='tours'&&x.stno===s.stno})[0]; if(!t||(t.empty&&s.jobs.length)) return;
         s.jobs=[]; var ft=r2(t.jobs.reduce(function(a,j){return a+j.fee},0)), d=r2(s.fees-ft);
         if(Math.abs(d)>0&&Math.abs(d)<=0.10&&t.jobs.length) t.jobs[t.jobs.length-1].fee=r2(t.jobs[t.jobs.length-1].fee+d);
         s.checks.push(chk(near(t.total,s.total),'Matches the pay sheet: '+t.jobs.length+' jobs, '+gbp2.format(t.total)));
