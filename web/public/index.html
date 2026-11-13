@@ -6368,7 +6368,9 @@ html{overscroll-behavior-x:none}
     var tot={v:0,t:0,c:0,p:0};
     L.forEach(function(l){
       var m=/^\d+\.\s+(\d\d\/\d\d\/\d\d)\s+(\d\d:\d\d)\s{2,}(.+?)\s{2,}(\S+)\s{2,}(.+?)\s{2,}£\s?(-?[\d,.]+)\s+£\s?(-?[\d,.]+)\s+£\s?(-?[\d,.]+)\s+£\s?(-?[\d,.]+)\s+£\s?(-?[\d,.]+)\s*$/.exec(l);
-      if(!m) return;
+      /* "Cancellation fee" lines leave the tip and reduction columns blank: value, commission, payout (Matt, 13 Nov 2026) */
+      if(!m){ var k=/^\d+\.\s+(\d\d\/\d\d\/\d\d)\s+(\d\d:\d\d)\s{2,}(.+?)\s{2,}(\S+)\s{2,}(.+?)\s{2,}£\s?(-?[\d,.]+)\s+£\s?(-?[\d,.]+)\s+£\s?(-?[\d,.]+)\s*$/.exec(l);
+        if(!k) return; m=[k[0],k[1],k[2],k[3],k[4],k[5],k[6],'0',k[7],'0',k[8]]; }
       var value=stMoney(m[6]), tip=stMoney(m[7]), net=stMoney(m[8]), red=stMoney(m[9]), payout=stMoney(m[10]), method=m[5].trim(), cash=/cash/i.test(method);
       tot.v+=value; tot.t+=tip; tot.c+=net; tot.p+=payout;
       var fee=cash?r2(-payout):r2(value-payout);
@@ -6390,12 +6392,13 @@ html{overscroll-behavior-x:none}
     /* "Airport fee" (Matt, 13 Nov 2026): the airport charge passengers pay on airport jobs, on top of the tour value.
        It's income (the drop-off/parking charge itself is a cost from Heathrow or the bank). Part of it can be inside
        "Total cash tours" when the passenger paid it in cash. Any other line making up "Total gross pay" is kept too. */
-    S0.airport=g(/Airport fee\s+£\s?(-?[\d,.]+)/);
-    var gross=/Total gross pay\s+£\s?(-?[\d,.]+)/.exec(txt); S0.otherPay=gross?r2(stMoney(gross[1])-(S0.total-S0.fees+S0.credits+S0.airport)):0;
+    S0.airport=g(/Airport fee\s+£\s?(-?[\d,.]+)/); S0.cancel=g(/Total value of cancellation fees\s+£\s?(-?[\d,.]+)/);
+    var gross=/Total gross pay\s+£\s?(-?[\d,.]+)/.exec(txt); S0.otherPay=gross?r2(stMoney(gross[1])-(S0.total+S0.cancel-S0.fees+S0.credits+S0.airport+S0.outstanding)):0;
     if(Math.abs(S0.otherPay)<0.01) S0.otherPay=0;
-    var calc=r2(S0.total-S0.fees+S0.credits+S0.airport+S0.otherPay+S0.outstanding-S0.cashTours);
-    S0.checks.push(chk(near(calc,S0.payout),'Tours '+gbp2.format(S0.total)+' − fees '+gbp2.format(S0.fees)+(S0.credits?' + credits '+gbp2.format(S0.credits):'')+(S0.airport?' + airport fees '+gbp2.format(S0.airport):'')+(S0.otherPay?' + other '+gbp2.format(S0.otherPay):'')+(S0.outstanding?' '+(S0.outstanding<0?'−':'+')+' carried from last week '+gbp2.format(Math.abs(S0.outstanding)):'')+' − cash tours '+gbp2.format(S0.cashTours)+' = payout '+gbp2.format(S0.payout)));
+    var calc=r2(S0.total+S0.cancel-S0.fees+S0.credits+S0.airport+S0.otherPay+S0.outstanding-S0.cashTours);
+    S0.checks.push(chk(near(calc,S0.payout),'Tours '+gbp2.format(S0.total)+(S0.cancel?' + cancellation fees '+gbp2.format(S0.cancel):'')+' − fees '+gbp2.format(S0.fees)+(S0.credits?' + credits '+gbp2.format(S0.credits):'')+(S0.airport?' + airport fees '+gbp2.format(S0.airport):'')+(S0.otherPay?' + other '+gbp2.format(S0.otherPay):'')+(S0.outstanding?' '+(S0.outstanding<0?'−':'+')+' carried from last week '+gbp2.format(Math.abs(S0.outstanding)):'')+' − cash tours '+gbp2.format(S0.cashTours)+' = payout '+gbp2.format(S0.payout)));
     if(S0.credits) S0.extras.push({id:'fncr-'+S0.ref,date:S0.to,label:'FreeNow credits (incentives, referrals)',amount:S0.credits});
+    if(S0.cancel) S0.extras.push({id:'fncf-'+S0.ref,date:S0.to,label:'FreeNow cancellation fees',amount:S0.cancel});
     if(S0.airport) S0.extras.push({id:'fnap-'+S0.ref,date:S0.to,label:'FreeNow airport fees paid by passengers',amount:S0.airport});
     if(S0.otherPay) S0.extras.push({id:'fnot-'+S0.ref,date:S0.to,label:'FreeNow other pay on the statement',amount:S0.otherPay});
     return S0;
@@ -7169,7 +7172,9 @@ html{overscroll-behavior-x:none}
         if(t){ var cashT=t.jobs.filter(function(j){return j.cash}).reduce(function(a,j){return a+j.fare+j.tip},0);
           var apc=r2(s.cashTours-cashT), apOk=near(cashT,s.cashTours)||(apc>0&&apc<=(s.airport||0)+0.01);
           if(apOk&&apc>0.005) s.extras.forEach(function(x){ if(/^fnap-/.test(x.id)) x.cashPart=apc; });
-          s.checks.push(chk(near(t.total,s.total)&&apOk,'Matches the tour overview: '+gbp2.format(t.total)+' of tours, '+gbp2.format(cashT)+' cash'+(apOk&&apc>0.005?' (+ '+gbp2.format(apc)+' airport fee paid in cash)':'')));
+          /* the tour overview lists cancellation fees as jobs, so they aren't added again from the payment overview */
+          if(s.cancel) s.extras=s.extras.filter(function(x){ return !/^fncf-/.test(x.id); });
+          s.checks.push(chk(Math.abs(t.total-s.total-(s.cancel||0))<=(s.cancel?0.05:0.01)&&apOk,'Matches the tour overview: '+gbp2.format(t.total)+' of tours'+(s.cancel?' incl. '+gbp2.format(s.cancel)+' cancellation fees':'')+', '+gbp2.format(cashT)+' cash'+(apOk&&apc>0.005?' (+ '+gbp2.format(apc)+' airport fee paid in cash)':'')));
           var feeT=t.jobs.reduce(function(a,j){return a+j.fee},0), diff=r2(s.fees-feeT);
           if(Math.abs(diff)>0&&Math.abs(diff)<=0.05&&t.jobs.length){ t.jobs[t.jobs.length-1].fee=r2(t.jobs[t.jobs.length-1].fee+diff); }
           s.checks.push(chk(near(s.fees,t.jobs.reduce(function(a,j){return a+j.fee},0)),'Fees per tour add up to '+gbp2.format(s.fees)+' incl. VAT')); }
