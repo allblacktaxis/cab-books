@@ -11,7 +11,8 @@ self.addEventListener('push', e => {
     tag: d.tag || 'cab-books-trains',
     renotify: true,
     icon: '/icon-192.png',
-    badge: '/icon-192.png',
+    // the small icon in the status bar and the notification's circle: a white shape on see-through (Matt, 15 Nov 2026)
+    badge: /^cab-books-(trains|tube|rmt)/.test(d.tag || 'cab-books-trains') ? '/badge-train.png' : '/badge-taxi.png',
     data: { url: d.url || '/?tool=trains' }
   }));
 });
