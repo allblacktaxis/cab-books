@@ -182,6 +182,8 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .jrow .b{font-family:var(--font-num);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:7px 10px;min-width:72px;text-align:right}
 .cardhead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px}
 .cardhead h2{margin:0}
+/* Import tab: card headings in the same type and colour as 'Other spreadsheet (advanced)' (Matt, 14 Nov 2026) */
+#tab-import .card>h2{font-family:var(--font-body)!important;font-size:inherit!important;font-weight:700!important;letter-spacing:0!important;text-transform:none!important;color:var(--ink)!important}
 .iconbtn{background:var(--bg);border:1px solid var(--line);border-radius:8px;min-width:44px;min-height:44px;cursor:pointer;font-size:18px;color:var(--accent)}
 .fgrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
 .feeline{display:flex;align-items:center;justify-content:space-between;gap:10px}
@@ -1033,19 +1035,6 @@ html{overscroll-behavior-x:none}
       <div style="height:12px"></div>
       <button class="btn" id="st-save" type="button" hidden>Add to my books</button>
     </div>
-    <div class="card">
-      <h2>Calendar file</h2>
-      <p class="help">Export your Outlook or Apple calendar as an .ics file and choose it here. Events are added to your daily schedule. Importing the same file again does not create duplicates.</p>
-      <div class="field"><label for="ics-file">Calendar file (.ics)</label><input type="file" id="ics-file" accept=".ics,text/calendar"></div>
-      <div id="ics-box" hidden>
-        <div class="two">
-          <div class="field"><label for="ics-from">From</label><input type="date" id="ics-from"></div>
-          <div class="field"><label for="ics-to">To</label><input type="date" id="ics-to"></div>
-        </div>
-        <div class="preview" id="ics-prev"></div>
-        <button class="btn" id="ics-save" type="button">Add events</button>
-      </div>
-    </div>
     <div class="card" id="bk-card">
       <h2>Bank statement</h2>
       <p class="help" id="bk-help">Brings in what the taxi apps paid you and the money going out. Payments from FreeNow, Gett, Uber, Curb, ComCab, Taxiworld, Helix Pay and HIPS are recognised, with the commission added back to estimate your fares. Payees are sorted into categories, and anything unknown is left out as personal until you say otherwise. Bank figures replace the expenses you typed, up to the statement's last date.</p>
@@ -1082,6 +1071,20 @@ html{overscroll-behavior-x:none}
       <div style="height:12px"></div>
       <button class="btn" id="bk-save" type="button">Import</button>
     </div>
+    <div class="card" id="ih-card">
+      <h2>What you've imported</h2>
+      <p class="help">Every statement, card report and bank file you've brought in, newest first. If one went in by mistake, remove it here: the jobs, payments and costs that came from it come out with it, and any bank estimates it had replaced come back.</p>
+      <details id="ih-sum" hidden style="margin:0 0 12px;padding:10px 12px;border:1px solid var(--line);border-radius:12px"><summary id="ih-sum-t" style="cursor:pointer;font-weight:700"></summary><div id="ih-sum-b" style="margin-top:8px"></div></details>
+      <div id="ih-filter" hidden style="display:flex;flex-wrap:wrap;gap:8px;margin:0 0 8px">
+        <select id="ih-prov" aria-label="Which imports to show" style="flex:1 1 100%;min-width:0"></select>
+        <label class="note" style="flex:1 1 40%;min-width:0">From<input type="date" id="ih-from" style="width:100%"></label>
+        <label class="note" style="flex:1 1 40%;min-width:0">To<input type="date" id="ih-to" style="width:100%"></label>
+      </div>
+      <div id="ih-batch" hidden style="margin:0 0 6px"></div>
+      <div id="ih-list"></div>
+      <button class="btn ghost small" type="button" id="ih-more" hidden style="margin-top:8px">Show more</button>
+      <div id="ih-bankall" hidden style="margin-top:12px;padding-top:12px;border-top:1px solid var(--line)"></div>
+    </div>
     <div class="card">
       <details><summary style="cursor:pointer;font-weight:700">Other spreadsheet (advanced)</summary>
       <p class="help" style="margin-top:8px">Only for a list Cab Books doesn't read by itself, such as your own list of private-client fares, where you match the columns yourself. Taxi app statements go in the box at the top, and bank statements in the Bank statement box. Rows already imported are skipped.</p>
@@ -1116,18 +1119,18 @@ html{overscroll-behavior-x:none}
       <div style="height:12px"></div>
       <button class="btn" id="i-save" type="button">Add rows</button>
     </div>
-    <div class="card" id="ih-card">
-      <h2>What you've imported</h2>
-      <p class="help">Every statement, card report and bank file you've brought in, newest first. If one went in by mistake, remove it here: the jobs, payments and costs that came from it come out with it, and any bank estimates it had replaced come back.</p>
-      <div id="ih-filter" hidden style="display:flex;flex-wrap:wrap;gap:8px;margin:0 0 8px">
-        <select id="ih-prov" aria-label="Which imports to show" style="flex:1 1 100%;min-width:0"></select>
-        <label class="note" style="flex:1 1 40%;min-width:0">From<input type="date" id="ih-from" style="width:100%"></label>
-        <label class="note" style="flex:1 1 40%;min-width:0">To<input type="date" id="ih-to" style="width:100%"></label>
+    <div class="card">
+      <h2>Calendar file</h2>
+      <p class="help">Export your Outlook or Apple calendar as an .ics file and choose it here. Events are added to your daily schedule. Importing the same file again does not create duplicates.</p>
+      <div class="field"><label for="ics-file">Calendar file (.ics)</label><input type="file" id="ics-file" accept=".ics,text/calendar"></div>
+      <div id="ics-box" hidden>
+        <div class="two">
+          <div class="field"><label for="ics-from">From</label><input type="date" id="ics-from"></div>
+          <div class="field"><label for="ics-to">To</label><input type="date" id="ics-to"></div>
+        </div>
+        <div class="preview" id="ics-prev"></div>
+        <button class="btn" id="ics-save" type="button">Add events</button>
       </div>
-      <div id="ih-batch" hidden style="margin:0 0 6px"></div>
-      <div id="ih-list"></div>
-      <button class="btn ghost small" type="button" id="ih-more" hidden style="margin-top:8px">Show more</button>
-      <div id="ih-bankall" hidden style="margin-top:12px;padding-top:12px;border-top:1px solid var(--line)"></div>
     </div>
   </section>
 </div>
@@ -6998,8 +7001,35 @@ html{overscroll-behavior-x:none}
     t.addEventListener('change',function(){ IHF.to=t.value; IHF.n=30; ihRender(); });
     m.addEventListener('click',function(){ IHF.n+=30; ihRender(); });
   }
+  /* What's in, app by app (Matt, 14 Nov 2026): first and last date each app's statements cover, any gaps between them
+     (weekly apps), and how far the bank statement goes. */
+  function ihSumRender(){
+    var box=$('ih-sum'), t=$('ih-sum-t'), b=$('ih-sum-b'); if(!box) return;
+    var P={}; Object.keys(S.stmts||{}).forEach(function(i){ var s=S.stmts[i]; if(!s||!s.from||!s.to) return; var k=s.prov||'Other';
+      (P[k]=P[k]||[]).push([s.from,s.to<s.from?s.from:s.to]); });
+    var rows=[], gapsN=0, GAPK={comcab:1,freenow:1,uber:1,taxiworld:1};
+    Object.keys(P).sort(function(a,c){ return String(pname(a)).localeCompare(String(pname(c))); }).forEach(function(k){
+      var R=P[k].sort(function(x,y){return x[0]<y[0]?-1:1}), lo=R[0][0], hi=R.reduce(function(m,r){return r[1]>m?r[1]:m},''), gaps=[];
+      if(GAPK[bkey(k)]){ var end=R[0][1]; R.forEach(function(r){ if(r[0]>addDays(end,2)) gaps.push([addDays(end,1),addDays(r[0],-1)]); if(r[1]>end) end=r[1]; }); }
+      gapsN+=gaps.length; rows.push({k:k,lo:lo,hi:hi,gaps:gaps,n:R.length});
+    });
+    var bl=''; (S.entriesRaw||[]).forEach(function(e){ if(e.src!=='import'||e.stmt||!e.date) return; if(!(e.est==='bank'||(e.kind==='expense'&&!e.provider))) return; if(!bl||e.date<bl) bl=e.date; });
+    var bh=S.bankCov||''; if(!bh) (S.entriesRaw||[]).forEach(function(e){ if(e.src==='import'&&!e.stmt&&(e.est==='bank'||(e.kind==='expense'&&!e.provider))&&e.date>bh) bh=e.date; });
+    if(!rows.length&&!bl){ box.hidden=true; return; }
+    box.hidden=false;
+    var latest=rows.concat(bh?[{hi:bh}]:[]).reduce(function(m,r){return r.hi>m?r.hi:m},'');
+    t.innerHTML='What’s in, and up to when'+(gapsN?' <span style="color:var(--warn,#d98b00)">\u00b7 \u26A0 '+gapsN+' gap'+(gapsN>1?'s':'')+'</span>':'');
+    var line=function(name,range,extra,warn){ return '<div style="display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-top:1px solid var(--line)"><span style="min-width:0">'+name+'</span><span class="num" style="text-align:right;flex:none">'+range+'</span></div>'+(extra?'<div class="note" style="margin:-2px 0 6px;color:'+(warn?'var(--warn,#d98b00)':'var(--muted)')+'">'+extra+'</div>':''); };
+    var h=rows.map(function(r){
+      var g=r.gaps.map(function(x){ return x[0]===x[1]?esc(dlabel(x[0])):esc(dlabel(x[0]))+' – '+esc(dlabel(x[1])); });
+      return line(ptag(r.k),esc(dlabel(r.lo))+' – '+esc(dlabel(r.hi)),g.length?'\u26A0 Missing: '+g.join(', '):'',true);
+    }).join('');
+    if(bl||bh) h+=line('<b>Bank</b>',(bl?esc(dlabel(bl)):'')+' – '+(bh?esc(dlabel(bh)):''),'');
+    h+='<p class="note" style="margin:8px 0 0">From the first to the last day each app’s statements cover. A gap is a stretch between them with no statement: fetch that week from the app and add it at the top of this tab.</p>';
+    b.innerHTML=h;
+  }
   function ihRender(){
-    var box=$('ih-list'); if(!box) return; var All=ihGroups(); ihBankAllRender(); ihFilterBind();
+    var box=$('ih-list'); if(!box) return; var All=ihGroups(); ihBankAllRender(); ihFilterBind(); ihSumRender();
     var fb=$('ih-filter'), bb=$('ih-batch'), mb=$('ih-more');
     if(!All.length){ fb.hidden=true; bb.hidden=true; mb.hidden=true; box.innerHTML='<p class="note" style="margin:0">Nothing imported yet.</p>'; return; }
     var cnt={}; All.forEach(function(g){ cnt[g.prov]=(cnt[g.prov]||0)+1; });
