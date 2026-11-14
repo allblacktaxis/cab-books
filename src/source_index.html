@@ -1443,34 +1443,39 @@ html{overscroll-behavior-x:none}
   var CL_ST={waiting:'Waiting',received:'Received',checked:'Checked'};
   /* Only the apps this driver uses (Settings → Providers I use, or Set up my app). Bank and cash fares always. */
   function closeSrcs(k){ var P={freenow:'Freenow',gett:'Gett',curb:'Curb',uber:'Uber',comcab:'ComCab',taxiworld:'Taxiworld'}, ms=(k||monthOf(todayISO()))+'-01';
-    return CLOSE_SRC.filter(function(x){ return !P[x.k]||provShown(P[x.k])||(x.k==='curb'&&cardHist().some(function(h){ return h.card==='Curb'&&h.until>=ms; })); }); }
+    var me=addDays(addMonths(ms.slice(0,7),1)+'-01',-1), has={};
+    Object.keys(S.stmts||{}).forEach(function(i){ var s=S.stmts[i], p=pkey(s&&s.prov); if(p&&s.from&&s.to&&s.from<=me&&s.to>=addDays(ms,-8)) has[p]=1; });
+    (S.entriesRaw||[]).forEach(function(e){ if(e.est==='bank'&&e.date>=ms&&e.date<=me){ var p=pkey(e.provider); if(p) has[p]=1; } });
+    return CLOSE_SRC.filter(function(x){ return !P[x.k]||provShown(P[x.k])||has[x.k]||(x.k==='curb'&&cardHist().some(function(h){ return h.card==='Curb'&&h.until>=ms; })); }); }
   /* Statement payments against the bank (Matt, 13 Nov 2026): every payment an app's statements say it made in the month,
      and whether that money is in the bank statement you brought in: same amount, within a few days. Bank payments from that
      app with no statement are listed too. */
+  function mEnd(k){ return addDays(addMonths(k,1)+'-01',-1); }
   function clBank(src,k){
     if(src==='bank'||src==='cash') return '';
-    var a=k+'-01', b=k+'-31', pays=[];
+    var a=k+'-01', b=mEnd(k), pays=[];
     Object.keys(S.stmts||{}).forEach(function(i){ var s=S.stmts[i]; if(pkey(s.prov)!==src) return;
-      (s.payouts||(s.payout!=null&&s.payDate?[{d:s.payDate,amt:s.payout}]:[])).forEach(function(p){ if(p.d>=a&&p.d<=b&&(+p.amt||0)>0.005) pays.push({d:p.d,amt:r2(+p.amt)}); }); });
+      (s.payouts||(s.payout!=null&&s.payDate?[{d:s.payDate,amt:s.payout}]:[])).forEach(function(p){ if(p.d>=addDays(a,-8)&&p.d<=addDays(b,8)&&(+p.amt||0)>0.005) pays.push({d:p.d,amt:r2(+p.amt)}); }); });
     var seen={}; pays=pays.filter(function(p){ var x=p.d+'|'+p.amt; if(seen[x]) return false; seen[x]=1; return true; }).sort(function(x,y){return x.d<y.d?-1:1});
     var bank=(S.entriesRaw||[]).filter(function(e){ return e.kind==='fare'&&e.src==='import'&&e.est==='bank'&&pkey(e.provider)===src&&e.date>=addDays(a,-5)&&e.date<=addDays(b,7); }), used={};
     var bankTo=S.bankCov||'';
-    if(!pays.length&&!bank.some(function(e){return e.date>=a&&e.date<=b})) return '';
+    if(!pays.some(function(p){return p.d>=a&&p.d<=b})&&!bank.some(function(e){return e.date>=a&&e.date<=b})) return '';
+    /* match every payment (including the days either side of the month), then show this month's */
     var rows=pays.map(function(p){
       var m=bank.filter(function(e){ var n=bankNet(e); return !used[e.id]&&n!=null&&near(n,p.amt)&&e.date>=addDays(p.d,-3)&&e.date<=addDays(p.d,5); })[0];
       if(m){ used[m.id]=1; return {ok:1,t:gbp2.format(p.amt)+' due '+dlabel(p.d)+': in your bank on '+dlabel(m.date)}; }
       if(!bankTo||bankTo<addDays(p.d,5)) return {wait:1,t:gbp2.format(p.amt)+' due '+dlabel(p.d)+': your bank statement doesn’t reach this date yet'};
       return {bad:1,t:gbp2.format(p.amt)+' due '+dlabel(p.d)+': not found in your bank'};
-    });
+    }).filter(function(r,i){ return pays[i].d>=a&&pays[i].d<=b; });
     bank.forEach(function(e){ if(used[e.id]||e.date<a||e.date>b) return; var n=bankNet(e); rows.push({bad:1,t:(n!=null?gbp2.format(n):'A payment')+' in your bank on '+dlabel(e.date)+': no statement for it yet'}); });
     var nOk=rows.filter(function(r){return r.ok}).length, nBad=rows.filter(function(r){return r.bad}).length, nW=rows.filter(function(r){return r.wait}).length;
-    var head=nBad?'\u26A0 '+nBad+' payment'+(nBad>1?'s':'')+' don’t match the bank'+(nOk?' ('+nOk+' do)':''):nW?(nOk?'\u2713 '+nOk+' found in your bank, ':'')+nW+' waiting for your bank statement':(nOk===1?'\u2713 The payment was found in your bank':'\u2713 All '+nOk+' payments found in your bank');
+    var head=nBad?'\u26A0 '+nBad+' payment'+(nBad>1?'s don’t':' doesn’t')+' match the bank'+(nOk?' ('+nOk+' do)':''):nW?(nOk?'\u2713 '+nOk+' found in your bank, ':'')+nW+' waiting for your bank statement':(nOk===1?'\u2713 The payment was found in your bank':'\u2713 All '+nOk+' payments found in your bank');
     return '<details class="clbank" style="margin:6px 0 0"'+(nBad?' open':'')+'><summary class="chk" style="cursor:pointer;color:'+(nBad?'var(--warn,#d98b00)':nW?'var(--muted)':'var(--ok)')+'">'+head+'</summary>'
       +rows.map(function(r){ return '<div class="note" style="margin:2px 0 0 14px;color:'+(r.ok?'var(--ok)':r.bad?'var(--warn,#d98b00)':'var(--muted)')+'">'+(r.ok?'\u2713 ':r.bad?'\u26A0 ':'\u2026 ')+esc(r.t)+'</div>'; }).join('')+'</details>';
   }
   function clRead(src,k){
     if(src!=='freenow'&&src!=='gett'&&src!=='curb'&&src!=='uber'&&src!=='comcab'&&src!=='taxiworld') return '';
-    var a=k+'-01', b=k+'-31', L=Object.keys(S.stmts||{}).map(function(i){return S.stmts[i]}).filter(function(s){ return pkey(s.prov)===src&&s.from&&s.to&&s.from<=b&&s.to>=a; });
+    var a=k+'-01', b=mEnd(k), L=Object.keys(S.stmts||{}).map(function(i){return S.stmts[i]}).filter(function(s){ return pkey(s.prov)===src&&s.from&&s.to&&s.from<=b&&s.to>=a; });
     if(!L.length) return '';
     var to=L.reduce(function(m,s){return s.to>m?s.to:m},''), pays=L.filter(function(s){return s.kind==='payment'||s.kind==='settlement'}).length;
     return '<div class="chk" style="color:var(--ok)">\u2713 Read: '+L.length+' statement'+(L.length>1?'s':'')+(pays?' ('+pays+' payment'+(pays>1?'s':'')+')':'')+', up to '+esc(dlabel(to>b?b:to))+'</div>';
