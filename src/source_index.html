@@ -1932,7 +1932,24 @@ html{overscroll-behavior-x:none}
   function eom(k){return dayAdd(addMonths(k,1)+'-01',-1)}
   /* Making Tax Digital quarters (Matt, 10 Nov 2026). Standard update periods run 6 Apr–5 Jul, 6 Jul–5 Oct, 6 Oct–5 Jan, 6 Jan–5 Apr;
      a driver can choose calendar quarters instead (1 Apr–30 Jun …). Either way the update is due on the 7th of the month after. */
-  function mtdCal(){ return !(S.tax&&S.tax.mtdStd); }
+  /* 6th-to-5th quarters are the default; calendar quarters only when chosen (Matt, 14 Nov 2026) */
+  function mtdCal(){ return !!(S.tax&&S.tax.mtdQ==='cal'); }
+  /* Cash basis (HMRC's default for the self-employed from 2024-25) or traditional accounting (Matt, 14 Nov 2026).
+     Traditional: a fare counts on the day of the job, a cost on the day it's charged. Cash basis: on the day the money
+     comes in or goes out, so statement jobs (and costs taken off a statement, like ComCab rent) count on the day
+     that statement's payment was made. Bank lines and cash are already dated when the money moved. */
+  function mtdBasis(){ return (S.tax&&S.tax.basis)==='trad'?'trad':'cash'; }
+  function cashDate(e){
+    if(!e||!e.stmt||e.est||!e.date) return e&&e.date;
+    var s=(S.stmts||{})[e.stmt]; if(!s) return e.date;
+    var P=(s.payouts||(s.payDate?[{d:s.payDate}]:[])).map(function(p){return p.d}).filter(function(d){ return d&&d>=e.date&&d<=addDays(e.date,35); }).sort();
+    return P[0]||e.date;
+  }
+  function withBasis(fn){
+    if(mtdBasis()!=='cash') return fn();
+    var keep=S.entries; S.entries=keep.map(function(e){ var d=cashDate(e); return d===e.date?e:Object.assign({},e,{date:d,m:monthOf(d)}); });
+    try{ return fn(); } finally{ S.entries=keep; }
+  }
   function qPeriod(t,o){
     var cal=mtdCal(), d0=cal?1:6, y=+t.slice(0,4), mo=+t.slice(5,7), qs=[4,7,10,1];
     if(+t.slice(8,10)<d0){ mo--; if(mo<1){ mo=12; y--; } }
@@ -4117,7 +4134,7 @@ html{overscroll-behavior-x:none}
   }
   function saveTax(patch){
     if(!S.db) return Promise.resolve();
-    var d=Object.assign({aside:+S.tax.aside||0,asOf:S.tax.asOf||'',mtd:S.tax.mtd||'auto',unionPct:unionPct(),accNotes:S.tax.accNotes||'',mtdStd:!!S.tax.mtdStd,bizPct:(S.tax&&S.tax.bizPct)||{}},patch);
+    var d=Object.assign({aside:+S.tax.aside||0,asOf:S.tax.asOf||'',mtd:S.tax.mtd||'auto',unionPct:unionPct(),accNotes:S.tax.accNotes||'',mtdStd:!!S.tax.mtdStd,mtdQ:S.tax.mtdQ||'std',basis:S.tax.basis||'cash',bizPct:(S.tax&&S.tax.bizPct)||{}},patch);
     return S.db.collection('settings').doc('tax').set(d);
   }
   document.addEventListener('click',function(ev){
@@ -4303,7 +4320,7 @@ html{overscroll-behavior-x:none}
   function mtdQData(P){
     var ty=P.mtdY, YP=P.cal?{monthly:true,keys:[],from:ty+'-04-01',to:P.to}:{std:true,from:ty+'-04-06',to:P.to};
     if(P.cal) for(var k=ty+'-04';k<=P.to.slice(0,7);k=addMonths(k,1)) YP.keys.push(k);
-    var QA=agg(P), YA=agg(YP);
+    var QA=withBasis(function(){ return agg(P); }), YA=withBasis(function(){ return agg(YP); });
     return {P:P,QA:QA,YA:YA,HQ:hmLines(QA),HY:hmLines(YA),qTurn:QA.turn+QA.tips,yTurn:YA.turn+YA.tips};
   }
   function mtdQHTML(P){
@@ -4311,6 +4328,8 @@ html{overscroll-behavior-x:none}
     var st=t<P.from?'Not started yet':t<=P.to?'Quarter in progress: figures so far':dn>=0?'Due in '+dn+' day'+(dn===1?'':'s'):'Was due '+dlabel(P.due);
     var h='<div class="card wide" id="mtd-card"><h2>Quarterly update for HMRC</h2>'
       +'<div class="seg" role="group" aria-label="Which quarters" style="margin:0 0 10px"><button type="button" data-mtdq="cal" aria-pressed="'+cal+'">Calendar quarters</button><button type="button" data-mtdq="std" aria-pressed="'+!cal+'">6th to 5th</button></div>'
+      +'<div class="seg" role="group" aria-label="Accounting basis" style="margin:0 0 10px"><button type="button" data-mtdb="cash" aria-pressed="'+(mtdBasis()==='cash')+'">Cash basis</button><button type="button" data-mtdb="trad" aria-pressed="'+(mtdBasis()==='trad')+'">Traditional accounting</button></div>'
+      +'<p class="note" style="margin:-4px 0 10px">'+(mtdBasis()==='cash'?'<b>Cash basis</b> (HMRC’s standard for the self-employed): money counts on the day it reaches you or leaves you. Statement jobs count on the day that statement was paid.':'<b>Traditional accounting</b>: fares count on the day of the job and costs on the day they’re charged, even if the money moves later.')+' Use the one you’ve told HMRC (ask your accountant if you’re not sure).</p>'
       +'<div class="kv"><span class="k">Quarter</span><span class="v">'+esc(P.label)+'</span></div>'
       +'<div class="kv"><span class="k">Send by</span><span class="v"><b>'+esc(dlabel(P.due))+'</b></span></div>'
       +'<div class="kv"><span class="k">Status</span><span class="v">'+esc(st)+'</span></div>';
@@ -4331,7 +4350,7 @@ html{overscroll-behavior-x:none}
   function mtdCSV(P){
     var D=mtdQData(P), R=[['HMRC category','This quarter (£)','Tax year so far (£)']];
     function q(v){ v=String(v==null?'':v); return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; }
-    R.push(['Quarter',P.label,'']); R.push(['Send by',dlabel(P.due),'']); R.push(['Name',(S.biz&&S.biz.name)||'','']);
+    R.push(['Quarter',P.label,'']); R.push(['Send by',dlabel(P.due),'']); R.push(['Basis',mtdBasis()==='cash'?'Cash basis':'Traditional accounting','']); R.push(['Name',(S.biz&&S.biz.name)||'','']);
     R.push(['Turnover (fares + tips)',n2(D.qTurn),n2(D.yTurn)]);
     HM_LINES.forEach(function(k){ R.push([k,n2(D.HQ.sub[k]),n2(D.HY.sub[k])]); });
     R.push(['Total allowable expenses',n2(D.HQ.allow),n2(D.HY.allow)]);
@@ -4344,7 +4363,7 @@ html{overscroll-behavior-x:none}
     var D=mtdQData(P), doc=new window.jspdf.jsPDF({unit:'mm',format:'a4'}), L=18, R=192, Y=18, z=S.biz||{};
     try{ doc.addImage(LOGO160,'PNG',L,Y-4,22,22); }catch(e){}
     doc.setFont('helvetica','bold'); doc.setFontSize(18); doc.text('Quarterly update figures',L+28,Y+5);
-    doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(110); doc.text(P.label+'  ·  send by '+dlabel(P.due),L+28,Y+11);
+    doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(110); doc.text(P.label+'  ·  send by '+dlabel(P.due)+'  ·  '+(mtdBasis()==='cash'?'cash basis':'traditional accounting'),L+28,Y+11);
     doc.text(brandName()+(z.name?'  ·  '+z.name:''),L+28,Y+16); doc.setTextColor(0); Y+=28;
     doc.setFont('helvetica','bold'); doc.text('HMRC category',L,Y); doc.text('This quarter',150,Y,{align:'right'}); doc.text('Tax year so far',R,Y,{align:'right'}); Y+=2; doc.setDrawColor(200); doc.line(L,Y,R,Y); Y+=6;
     function row(l,a,b,bold){ doc.setFont('helvetica',bold?'bold':'normal'); doc.text(doc.splitTextToSize(l,100),L,Y); doc.text(gbp2.format(a),150,Y,{align:'right'}); doc.text(gbp2.format(b),R,Y,{align:'right'}); Y+=7; }
@@ -4357,10 +4376,11 @@ html{overscroll-behavior-x:none}
     offerFile(mtdFileBase(P)+'.pdf',doc.output('arraybuffer'),'PDF ready');
   }
   document.addEventListener('click',function(ev){
-    var b=ev.target&&ev.target.closest?ev.target.closest('[data-mtdq],#mtd-pdf,#mtd-csv'):null; if(!b) return;
+    var b=ev.target&&ev.target.closest?ev.target.closest('[data-mtdq],[data-mtdb],#mtd-pdf,#mtd-csv'):null; if(!b) return;
+    if(b.hasAttribute('data-mtdb')){ var bs=b.getAttribute('data-mtdb'); if(bs===mtdBasis()) return; S.tax=S.tax||{}; S.tax.basis=bs; renderReports(); saveTax({basis:bs}).catch(fail); return; }
     if(b.id==='mtd-pdf') mtdPDF(period());
     else if(b.id==='mtd-csv'){ var P=period(); offerFile(mtdFileBase(P)+'.csv',new Blob([mtdCSV(P)],{type:'text/csv;charset=utf-8'}),'Spreadsheet ready'); }
-    else { var std=b.getAttribute('data-mtdq')==='std'; if(std===!mtdCal()) return; S.tax=S.tax||{}; S.tax.mtdStd=std; renderReports(); saveTax({mtdStd:std}).catch(fail); }
+    else { var std=b.getAttribute('data-mtdq')==='std'; if(std===!mtdCal()) return; S.tax=S.tax||{}; S.tax.mtdQ=std?'std':'cal'; renderReports(); saveTax({mtdQ:S.tax.mtdQ}).catch(fail); }
   });
   function accY(){ var P=period(); return +P.from.slice(0,4); }
   document.addEventListener('click',function(ev){
