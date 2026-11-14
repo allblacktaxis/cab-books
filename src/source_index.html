@@ -1461,9 +1461,14 @@ html{overscroll-behavior-x:none}
     var bankTo=S.bankCov||'';
     if(!pays.some(function(p){return p.d>=a&&p.d<=b})&&!bank.some(function(e){return e.date>=a&&e.date<=b})) return '';
     /* match every payment (including the days either side of the month), then show this month's */
-    var rows=pays.map(function(p){
-      var m=bank.filter(function(e){ var n=bankNet(e); return !used[e.id]&&n!=null&&near(n,p.amt)&&e.date>=addDays(p.d,-3)&&e.date<=addDays(p.d,5); })[0];
-      if(m){ used[m.id]=1; return {ok:1,t:gbp2.format(p.amt)+' due '+dlabel(p.d)+': in your bank on '+dlabel(m.date)}; }
+    var find=function(amt,d){ return bank.filter(function(e){ var n=bankNet(e); return !used[e.id]&&n!=null&&near(n,amt)&&e.date>=addDays(d,-3)&&e.date<=addDays(d,5); })[0]; };
+    var hit={}; pays.forEach(function(p,i){ var m=find(p.amt,p.d); if(m){ used[m.id]=1; hit[i]=m; } });
+    /* payments due the same day can reach the bank as one (Gett pays Friday-Sunday rides together on Monday) */
+    var byD={}; pays.forEach(function(p,i){ if(!hit[i]) (byD[p.d]=byD[p.d]||[]).push(i); });
+    Object.keys(byD).forEach(function(d){ var I=byD[d]; if(I.length<2) return; var m=find(I.reduce(function(t,i){return t+pays[i].amt},0),d); if(m){ used[m.id]=1; I.forEach(function(i){ hit[i]=m; }); } });
+    var rows=pays.map(function(p,i){
+      var m=hit[i];
+      if(m) return {ok:1,t:gbp2.format(p.amt)+' due '+dlabel(p.d)+': in your bank on '+dlabel(m.date)+(near(bankNet(m),p.amt)?'':' (paid together with others, '+gbp2.format(bankNet(m))+')')};
       if(!bankTo||bankTo<addDays(p.d,5)) return {wait:1,t:gbp2.format(p.amt)+' due '+dlabel(p.d)+': your bank statement doesn’t reach this date yet'};
       return {bad:1,t:gbp2.format(p.amt)+' due '+dlabel(p.d)+': not found in your bank'};
     }).filter(function(r,i){ return pays[i].d>=a&&pays[i].d<=b; });
@@ -6432,6 +6437,10 @@ html{overscroll-behavior-x:none}
       S0.checks.push(chk(near(calc,S0.payout),'Rides '+gbp2.format(S0.ridesTips)+' − fees '+gbp2.format(S0.fees)+(S0.bf?' − brought forward '+gbp2.format(S0.bf):'')+(S0.adj?' + extra payments '+gbp2.format(S0.adj):'')+' − cash '+gbp2.format(S0.cashFare)+' = '+(S0.payout<0?'owed to Gett ':'payment ')+gbp2.format(Math.abs(S0.payout)))); }
     S0.total=S0.ridesTips;
     if(daily){ S0.payDate=to?nextWorkDay(to):''; if(S0.payout<=0) S0.payout=0; } else { delete S0.payout; }
+    /* A weekly statement with no daily ones (Matt, 14 Nov 2026): Gett pays each day's rides on the next working day, so the
+       week's payments are worked out day by day (card rides less fees, less the fee on cash rides) for matching to the bank. */
+    if(!daily&&S0.jobs.length){ var DY={}; S0.jobs.forEach(function(j){ if(!j.date) return; DY[j.date]=(DY[j.date]||0)+(j.cash?0:j.fare+j.tip)-j.fee; });
+      var carry=0; S0.payouts=Object.keys(DY).sort().map(function(d){ var v=r2(DY[d]+carry); carry=v<0?v:0; return {d:nextWorkDay(d),amt:v}; }).filter(function(p){ return p.amt>0.005; }); }
     return S0;
   }
   /* ---- Curb ---- */
@@ -7192,7 +7201,9 @@ html{overscroll-behavior-x:none}
     }
     box.innerHTML=h;
     var n=plan.add.length+plan.extras.length+plan.costs.length, sb=$('st-save'), nd=(plan.del||[]).length;
-    var ns=plan.stmts.filter(function(r){ return !(S.stmts||{})[r.id]; }).length;
+    /* new statements, and saved ones read again that now carry more (e.g. Gett weekly payments by day, ComCab payments received) */
+    var J=function(x){ return JSON.stringify(x||null); };
+    var ns=plan.stmts.filter(function(r){ var o=(S.stmts||{})[r.id]; return !o||J(r.payouts)!==J(o.payouts)||J(r.paidIn)!==J(o.paidIn); }).length;
     sb.hidden=!ok.length||(!n&&!plan.bankRepl.length&&!nd&&!ns); sb.disabled=false;
     sb.textContent=n?'Add '+n+' to my books':nd?'Refresh '+nd+' line'+(nd===1?'':'s'):plan.bankRepl.length?'Use the exact figures':'Save '+ns+' statement'+(ns===1?'':'s');
     ST.plan=plan;
