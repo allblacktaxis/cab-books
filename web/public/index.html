@@ -925,7 +925,7 @@ html{overscroll-behavior-x:none}
         <div class="field" style="margin:0"><label for="e-amt">Amount</label><input type="text" class="money" id="e-amt" inputmode="numeric" autocomplete="off" placeholder="0.00"></div>
         <button class="btn small" id="e-add" type="button">Add</button>
       </div>
-      <div class="field" style="margin:10px 0 0"><label id="l-epay">Paid by</label><div class="seg" role="group" aria-labelledby="l-epay" style="margin:0"><button type="button" id="e-pcash" aria-pressed="true">Cash</button><button type="button" id="e-pcard" aria-pressed="false">Card / bank</button></div><input type="checkbox" id="e-cash" checked hidden><p class="help" style="margin:6px 0 0" id="e-payhelp">Cash never shows in the bank, so it is only counted from here.</p></div>
+      <div class="field" style="margin:10px 0 0"><label id="l-epay">Paid by</label><div class="seg" role="group" aria-labelledby="l-epay" style="margin:0"><button type="button" id="e-pcard" aria-pressed="true">Card / bank</button><button type="button" id="e-pcash" aria-pressed="false">Cash</button></div><input type="checkbox" id="e-cash" hidden><p class="help" style="margin:6px 0 0" id="e-payhelp">Counted now; replaced by the bank line once you import that statement.</p></div>
       <div class="rp-pick" style="margin-top:8px"><button class="btn ghost small" id="e-photo" type="button">Add receipt photo</button><span id="e-photo-st"></span></div>
       </div>
       </details>
@@ -3073,7 +3073,7 @@ html{overscroll-behavior-x:none}
     var ref=S.db.collection('entries').doc(), cat=$('e-cat').value, amt=Math.round(a*100)/100, ph=S.rpPending;
     ref.set({kind:'expense',date:S.day,m:monthOf(S.day),category:cat,amount:amt,cash:$('e-cash').checked,note:'',src:'manual',ts:Date.now(),demo:!!S.practice})
       .then(function(){ return ph?rpSave(ph,{date:S.day,eid:ref.id,category:cat,amount:amt}):null; })
-      .then(function(){ toast('Expense saved: '+gbp2.format(a)+(ph?' with receipt photo':'')); $('e-amt').value=''; ePay(true); S.rpPending=null; rpPendingShow(); }).catch(fail).then(function(){$('e-add').disabled=false});
+      .then(function(){ toast('Expense saved: '+gbp2.format(a)+(ph?' with receipt photo':'')); $('e-amt').value=''; ePay(false); S.rpPending=null; rpPendingShow(); }).catch(fail).then(function(){$('e-add').disabled=false});
   }
 
   /* ---------- receipt photos (Matt, 28 Oct) ----------
@@ -4428,7 +4428,7 @@ html{overscroll-behavior-x:none}
     var D=mtdQData(P), t=todayISO(), mi=mtdInfo(), dn=daysTo(P.due), cal=P.cal;
     var st=t<P.from?'Not started yet':t<=P.to?'Quarter in progress: figures so far':dn>=0?'Due in '+dn+' day'+(dn===1?'':'s'):'Was due '+dlabel(P.due);
     var h='<div class="card wide" id="mtd-card"><h2>Quarterly update for HMRC</h2>'
-      +'<div class="seg" role="group" aria-label="Which quarters" style="margin:0 0 10px"><button type="button" data-mtdq="cal" aria-pressed="'+cal+'">Calendar quarters</button><button type="button" data-mtdq="std" aria-pressed="'+!cal+'">6th to 5th</button></div>'
+      +'<div class="seg" role="group" aria-label="Which quarters" style="margin:0 0 10px"><button type="button" data-mtdq="std" aria-pressed="'+!cal+'">6th to 5th</button><button type="button" data-mtdq="cal" aria-pressed="'+cal+'">Calendar quarters</button></div>'
       +'<div class="seg" role="group" aria-label="Accounting basis" style="margin:0 0 10px"><button type="button" data-mtdb="cash" aria-pressed="'+(mtdBasis()==='cash')+'">Cash basis</button><button type="button" data-mtdb="trad" aria-pressed="'+(mtdBasis()==='trad')+'">Traditional accounting</button></div>'
       +'<p class="note" style="margin:-4px 0 10px">'+(mtdBasis()==='cash'?'<b>Cash basis</b> (HMRC’s standard for the self-employed): money counts on the day it reaches you or leaves you. App work counts on the day that payment reached your bank (the statement’s payment date if it isn’t in a bank statement yet), and costs taken off a statement count on that day too.':'<b>Traditional accounting</b>: fares count on the day of the job and costs on the day they’re charged, even if the money moves later.')+' Use the one you’ve told HMRC (ask your accountant if you’re not sure).</p>'
       +'<div class="kv"><span class="k">Quarter</span><span class="v">'+esc(P.label)+'</span></div>'
