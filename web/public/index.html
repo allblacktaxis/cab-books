@@ -7153,9 +7153,22 @@ html{overscroll-behavior-x:none}
     box.innerHTML=L.map(function(g,i){
       var bits=[]; if(g.fares) bits.push(g.fares+' job'+(g.fares===1?'':'s')+' or payment'+(g.fares===1?'':'s')+' ('+gbp2.format(g.money)+')'); if(g.costs) bits.push(g.costs+' cost'+(g.costs===1?'':'s')); if(!bits.length) bits.push('no records');
       return '<div class="xrow" style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line)"><div style="min-width:0"><b>'+esc(g.label)+'</b>'+(g.file?'<br><span class="note">'+esc(g.file)+'</span>':'')
-        +'<br><span class="note">'+(g.from?esc(fmtD(g.from))+(g.to&&g.to!==g.from?' – '+esc(fmtD(g.to)):''):'')+' · '+bits.join(', ')+(g.ts?' · added '+esc(fmtD(new Date(g.ts).toISOString().slice(0,10))):'')+'</span></div>'
+        +'<br><span class="note">'+(g.from?esc(fmtD(g.from))+(g.to&&g.to!==g.from?' – '+esc(fmtD(g.to)):''):'')+' · '+bits.join(', ')+(g.ts?' · added '+esc(fmtD(new Date(g.ts).toISOString().slice(0,10))):'')+'</span>'
+        +(g.ids.length?'<br><a href="#" class="note" data-ihsee="'+i+'" style="color:var(--accent);font-weight:600">What’s in it</a><div data-ihlist="'+i+'" hidden></div>':'')+'</div>'
         +'<button class="btn ghost small" type="button" data-ihrm="'+i+'" style="flex:none">Remove</button></div>';
     }).join('');
+    /* What's in it (Matt, 14 Nov 2026): the records that came from this import, newest first */
+    Array.prototype.forEach.call(box.querySelectorAll('[data-ihsee]'),function(a){ a.addEventListener('click',function(ev){ ev.preventDefault();
+      var i=+a.getAttribute('data-ihsee'), g=L[i], el=box.querySelector('[data-ihlist="'+i+'"]'); if(!g||!el) return;
+      if(!el.hidden){ el.hidden=true; a.textContent='What’s in it'; return; }
+      var M={}; (S.entriesRaw||[]).forEach(function(e){ M[e.id]=e; });
+      var E=g.ids.map(function(id){return M[id]}).filter(Boolean).sort(function(x,y){ return x.date<y.date?1:x.date>y.date?-1:0; });
+      el.innerHTML=E.slice(0,200).map(function(e){ var exp=e.kind==='expense', lab=exp?(e.category||'Expense'):(pname(e.provider)||'Job'), v=exp?(+e.amount||0):((+e.amount||0)+(+e.extras||0)+(+e.tips||0));
+        var tag=e.superseded?' · replaced by statement':(e.est==='bank'?' · from bank':'');
+        return '<div style="display:flex;justify-content:space-between;gap:8px;padding:3px 0;border-top:1px dashed var(--line)"><span class="note" style="min-width:0">'+esc(fmtD(e.date))+' · <b>'+esc(lab)+'</b>'+esc(tag)+(e.note?'<br>'+esc(String(e.note).slice(0,80)):'')+'</span><span class="note num" style="flex:none">'+(exp?'−':'')+gbp2.format(v)+'</span></div>'; }).join('')
+        +(E.length>200?'<p class="note">… and '+(E.length-200)+' more (see the Log).</p>':'');
+      el.hidden=false; a.textContent='Hide';
+    }); });
     Array.prototype.forEach.call(box.querySelectorAll('[data-ihrm]'),function(b){ b.addEventListener('click',function(){
       var g=L[+b.getAttribute('data-ihrm')]; if(!g) return;
       if(!b.classList.contains('arm')){ b.classList.add('arm'); b.textContent='Tap again to remove'; setTimeout(function(){ if(b.isConnected){ b.classList.remove('arm'); b.textContent='Remove'; } },4000); return; }
