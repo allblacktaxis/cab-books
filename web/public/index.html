@@ -7092,16 +7092,16 @@ html{overscroll-behavior-x:none}
     b.disabled=true; b.textContent='Removing…'; ihRemoveAllBank(); });
   /* Filter and batch remove (Matt, 12 Nov 2026): the list gets long, so pick a kind (e.g. ComCab) and dates,
      then remove one, or everything shown in one go. */
-  var IHF={prov:'',from:'',to:'',n:30};
+  var IHF={prov:'',from:'',to:'',n:10};
   function ihDates(g){ var t=g.ts?new Date(g.ts).toISOString().slice(0,10):''; return [g.from||t,g.to||g.from||t]; }
   function ihShown(L){ return L.filter(function(g){ if(IHF.prov&&g.prov!==IHF.prov) return false; var d=ihDates(g);
     if(IHF.from&&d[1]&&d[1]<IHF.from) return false; if(IHF.to&&d[0]&&d[0]>IHF.to) return false; return true; }); }
   function ihFilterBind(){
     var p=$('ih-prov'), f=$('ih-from'), t=$('ih-to'), m=$('ih-more'); if(!p||p._b) return; p._b=1;
-    p.addEventListener('change',function(){ IHF.prov=p.value; IHF.n=30; ihRender(); });
-    f.addEventListener('change',function(){ IHF.from=f.value; IHF.n=30; ihRender(); });
-    t.addEventListener('change',function(){ IHF.to=t.value; IHF.n=30; ihRender(); });
-    m.addEventListener('click',function(){ IHF.n+=30; ihRender(); });
+    p.addEventListener('change',function(){ IHF.prov=p.value; IHF.n=10; ihRender(); });
+    f.addEventListener('change',function(){ IHF.from=f.value; IHF.n=10; ihRender(); });
+    t.addEventListener('change',function(){ IHF.to=t.value; IHF.n=10; ihRender(); });
+    m.addEventListener('click',function(){ IHF.n+=10; ihRender(); });
   }
   /* What's in, app by app (Matt, 14 Nov 2026): first and last date each app's statements cover, any gaps between them
      (weekly apps), and how far the bank statement goes. */
