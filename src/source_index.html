@@ -1939,14 +1939,31 @@ html{overscroll-behavior-x:none}
      comes in or goes out, so statement jobs (and costs taken off a statement, like ComCab rent) count on the day
      that statement's payment was made. Bank lines and cash are already dated when the money moved. */
   function mtdBasis(){ return (S.tax&&S.tax.basis)==='trad'?'trad':'cash'; }
+  /* The day each statement payment reached the bank (Matt, 14 Nov 2026): matched like Monthly checks (same app, same amount,
+     a few days either side; payments due the same day can arrive as one). Key: statement id + due date. */
+  function payBankDates(){
+    var out={}, used={}, byP={};
+    (S.entriesRaw||[]).forEach(function(e){ if(e.kind==='fare'&&e.src==='import'&&e.est==='bank'){ var p=pkey(e.provider); if(p) (byP[p]=byP[p]||[]).push(e); } });
+    var pays=[]; Object.keys(S.stmts||{}).forEach(function(id){ var s=S.stmts[id], p=pkey(s&&s.prov); if(!p||!byP[p]) return;
+      (s.payouts||(s.payout!=null&&s.payDate?[{d:s.payDate,amt:s.payout}]:[])).forEach(function(x){ if(x.d&&(+x.amt||0)>0.005) pays.push({id:id,p:p,d:x.d,amt:r2(+x.amt)}); }); });
+    var find=function(p,amt,d){ return (byP[p]||[]).filter(function(e){ var n=bankNet(e); return !used[e.id]&&n!=null&&near(n,amt)&&e.date>=addDays(d,-3)&&e.date<=addDays(d,5); })[0]; };
+    var left=[]; pays.forEach(function(x){ var m=find(x.p,x.amt,x.d); if(m){ used[m.id]=1; out[x.id+'|'+x.d]=m.date; } else left.push(x); });
+    var G={}; left.forEach(function(x){ var k=x.p+'|'+x.d; (G[k]=G[k]||[]).push(x); });
+    Object.keys(G).forEach(function(k){ var L=G[k]; if(L.length<2) return; var m=find(L[0].p,L.reduce(function(t,x){return t+x.amt},0),L[0].d); if(m){ used[m.id]=1; L.forEach(function(x){ out[x.id+'|'+x.d]=m.date; }); } });
+    return out;
+  }
+  var PBD=null;
   function cashDate(e){
     if(!e||!e.stmt||e.est||!e.date) return e&&e.date;
     var s=(S.stmts||{})[e.stmt]; if(!s) return e.date;
     var P=(s.payouts||(s.payDate?[{d:s.payDate}]:[])).map(function(p){return p.d}).filter(function(d){ return d&&d>=e.date&&d<=addDays(e.date,35); }).sort();
-    return P[0]||e.date;
+    if(!P[0]) return e.date;
+    /* the day it reached the bank; the statement's payment date if that payment isn't in a bank statement yet */
+    return (PBD&&PBD[e.stmt+'|'+P[0]])||P[0];
   }
   function withBasis(fn){
     if(mtdBasis()!=='cash') return fn();
+    PBD=payBankDates();
     var keep=S.entries; S.entries=keep.map(function(e){ var d=cashDate(e); return d===e.date?e:Object.assign({},e,{date:d,m:monthOf(d)}); });
     try{ return fn(); } finally{ S.entries=keep; }
   }
@@ -4329,7 +4346,7 @@ html{overscroll-behavior-x:none}
     var h='<div class="card wide" id="mtd-card"><h2>Quarterly update for HMRC</h2>'
       +'<div class="seg" role="group" aria-label="Which quarters" style="margin:0 0 10px"><button type="button" data-mtdq="cal" aria-pressed="'+cal+'">Calendar quarters</button><button type="button" data-mtdq="std" aria-pressed="'+!cal+'">6th to 5th</button></div>'
       +'<div class="seg" role="group" aria-label="Accounting basis" style="margin:0 0 10px"><button type="button" data-mtdb="cash" aria-pressed="'+(mtdBasis()==='cash')+'">Cash basis</button><button type="button" data-mtdb="trad" aria-pressed="'+(mtdBasis()==='trad')+'">Traditional accounting</button></div>'
-      +'<p class="note" style="margin:-4px 0 10px">'+(mtdBasis()==='cash'?'<b>Cash basis</b> (HMRC’s standard for the self-employed): money counts on the day it reaches you or leaves you. Statement jobs count on the day that statement was paid.':'<b>Traditional accounting</b>: fares count on the day of the job and costs on the day they’re charged, even if the money moves later.')+' Use the one you’ve told HMRC (ask your accountant if you’re not sure).</p>'
+      +'<p class="note" style="margin:-4px 0 10px">'+(mtdBasis()==='cash'?'<b>Cash basis</b> (HMRC’s standard for the self-employed): money counts on the day it reaches you or leaves you. App work counts on the day that payment reached your bank (the statement’s payment date if it isn’t in a bank statement yet), and costs taken off a statement count on that day too.':'<b>Traditional accounting</b>: fares count on the day of the job and costs on the day they’re charged, even if the money moves later.')+' Use the one you’ve told HMRC (ask your accountant if you’re not sure).</p>'
       +'<div class="kv"><span class="k">Quarter</span><span class="v">'+esc(P.label)+'</span></div>'
       +'<div class="kv"><span class="k">Send by</span><span class="v"><b>'+esc(dlabel(P.due))+'</b></span></div>'
       +'<div class="kv"><span class="k">Status</span><span class="v">'+esc(st)+'</span></div>';
