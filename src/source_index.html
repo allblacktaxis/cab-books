@@ -1817,6 +1817,7 @@ html{overscroll-behavior-x:none}
     if(S.lg.view==='ins'){ out.innerHTML=S.lg.kind==='fare'?logInsights(R):expInsights(R); bindLogCsv(out,R); return; }
     var tj=0,tf=0,tt=0; R.forEach(function(r){ tj+=r.jobs; tf+=r.fare; tt+=r.tip; });
     var h='<div class="card"><div class="cardhead"><div class="lgsum" style="margin:0"><b>'+(S.lg.kind==='fare'?tj.toLocaleString('en-GB')+' job'+(tj===1?'':'s'):R.length+' expense'+(R.length===1?'':'s'))+'</b> · '+gbp2.format(tf)+(tt?' · tips '+gbp2.format(tt):'')+'</div>'+(R.length?'<button class="btn ghost small" type="button" id="lg-csv">Download</button>':'')+'</div>';
+    if(S.lg.kind==='fare'&&R.length) h+='<p class="note" style="margin:0 0 8px"><b>from statement</b>: from an app or card statement, counts. <b>typed · counts</b>: typed in, no statement covers it (yet), so it counts. <b>typed · replaced by statement</b>: typed in, but the statement has it, so only the statement counts. <b>from bank</b>: worked out from a bank payment when there was no statement.</p>';
     if(!R.length) h+='<div class="empty" style="padding:14px 0">Nothing matches. Try fewer words, or clear the filters.</div>';
     var shown=R.slice(0,S.lg.n), day='';
     shown.forEach(function(r){
@@ -1825,7 +1826,13 @@ html{overscroll-behavior-x:none}
       var badge='';
       if(r.src==='hist') badge='<span class="badge rec">statement</span>';
       else if(r.exp) badge=r.e.src==='import'?'<span class="badge rec">bank</span>':r.e.cash?'<span class="badge">cash</span>':r.est?'<span class="badge ind">estimate</span>':'<span class="badge rec">replaced</span>';
-      else badge=r.e.demo?'<span class="badge ind">practice</span>':r.status==='indicative'?'<span class="badge ind">indication</span>':r.status==='covered'?'<span class="badge rec">in statements</span>':'<span class="badge">entered</span>';
+      /* Plain labels (Matt, 14 Nov 2026): where a job came from and whether it counts */
+      else badge=r.e.demo?'<span class="badge ind">practice</span>'
+        :r.e.src==='import'&&r.e.est==='bank'?(r.status==='covered'?'<span class="badge">bank · replaced by statement</span>':'<span class="badge ind">from bank · estimate</span>')
+        :r.e.src==='import'?'<span class="badge rec">from statement</span>'
+        :r.status==='covered'?'<span class="badge">typed · replaced by statement</span>'
+        :r.status==='indicative'?'<span class="badge ind">typed · counts</span>'
+        :'<span class="badge">typed</span>';
       var ap=!r.exp&&airportOf(r);
       h+='<div class="lgr"><div class="lgl">'+(r.exp?'<b>'+esc(r.prov)+'</b>':ptag(r.prov))+'<span class="ppay">'+esc(r.pay)+(r.tm?' · '+esc(r.tm):'')+'</span>'+badge+(ap?'<span class="badge">✈ '+esc(ap)+'</span>':'')
         +((r.ref||r.note)?'<div class="d">'+esc([r.note,r.ref].filter(Boolean).join(' · '))+'</div>':'')
