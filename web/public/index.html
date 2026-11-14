@@ -1790,7 +1790,7 @@ html{overscroll-behavior-x:none}
 
   var armed=null;
   /* Log: every fare ever – job-level statement history plus everything entered in the app – with search and filters. */
-  S.hist={}; S.lg={q:'',prov:'',m:'',kind:'fare',n:150,from:'',to:'',amin:'',amax:'',pay:'',tips:false,air:false,canc:false,view:'list',open:false};
+  S.hist={}; S.lg={q:'',prov:'',m:'',kind:'fare',n:150,from:'',to:'',amin:'',amax:'',pay:'',tips:false,air:false,canc:false,est:false,view:'list',open:false};
   function logRows(){
     var R=[], CL=compute(S.entries), EIL=expImpMap();
     if(S.lg.kind==='fare'){
@@ -1807,7 +1807,7 @@ html{overscroll-behavior-x:none}
   function rowText(r){ return [r.note,r.ref,r.pay,r.st||''].join(' '); }
   function airportOf(r){ var t=rowText(r); for(var i=0;i<AIRPORTS.length;i++) if(AIRPORTS[i][1].test(t)) return AIRPORTS[i][0]; return /airport/i.test(t)?'Other airport':''; }
   function isCancelled(r){ return /cancel|scrub|no[ -]?show/i.test(rowText(r)) || (r.src==='hist'&&!r.exp&&r.fare===0&&r.tip===0); }
-  function lgActive(){ var L=S.lg, n=0; ['from','to','pay'].forEach(function(k){ if(L[k]) n++; }); if(L.amin!=='') n++; if(L.amax!=='') n++; if(L.tips) n++; if(L.air) n++; if(L.canc) n++; return n; }
+  function lgActive(){ var L=S.lg, n=0; ['from','to','pay'].forEach(function(k){ if(L[k]) n++; }); if(L.amin!=='') n++; if(L.amax!=='') n++; if(L.tips) n++; if(L.air) n++; if(L.canc) n++; if(L.est) n++; return n; }
   function logFiltered(){
     var L=S.lg, q=L.q.trim().toLowerCase().replace(/[£,]/g,''), amin=L.amin===''?null:+L.amin, amax=L.amax===''?null:+L.amax;
     return logRows().filter(function(r){
@@ -1818,6 +1818,8 @@ html{overscroll-behavior-x:none}
       if(L.pay&&r.pay!==L.pay) return false;
       if(amin!=null&&r.fare<amin-0.004) return false;
       if(amax!=null&&r.fare>amax+0.004) return false;
+      /* only what still counts as an estimate: typed jobs no statement covers yet, typed costs the bank hasn't replaced (Matt, 14 Nov 2026) */
+      if(L.est&&(L.kind==='fare'?r.status!=='indicative':!(r.exp&&r.est))) return false;
       if(L.kind==='fare'){
         if(L.tips&&!(r.tip>0.004)) return false;
         if(L.air&&!airportOf(r)) return false;
@@ -1844,7 +1846,8 @@ html{overscroll-behavior-x:none}
       +'<div class="two"><div class="field"><label for="lg-from">From</label><input type="date" id="lg-from" value="'+esc(L.from)+'"></div><div class="field"><label for="lg-to">To</label><input type="date" id="lg-to" value="'+esc(L.to)+'"></div></div>'
       +'<div class="two"><div class="field"><label for="lg-amin">'+(L.kind==='fare'?'Fare':'Amount')+' from (£)</label><input type="text" class="money" id="lg-amin" inputmode="numeric" autocomplete="off" placeholder="0.00" value="'+(L.amin!==''?(+L.amin).toFixed(2):'')+'"></div><div class="field"><label for="lg-amax">to (£)</label><input type="text" class="money" id="lg-amax" inputmode="numeric" autocomplete="off" placeholder="any" value="'+(L.amax!==''?(+L.amax).toFixed(2):'')+'"></div></div>'
       +(L.kind==='fare'?'<div class="field"><label for="lg-pay">Paid by</label><select id="lg-pay"><option value="">Any</option>'+yk.map(function(p){return '<option'+(p===L.pay?' selected':'')+'>'+esc(p)+'</option>'}).join('')+'</select></div>'
-        +'<div class="chips tight" role="group" aria-label="Show only"><button type="button" data-lf="tips" aria-pressed="'+!!L.tips+'">Tips only</button><button type="button" data-lf="air" aria-pressed="'+!!L.air+'">Airport jobs</button><button type="button" data-lf="canc" aria-pressed="'+!!L.canc+'">Cancelled</button></div>':'')
+        +'<div class="chips tight" role="group" aria-label="Show only"><button type="button" data-lf="tips" aria-pressed="'+!!L.tips+'">Tips only</button><button type="button" data-lf="air" aria-pressed="'+!!L.air+'">Airport jobs</button><button type="button" data-lf="canc" aria-pressed="'+!!L.canc+'">Cancelled</button><button type="button" data-lf="est" aria-pressed="'+!!L.est+'">Not in statements yet</button></div>'
+        :'<div class="chips tight" role="group" aria-label="Show only"><button type="button" data-lf="est" aria-pressed="'+!!L.est+'">Typed in, not from the bank</button></div>')
       +'<button class="btn ghost small" type="button" id="lg-clear" style="width:100%;margin-top:12px">Clear all filters</button></div></details>'
       +'<div class="seg" style="margin-top:12px"><button type="button" data-lv="list" aria-pressed="'+(L.view!=='ins')+'">List</button><button type="button" data-lv="ins" aria-pressed="'+(L.view==='ins')+'">Insights</button></div>'
       +'</div><div id="lg-out"></div>';
@@ -1859,7 +1862,7 @@ html{overscroll-behavior-x:none}
     onCh('lg-prov','prov'); onCh('lg-m','m'); onCh('lg-from','from'); onCh('lg-to','to'); onCh('lg-pay','pay');
     var amt=function(v){ var n=parseAmt(v); return isNaN(n)?'':Math.abs(n); };
     onCh('lg-amin','amin',amt); onCh('lg-amax','amax',amt);
-    $('lg-clear').addEventListener('click',function(){ Object.assign(S.lg,{q:'',prov:'',m:'',from:'',to:'',amin:'',amax:'',pay:'',tips:false,air:false,canc:false,n:150}); renderLog(); });
+    $('lg-clear').addEventListener('click',function(){ Object.assign(S.lg,{q:'',prov:'',m:'',from:'',to:'',amin:'',amax:'',pay:'',tips:false,air:false,canc:false,est:false,n:150}); renderLog(); });
     renderLogList();
   }
   function renderLogList(){
@@ -4421,7 +4424,9 @@ html{overscroll-behavior-x:none}
     h+='<p class="note">HMRC asks for the <b>tax year so far</b> column: each update covers everything from the start of the tax year ('+(cal?'1 April':'6 April')+'). If your turnover is under £90,000 a year you can send just the total expenses instead of each category.</p>';
     var w=[]; var pend=cashPending(P.from,P.to); if(pend.v>0.5) w.push(gbp2.format(pend.v)+' of app income dated by the statement’s payment date, because '+(pend.n===1?'that payment isn’t':'those '+pend.n+' payments aren’t')+' in a bank statement yet (bring in a bank statement up to '+dlabel(addDays(pend.last,5))+' to use the bank dates)');
     if(D.YA.indic>0.5) w.push(gbp2.format(D.YA.indic)+' of jobs not yet matched to statements'); if(D.YA.expEst>0.5) w.push(gbp2.format(D.YA.expEst)+' of costs typed in, not yet from the bank'); if(D.YA.apport) w.push('the days at each end of a month that only has a monthly total are its share by days');
-    if(w.length) h+='<p class="warnbox" style="margin:10px 0 0">Includes estimates: '+esc(w.join('; '))+'.</p>';
+    if(w.length) h+='<p class="warnbox" style="margin:10px 0 0">Includes estimates: '+esc(w.join('; '))+'.'
+      +(D.YA.indic>0.5?' <a href="#" data-mtdshow="fare|'+esc(P.mtdY+(P.cal?'-04-01':'-04-06'))+'|'+esc(P.to)+'">Show those jobs</a>':'')
+      +(D.YA.expEst>0.5?' <a href="#" data-mtdshow="expense|'+esc(P.mtdY+(P.cal?'-04-01':'-04-06'))+'|'+esc(P.to)+'">Show those costs</a>':'')+'</p>';
     h+='<div class="two" style="margin-top:12px"><button class="btn" type="button" id="mtd-pdf">Download PDF</button><button class="btn ghost" type="button" id="mtd-csv">Spreadsheet (CSV)</button></div>';
     h+='<p class="note">'+(mi?'Cab Books expects you to send quarterly updates from April '+mi.from+'. '+esc(mi.why)+' ':'You may not need to send these yet. Quarterly updates apply from April '+MTDSTEPS.map(function(x){return x[0]+' if your takings (before costs) in '+tyLabel(x[1])+' were over '+gbp0.format(x[2])}).join(', from April ')+'. ')
       +'Cab Books can’t send updates to HMRC itself: copy these figures into HMRC-recognised software, or send them to your accountant. '+(cal?'Calendar quarters match how Cab Books keeps your books (by month); you tell HMRC you use them when you sign up. ':'')+'Check with your accountant before you rely on them.</p></div>';
@@ -4458,7 +4463,9 @@ html{overscroll-behavior-x:none}
     offerFile(mtdFileBase(P)+'.pdf',doc.output('arraybuffer'),'PDF ready');
   }
   document.addEventListener('click',function(ev){
-    var b=ev.target&&ev.target.closest?ev.target.closest('[data-mtdq],[data-mtdb],#mtd-pdf,#mtd-csv'):null; if(!b) return;
+    var b=ev.target&&ev.target.closest?ev.target.closest('[data-mtdq],[data-mtdb],[data-mtdshow],#mtd-pdf,#mtd-csv'):null; if(!b) return;
+    if(b.hasAttribute('data-mtdshow')){ ev.preventDefault(); var sp=b.getAttribute('data-mtdshow').split('|');
+      Object.assign(S.lg,{kind:sp[0],q:'',prov:'',m:'',from:sp[1]||'',to:sp[2]||'',amin:'',amax:'',pay:'',tips:false,air:false,canc:false,est:true,open:true,view:'list',n:150}); showTab('log'); return; }
     if(b.hasAttribute('data-mtdb')){ var bs=b.getAttribute('data-mtdb'); if(bs===mtdBasis()) return; S.tax=S.tax||{}; S.tax.basis=bs; renderReports(); saveTax({basis:bs}).catch(fail); return; }
     if(b.id==='mtd-pdf') mtdPDF(period());
     else if(b.id==='mtd-csv'){ var P=period(); offerFile(mtdFileBase(P)+'.csv',new Blob([mtdCSV(P)],{type:'text/csv;charset=utf-8'}),'Spreadsheet ready'); }
