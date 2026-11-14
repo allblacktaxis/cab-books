@@ -6493,8 +6493,10 @@ html{overscroll-behavior-x:none}
     if(daily){ S0.payDate=to?nextWorkDay(to):''; if(S0.payout<=0) S0.payout=0; } else { delete S0.payout; }
     /* A weekly statement with no daily ones (Matt, 14 Nov 2026): Gett pays each day's rides on the next working day, so the
        week's payments are worked out day by day (card rides less fees, less the fee on cash rides) for matching to the bank. */
-    if(!daily&&S0.jobs.length){ var DY={}; S0.jobs.forEach(function(j){ if(!j.date) return; DY[j.date]=(DY[j.date]||0)+(j.cash?0:j.fare+j.tip)-j.fee; });
-      var carry=0; S0.payouts=Object.keys(DY).sort().map(function(d){ var v=r2(DY[d]+carry); carry=v<0?v:0; return {d:nextWorkDay(d),amt:v}; }).filter(function(p){ return p.amt>0.005; }); }
+    /* rides are grouped by the day they're paid (Friday-Sunday together on Monday); a cash ride's fee and any balance
+       brought forward come off the next payment (checked against Marcin's bank, Jan and Oct 2026) */
+    if(!daily&&S0.jobs.length){ var DY={}; S0.jobs.forEach(function(j){ if(!j.date) return; var pd=nextWorkDay(j.date); DY[pd]=(DY[pd]||0)+(j.cash?0:j.fare+j.tip)-j.fee; });
+      var carry=-(+S0.bf||0); S0.payouts=Object.keys(DY).sort().map(function(d){ var v=r2(DY[d]+carry); carry=v<0?v:0; return {d:d,amt:v}; }).filter(function(p){ return p.amt>0.005; }); }
     return S0;
   }
   /* ---- Curb ---- */
