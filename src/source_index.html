@@ -3417,7 +3417,7 @@ html{overscroll-behavior-x:none}
   }
   /* Never add to a month that already has figures for that app (statements, a loaded month, or earlier takings). */
   function bkIncomePlan(existing){
-    var B=S.bk, add=[], dup=0, covered=0, cm={};
+    var B=S.bk, add=[], dup=0, covered=0, cm={}, cov=[];
     (B.inc||[]).forEach(function(x){
       var m=monthOf(x.d), pk=pkey(x.prov)||String(x.prov).toLowerCase();
       if(existing[x.id]){ dup++; return; }
@@ -3425,11 +3425,11 @@ html{overscroll-behavior-x:none}
       if(cm[key]===undefined){
         cm[key]=!!S.months[m] || S.entries.some(function(e){ return e.kind==='fare'&&e.src==='import'&&e.m===m&&!e.est&&!e.stmt&&(pkey(e.provider)||String(e.provider).toLowerCase())===pk; });
       }
-      if(cm[key]){ covered++; return; }
-      if(stCoversBank(x.prov,x.d,x.net)){ covered++; return; }
+      if(cm[key]){ covered++; cov.push(x); return; }
+      if(stCoversBank(x.prov,x.d,x.net)){ covered++; cov.push(x); return; }
       add.push(x);
     });
-    return {add:add,dup:dup,covered:covered};
+    return {add:add,dup:dup,covered:covered,cov:cov};
   }
   function bkIncomeHtml(IN){
     var B=S.bk; if(!$('bk-inc').checked) return '';
@@ -3618,12 +3618,18 @@ html{overscroll-behavior-x:none}
       laterOut.forEach(function(r){ jobs.push(S.db.collection('tosort').doc(r.id).set({dir:'out',d:r.d,desc:r.desc,amt:r.amt,key:r.key||'',note:'',ts:Date.now()})); });
       laterIn.forEach(function(x){ jobs.push(S.db.collection('tosort').doc(x.id).set({dir:'in',d:x.d,desc:x.desc,amt:x.amt,key:x.key||'',note:'',ts:Date.now()})); });
       if(B.maxDate&&B.maxDate>S.bankCov) jobs.push(S.db.collection('settings').doc('bank').set({covered:B.maxDate}));
+      /* App payments a statement already covers aren't counted again, but the bank line is kept (marked as replaced by the
+         statement) so Monthly checks can show the payment was found in the bank (Matt, 14 Nov 2026). */
+      (IN.cov||[]).forEach(function(x){ var pct=bkPct(x.prov,x.d);
+        jobs.push(S.db.collection('entries').doc(x.id).set({kind:'fare',date:x.d,m:monthOf(x.d),provider:x.prov,pay:'Account',amount:x.gross,tips:0,commission:pct,feeFixed:Math.max(0,Math.round((x.gross*(1-pct/100)-x.net)*100)/100),
+          note:'From bank: '+gbp2.format(x.net)+' paid by '+(PROV[pkey(x.prov)]||x.prov)+'; already in your statements',src:'import',est:'bank',superseded:true,net:r2(x.net),ts:Date.now()})); });
       Promise.all(jobs).then(function(){
         /* A result box that stays on screen, so the driver can see the statement was taken in and what came from it (Matt, 3 Nov 2026). */
         var inSum=incTodo.slice(0,incDone).reduce(function(a,x){return a+(+x.net||0)},0), exSum=todo.slice(0,done).reduce(function(a,r){return a+(+r.amt||0)},0);
         var dupN=B.rows.filter(function(r){return existing[r.id]}).length, ignN=B.rows.filter(function(r){return bkEff(r)==='ignore'&&!existing[r.id]}).length, cov=B.maxDate>S.bankCov?B.maxDate:S.bankCov;
         var bd=$('bk-done'); if(bd){ bd.hidden=false; bd.innerHTML='<b style="color:var(--ok)">✓ Done. Your bank statement is in your books.</b>'
-          +'<div class="kv"><span class="k">Payments from taxi apps</span><span class="v">'+incDone+' · '+gbp2.format(inSum)+'</span></div>'
+          +((IN.cov||[]).length?'<div class="kv"><span class="k">Payments from taxi apps already in your statements (matched, not counted twice)</span><span class="v">'+IN.cov.length+' · '+gbp2.format(IN.cov.reduce(function(a,x){return a+(+x.net||0)},0))+'</span></div>':'')
+          +'<div class="kv"><span class="k">Payments from taxi apps with no statement yet (counted from the bank)</span><span class="v">'+incDone+' · '+gbp2.format(inSum)+'</span></div>'
           +'<div class="kv"><span class="k">Expenses added</span><span class="v">'+done+' · '+gbp2.format(exSum)+'</span></div>'
           +(dupN?'<div class="kv"><span class="k">Already in your books (skipped)</span><span class="v">'+dupN+'</span></div>':'')
           +(ignN?'<div class="kv"><span class="k">Left out as personal</span><span class="v">'+ignN+'</span></div>':'')
@@ -3640,7 +3646,7 @@ html{overscroll-behavior-x:none}
       var x=incTodo[incDone]; $('bk-save').textContent='Adding payment '+(incDone+1)+' of '+incTodo.length+'…';
       var pct=bkPct(x.prov,x.d);
       S.db.collection('entries').doc(x.id).set({kind:'fare',date:x.d,m:monthOf(x.d),provider:x.prov,pay:'Account',amount:x.gross,tips:0,commission:pct,feeFixed:Math.round((x.gross*(1-pct/100)-x.net)*100)/100>0?Math.round((x.gross*(1-pct/100)-x.net)*100)/100:0,
-        note:'From bank: '+gbp2.format(x.net)+' paid by '+(PROV[pkey(x.prov)]||x.prov)+'; fares estimated',src:'import',est:'bank',ts:Date.now()})
+        note:'From bank: '+gbp2.format(x.net)+' paid by '+(PROV[pkey(x.prov)]||x.prov)+'; fares estimated',src:'import',est:'bank',net:r2(x.net),ts:Date.now()})
         .then(function(){ incDone++; nextIn(); }).catch(function(e){ fail(e); $('bk-save').disabled=false; bkRender(); });
     }
     function next(){
