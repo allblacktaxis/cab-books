@@ -7019,7 +7019,8 @@ html{overscroll-behavior-x:none}
   function ihBankAllRender(){
     var el=$('ih-bankall'); if(!el) return;
     var n=ihBankIds().length, t=Object.keys(S.tosort||{}).length;
-    if(!n&&!t&&!S.bankCov){ el.hidden=true; el.innerHTML=''; return; }
+    /* only when Bank statement is picked in the list's dropdown (Matt, 14 Nov 2026) */
+    if((!n&&!t&&!S.bankCov)||(typeof IHF!=='undefined'&&IHF.prov!=='Bank statement')){ el.hidden=true; el.innerHTML=''; return; }
     el.hidden=false;
     el.innerHTML='<b>Start the bank again</b><p class="help" style="margin:4px 0 8px">Takes out everything that came from your bank statements ('+n+' record'+(n===1?'':'s')+(t?' and '+t+' to sort out':'')+'), however you brought them in. Your taxi app statements, typed-in jobs and the payees Cab Books has learned stay. Then bring in your bank statement again.</p>'
       +'<button class="btn ghost small" type="button" id="ih-bankall-go">Remove all bank imports</button>';
