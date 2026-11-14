@@ -1790,15 +1790,17 @@ html{overscroll-behavior-x:none}
 
   var armed=null;
   /* Log: every fare ever – job-level statement history plus everything entered in the app – with search and filters. */
-  S.hist={}; S.lg={q:'',prov:'',m:'',kind:'fare',n:150,from:'',to:'',amin:'',amax:'',pay:'',tips:false,air:false,canc:false,est:false,view:'list',open:false};
+  S.hist={}; S.lg={q:'',prov:'',m:'',kind:'fare',n:150,from:'',to:'',amin:'',amax:'',pay:'',tips:false,air:false,canc:false,est:false,rep:false,view:'list',open:false};
   function logRows(){
     var R=[], CL=compute(S.entries), EIL=expImpMap();
     if(S.lg.kind==='fare'){
       Object.keys(S.hist).forEach(function(id){ var d=S.hist[id]; (d.jobs||[]).forEach(function(j,i){ var nt=String(j.n||'').replace(/(\s*-\s*)+$/,'').replace(/^\s*£?[\d.,]+\s*$/,'').trim(); R.push({src:'hist',id:id+':'+i,date:j.d,tm:j.tm||'',prov:provName(j.p),pay:j.pay||'',fare:+j.f||0,tip:+j.t||0,fee:+j.x||0,ref:j.r||'',note:nt,st:j.s||j.st||j.status||'',jobs:j.jobs||1}); }); });
       S.entriesAll.forEach(function(e){ if(e.kind!=='fare') return; var sv=CL.stat[e.id];
-        R.push({src:'app',e:e,id:e.id,date:e.date,tm:e.time||'',prov:provName(e.provider||'Job'),pay:e.pay||'',fare:eAmt(e),tip:+e.tips||0,fee:lineFee(e),ref:e.bill?('Receipt '+e.bill):(e.ref||''),note:e.note||'',status:sv,jobs:(e.bonus||e.tipOnly||e.adj)?0:1}); });
+        R.push({src:'app',e:e,id:e.id,date:e.date,tm:e.time||'',prov:provName(e.provider||'Job'),pay:e.pay||'',fare:eAmt(e),tip:+e.tips||0,fee:lineFee(e),ref:e.bill?('Receipt '+e.bill):(e.ref||''),note:e.note||'',status:sv,jobs:(e.bonus||e.tipOnly||e.adj)?0:1,replaced:sv==='covered'||!!e.demo}); });
     } else {
-      S.entriesAll.forEach(function(e){ if(e.kind!=='expense') return; R.push({src:'app',e:e,id:e.id,date:e.date,tm:'',prov:e.category||'Expense',pay:e.cash?'Cash':'',fare:+e.amount||0,tip:0,fee:0,ref:'',note:e.note||'',exp:true,est:e.src!=='import'&&!e.cash&&!expSuperseded(e,EIL,false),jobs:1}); });
+      var PO=ccPaidOff(S.entriesAll);
+      S.entriesAll.forEach(function(e){ if(e.kind!=='expense') return; var sup=e.src!=='import'&&!e.cash&&expSuperseded(e,EIL,false);
+        R.push({src:'app',e:e,id:e.id,date:e.date,tm:'',prov:e.category||'Expense',pay:e.cash?'Cash':'',fare:+e.amount||0,tip:0,fee:0,ref:'',note:e.note||'',exp:true,est:e.src!=='import'&&!e.cash&&!sup,po:!!PO[e.id],replaced:sup||!!PO[e.id]||!!e.demo,jobs:1}); });
     }
     return R;
   }
@@ -1807,7 +1809,7 @@ html{overscroll-behavior-x:none}
   function rowText(r){ return [r.note,r.ref,r.pay,r.st||''].join(' '); }
   function airportOf(r){ var t=rowText(r); for(var i=0;i<AIRPORTS.length;i++) if(AIRPORTS[i][1].test(t)) return AIRPORTS[i][0]; return /airport/i.test(t)?'Other airport':''; }
   function isCancelled(r){ return /cancel|scrub|no[ -]?show/i.test(rowText(r)) || (r.src==='hist'&&!r.exp&&r.fare===0&&r.tip===0); }
-  function lgActive(){ var L=S.lg, n=0; ['from','to','pay'].forEach(function(k){ if(L[k]) n++; }); if(L.amin!=='') n++; if(L.amax!=='') n++; if(L.tips) n++; if(L.air) n++; if(L.canc) n++; if(L.est) n++; return n; }
+  function lgActive(){ var L=S.lg, n=0; ['from','to','pay'].forEach(function(k){ if(L[k]) n++; }); if(L.amin!=='') n++; if(L.amax!=='') n++; if(L.tips) n++; if(L.air) n++; if(L.canc) n++; if(L.est) n++; if(L.rep) n++; return n; }
   function logFiltered(){
     var L=S.lg, q=L.q.trim().toLowerCase().replace(/[£,]/g,''), amin=L.amin===''?null:+L.amin, amax=L.amax===''?null:+L.amax;
     return logRows().filter(function(r){
@@ -1820,6 +1822,8 @@ html{overscroll-behavior-x:none}
       if(amax!=null&&r.fare>amax+0.004) return false;
       /* only what still counts as an estimate: typed jobs no statement covers yet, typed costs the bank hasn't replaced (Matt, 14 Nov 2026) */
       if(L.est&&(L.kind==='fare'?r.status!=='indicative':!(r.exp&&r.est))) return false;
+      /* typed jobs and costs a statement or the bank has replaced are hidden unless asked for (Matt, 14 Nov 2026) */
+      if(!L.rep&&r.replaced) return false;
       if(L.kind==='fare'){
         if(L.tips&&!(r.tip>0.004)) return false;
         if(L.air&&!airportOf(r)) return false;
@@ -1846,8 +1850,8 @@ html{overscroll-behavior-x:none}
       +'<div class="two"><div class="field"><label for="lg-from">From</label><input type="date" id="lg-from" value="'+esc(L.from)+'"></div><div class="field"><label for="lg-to">To</label><input type="date" id="lg-to" value="'+esc(L.to)+'"></div></div>'
       +'<div class="two"><div class="field"><label for="lg-amin">'+(L.kind==='fare'?'Fare':'Amount')+' from (£)</label><input type="text" class="money" id="lg-amin" inputmode="numeric" autocomplete="off" placeholder="0.00" value="'+(L.amin!==''?(+L.amin).toFixed(2):'')+'"></div><div class="field"><label for="lg-amax">to (£)</label><input type="text" class="money" id="lg-amax" inputmode="numeric" autocomplete="off" placeholder="any" value="'+(L.amax!==''?(+L.amax).toFixed(2):'')+'"></div></div>'
       +(L.kind==='fare'?'<div class="field"><label for="lg-pay">Paid by</label><select id="lg-pay"><option value="">Any</option>'+yk.map(function(p){return '<option'+(p===L.pay?' selected':'')+'>'+esc(p)+'</option>'}).join('')+'</select></div>'
-        +'<div class="chips tight" role="group" aria-label="Show only"><button type="button" data-lf="tips" aria-pressed="'+!!L.tips+'">Tips only</button><button type="button" data-lf="air" aria-pressed="'+!!L.air+'">Airport jobs</button><button type="button" data-lf="canc" aria-pressed="'+!!L.canc+'">Cancelled</button><button type="button" data-lf="est" aria-pressed="'+!!L.est+'">Not in statements yet</button></div>'
-        :'<div class="chips tight" role="group" aria-label="Show only"><button type="button" data-lf="est" aria-pressed="'+!!L.est+'">Typed in, not from the bank</button></div>')
+        +'<div class="chips tight" role="group" aria-label="Show only"><button type="button" data-lf="tips" aria-pressed="'+!!L.tips+'">Tips only</button><button type="button" data-lf="air" aria-pressed="'+!!L.air+'">Airport jobs</button><button type="button" data-lf="canc" aria-pressed="'+!!L.canc+'">Cancelled</button><button type="button" data-lf="est" aria-pressed="'+!!L.est+'">Not in statements yet</button><button type="button" data-lf="rep" aria-pressed="'+!!L.rep+'">Show replaced jobs</button></div>'
+        :'<div class="chips tight" role="group" aria-label="Show only"><button type="button" data-lf="est" aria-pressed="'+!!L.est+'">Typed in, not from the bank</button><button type="button" data-lf="rep" aria-pressed="'+!!L.rep+'">Show replaced costs</button></div>')
       +'<button class="btn ghost small" type="button" id="lg-clear" style="width:100%;margin-top:12px">Clear all filters</button></div></details>'
       +'<div class="seg" style="margin-top:12px"><button type="button" data-lv="list" aria-pressed="'+(L.view!=='ins')+'">List</button><button type="button" data-lv="ins" aria-pressed="'+(L.view==='ins')+'">Insights</button></div>'
       +'</div><div id="lg-out"></div>';
@@ -1862,24 +1866,31 @@ html{overscroll-behavior-x:none}
     onCh('lg-prov','prov'); onCh('lg-m','m'); onCh('lg-from','from'); onCh('lg-to','to'); onCh('lg-pay','pay');
     var amt=function(v){ var n=parseAmt(v); return isNaN(n)?'':Math.abs(n); };
     onCh('lg-amin','amin',amt); onCh('lg-amax','amax',amt);
-    $('lg-clear').addEventListener('click',function(){ Object.assign(S.lg,{q:'',prov:'',m:'',from:'',to:'',amin:'',amax:'',pay:'',tips:false,air:false,canc:false,est:false,n:150}); renderLog(); });
+    $('lg-clear').addEventListener('click',function(){ Object.assign(S.lg,{q:'',prov:'',m:'',from:'',to:'',amin:'',amax:'',pay:'',tips:false,air:false,canc:false,est:false,rep:false,n:150}); renderLog(); });
     renderLogList();
   }
   function renderLogList(){
     var out=$('lg-out'); if(!out) return;
     var R=logFiltered();
     if(S.lg.view==='ins'){ out.innerHTML=S.lg.kind==='fare'?logInsights(R):expInsights(R); bindLogCsv(out,R); return; }
-    var tj=0,tf=0,tt=0; R.forEach(function(r){ tj+=r.jobs; tf+=r.fare; tt+=r.tip; });
-    var h='<div class="card"><div class="cardhead"><div class="lgsum" style="margin:0"><b>'+(S.lg.kind==='fare'?tj.toLocaleString('en-GB')+' job'+(tj===1?'':'s'):R.length+' expense'+(R.length===1?'':'s'))+'</b> · '+gbp2.format(tf)+(tt?' · tips '+gbp2.format(tt):'')+'</div>'+(R.length?'<button class="btn ghost small" type="button" id="lg-csv">Download</button>':'')+'</div>';
+    var tj=0,tf=0,tt=0, nRep=0; R.forEach(function(r){ if(r.replaced){ nRep++; return; } tj+=r.jobs; tf+=r.fare; tt+=r.tip; });
+    var h='<div class="card"><div class="cardhead"><div class="lgsum" style="margin:0"><b>'+(S.lg.kind==='fare'?tj.toLocaleString('en-GB')+' job'+(tj===1?'':'s'):(R.length-nRep)+' expense'+(R.length-nRep===1?'':'s'))+'</b> · '+gbp2.format(tf)+(tt?' · tips '+gbp2.format(tt):'')+(nRep?' <span class="note">(+ '+nRep+' replaced, not counted)</span>':'')+'</div>'+(R.length?'<button class="btn ghost small" type="button" id="lg-csv">Download</button>':'')+'</div>';
     if(S.lg.kind==='fare'&&R.length) h+='<p class="note" style="margin:0 0 8px"><b>from statement</b>: from an app or card statement, counts. <b>typed · counts</b>: typed in, no statement covers it (yet), so it counts. <b>typed · replaced by statement</b>: typed in, but the statement has it, so only the statement counts. <b>from bank</b>: worked out from a bank payment when there was no statement.</p>';
+    if(S.lg.kind!=='fare'&&R.length) h+='<p class="note" style="margin:0 0 8px"><b>from bank</b>: from your bank statement, counts. <b>from statement</b>: taken off an app statement (e.g. ComCab rent) or from your Heathrow download, counts. <b>typed · counts</b>: typed in, the bank hasn’t got it yet (or it was paid in cash). <b>typed · replaced by bank</b>: typed in, but the bank has it, so only the bank counts. <b>bank · already in a statement</b>: a bank payment (e.g. paying ComCab what you owed) whose cost was already counted from the statement.</p>';
     if(!R.length) h+='<div class="empty" style="padding:14px 0">Nothing matches. Try fewer words, or clear the filters.</div>';
     var shown=R.slice(0,S.lg.n), day='';
     shown.forEach(function(r){
-      if(r.date!==day){ day=r.date; var dj=0,df=0; R.forEach(function(x){ if(x.date===day){dj+=x.jobs;df+=x.fare+x.tip;} });
+      if(r.date!==day){ day=r.date; var dj=0,df=0; R.forEach(function(x){ if(x.date===day&&!x.replaced){dj+=x.jobs;df+=x.fare+x.tip;} });
         h+='<div class="lgday"><span>'+esc(dayLabel(day))+'</span><span>'+(S.lg.kind==='fare'?dj+' job'+(dj===1?'':'s')+' · ':'')+gbp2.format(df)+'</span></div>'; }
       var badge='';
       if(r.src==='hist') badge='<span class="badge rec">statement</span>';
-      else if(r.exp) badge=r.e.src==='import'?'<span class="badge rec">bank</span>':r.e.cash?'<span class="badge">cash</span>':r.est?'<span class="badge ind">estimate</span>':'<span class="badge rec">replaced</span>';
+      else if(r.exp) badge=r.e.demo?'<span class="badge ind">practice</span>'
+        :r.e.src==='import'&&r.e.stmt?'<span class="badge rec">from statement</span>'
+        :r.e.src==='import'&&r.po?'<span class="badge">bank · already in a statement</span>'
+        :r.e.src==='import'?'<span class="badge rec">from bank</span>'
+        :r.e.cash?'<span class="badge ind">typed · cash, counts</span>'
+        :r.est?'<span class="badge ind">typed · counts</span>'
+        :'<span class="badge">typed · replaced by bank</span>';
       /* Plain labels (Matt, 14 Nov 2026): where a job came from and whether it counts */
       else badge=r.e.demo?'<span class="badge ind">practice</span>'
         :r.e.src==='import'&&r.e.est==='bank'?(r.status==='covered'?'<span class="badge">bank · replaced by statement</span>':'<span class="badge ind">from bank · estimate</span>')
@@ -1888,7 +1899,7 @@ html{overscroll-behavior-x:none}
         :r.status==='indicative'?'<span class="badge ind">typed · counts</span>'
         :'<span class="badge">typed</span>';
       var ap=!r.exp&&airportOf(r);
-      h+='<div class="lgr"><div class="lgl">'+(r.exp?'<b>'+esc(r.prov)+'</b>':ptag(r.prov))+'<span class="ppay">'+esc(r.pay)+(r.tm?' · '+esc(r.tm):'')+'</span>'+badge+(ap?'<span class="badge">✈ '+esc(ap)+'</span>':'')
+      h+='<div class="lgr"'+(r.replaced?' style="opacity:.55"':'')+'><div class="lgl">'+(r.exp?'<b>'+esc(r.prov)+'</b>':ptag(r.prov))+'<span class="ppay">'+esc(r.pay)+(r.tm?' · '+esc(r.tm):'')+'</span>'+badge+(ap?'<span class="badge">✈ '+esc(ap)+'</span>':'')
         +((r.ref||r.note)?'<div class="d">'+esc([r.note,r.ref].filter(Boolean).join(' · '))+'</div>':'')
         +(r.src==='app'?'<div class="lgact">'+(r.exp?'':'<button class="rc" type="button" data-lgedit="'+esc(r.id)+'">Edit</button><button class="rc" type="button" data-rc="'+esc(r.id)+'">Receipt</button>')+(r.e.bill?'':'<button class="del'+(armed===r.id?' arm':'')+'" data-del="'+esc(r.id)+'" type="button">'+(armed===r.id?'Tap again to delete':'Delete')+'</button>')+'</div>':'')
         +'</div><div class="amt num">'+(r.exp?'−':'')+gbp2.format(r.fare)+(r.tip?'<div class="d">+ tip '+gbp2.format(r.tip)+'</div>':'')+(r.fee>0.005?'<div class="d" style="color:var(--bad)">fee '+gbp2.format(r.fee)+'</div>':'')+'</div></div>';
