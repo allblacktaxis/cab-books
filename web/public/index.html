@@ -2013,7 +2013,16 @@ html{overscroll-behavior-x:none}
     var P=(s.payouts||(s.payDate?[{d:s.payDate}]:[])).map(function(p){return p.d}).filter(function(d){ return d&&d>=e.date&&d<=addDays(e.date,35); }).sort();
     if(!P[0]) return e.date;
     /* the day it reached the bank; the statement's payment date if that payment isn't in a bank statement yet */
-    return (PBD&&PBD[e.stmt+'|'+P[0]])||P[0];
+    var bd=PBD&&PBD[e.stmt+'|'+P[0]]; if(!bd) e._pend=1;
+    return bd||P[0];
+  }
+  /* Under cash basis: app income in a period still dated by the statement because its payment isn't in a bank statement yet */
+  function cashPending(from,to){
+    if(mtdBasis()!=='cash') return {n:0,v:0,last:''};
+    PBD=payBankDates(); var o={n:0,v:0,last:''}, seen={};
+    S.entries.forEach(function(e){ if(e.kind!=='fare') return; var x={stmt:e.stmt,est:e.est,date:e.date}, d=cashDate(x); if(!x._pend||d<from||d>to) return;
+      o.v+=eAmt(e)+(+e.tips||0); if(!seen[e.stmt+'|'+d]){ seen[e.stmt+'|'+d]=1; o.n++; } if(d>o.last) o.last=d; });
+    o.v=r2(o.v); return o;
   }
   function withBasis(fn){
     if(mtdBasis()!=='cash') return fn();
@@ -4410,7 +4419,8 @@ html{overscroll-behavior-x:none}
     HM_LINES.forEach(function(k){ if(!(D.HQ.sub[k]||D.HY.sub[k])) return; h+=row(esc(k),D.HQ.sub[k],D.HY.sub[k]); });
     h+=row('<b>Total allowable expenses</b>',D.HQ.allow,D.HY.allow)+row('<b>Net profit</b>',D.qTurn-D.HQ.allow,D.yTurn-D.HY.allow,'tot12')+'</table></div>';
     h+='<p class="note">HMRC asks for the <b>tax year so far</b> column: each update covers everything from the start of the tax year ('+(cal?'1 April':'6 April')+'). If your turnover is under £90,000 a year you can send just the total expenses instead of each category.</p>';
-    var w=[]; if(D.YA.indic>0.5) w.push(gbp2.format(D.YA.indic)+' of jobs not yet matched to statements'); if(D.YA.expEst>0.5) w.push(gbp2.format(D.YA.expEst)+' of costs typed in, not yet from the bank'); if(D.YA.apport) w.push('the days at each end of a month that only has a monthly total are its share by days');
+    var w=[]; var pend=cashPending(P.from,P.to); if(pend.v>0.5) w.push(gbp2.format(pend.v)+' of app income dated by the statement’s payment date, because '+(pend.n===1?'that payment isn’t':'those '+pend.n+' payments aren’t')+' in a bank statement yet (bring in a bank statement up to '+dlabel(addDays(pend.last,5))+' to use the bank dates)');
+    if(D.YA.indic>0.5) w.push(gbp2.format(D.YA.indic)+' of jobs not yet matched to statements'); if(D.YA.expEst>0.5) w.push(gbp2.format(D.YA.expEst)+' of costs typed in, not yet from the bank'); if(D.YA.apport) w.push('the days at each end of a month that only has a monthly total are its share by days');
     if(w.length) h+='<p class="warnbox" style="margin:10px 0 0">Includes estimates: '+esc(w.join('; '))+'.</p>';
     h+='<div class="two" style="margin-top:12px"><button class="btn" type="button" id="mtd-pdf">Download PDF</button><button class="btn ghost" type="button" id="mtd-csv">Spreadsheet (CSV)</button></div>';
     h+='<p class="note">'+(mi?'Cab Books expects you to send quarterly updates from April '+mi.from+'. '+esc(mi.why)+' ':'You may not need to send these yet. Quarterly updates apply from April '+MTDSTEPS.map(function(x){return x[0]+' if your takings (before costs) in '+tyLabel(x[1])+' were over '+gbp0.format(x[2])}).join(', from April ')+'. ')
@@ -4421,7 +4431,7 @@ html{overscroll-behavior-x:none}
   function mtdCSV(P){
     var D=mtdQData(P), R=[['HMRC category','This quarter (£)','Tax year so far (£)']];
     function q(v){ v=String(v==null?'':v); return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; }
-    R.push(['Quarter',P.label,'']); R.push(['Send by',dlabel(P.due),'']); R.push(['Basis',mtdBasis()==='cash'?'Cash basis':'Traditional accounting','']); R.push(['Name',(S.biz&&S.biz.name)||'','']);
+    R.push(['Quarter',P.label,'']); R.push(['Send by',dlabel(P.due),'']); R.push(['Basis',mtdBasis()==='cash'?'Cash basis':'Traditional accounting','']); var pq=cashPending(P.from,P.to); if(pq.v>0.5) R.push(['Not yet in a bank statement (dated by the app statement)',n2(pq.v),'']); R.push(['Name',(S.biz&&S.biz.name)||'','']);
     R.push(['Turnover (fares + tips)',n2(D.qTurn),n2(D.yTurn)]);
     HM_LINES.forEach(function(k){ R.push([k,n2(D.HQ.sub[k]),n2(D.HY.sub[k])]); });
     R.push(['Total allowable expenses',n2(D.HQ.allow),n2(D.HY.allow)]);
@@ -4442,6 +4452,7 @@ html{overscroll-behavior-x:none}
     HM_LINES.forEach(function(k){ if(D.HQ.sub[k]||D.HY.sub[k]) row(k,D.HQ.sub[k],D.HY.sub[k]); });
     row('Total allowable expenses',D.HQ.allow,D.HY.allow,true); row('Net profit',D.qTurn-D.HQ.allow,D.yTurn-D.HY.allow,true);
     Y+=4; doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(80);
+    var pq=cashPending(P.from,P.to); if(pq.v>0.5){ doc.text(doc.splitTextToSize('Cash basis: '+gbp2.format(pq.v)+' of app income is dated by the app statement’s payment date because it isn’t in a bank statement yet.',R-L),L,Y); Y+=10; }
     var t=doc.splitTextToSize('HMRC asks for the tax year so far figures: each update covers everything from the start of the tax year. If turnover is under £90,000 a year, total expenses can be sent as one figure. Commission and card fees are under other allowable expenses; only the allowable share of a union fee is counted. Produced by Cab Books on '+dlabel(todayISO())+' from the books as they stood then. Cab Books does not send updates to HMRC.',R-L);
     doc.text(t,L,Y); doc.setTextColor(0);
     offerFile(mtdFileBase(P)+'.pdf',doc.output('arraybuffer'),'PDF ready');
