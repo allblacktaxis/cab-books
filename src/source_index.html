@@ -1470,6 +1470,9 @@ html{overscroll-behavior-x:none}
       var m=hit[i];
       if(m) return {ok:1,t:gbp2.format(p.amt)+' due '+dlabel(p.d)+': in your bank on '+dlabel(m.date)+(near(bankNet(m),p.amt)?'':' (paid together with others, '+gbp2.format(bankNet(m))+')')};
       if(!bankTo||bankTo<addDays(p.d,5)) return {wait:1,t:gbp2.format(p.amt)+' due '+dlabel(p.d)+': your bank statement doesn’t reach this date yet'};
+      /* the bank has a different amount from this app around that day: one line saying how much more or less (Matt, 14 Nov 2026) */
+      var near2=bank.filter(function(e){ var n=bankNet(e); return !used[e.id]&&n!=null&&e.date>=addDays(p.d,-1)&&e.date<=addDays(p.d,3)&&e.date>=a&&e.date<=b; })[0];
+      if(near2&&p.d>=a&&p.d<=b){ used[near2.id]=1; var dn=r2(bankNet(near2)-p.amt); return {bad:1,t:gbp2.format(p.amt)+' due '+dlabel(p.d)+': '+gbp2.format(bankNet(near2))+' in your bank on '+dlabel(near2.date)+' ('+gbp2.format(Math.abs(dn))+(dn<0?' less':' more')+')'}; }
       return {bad:1,t:gbp2.format(p.amt)+' due '+dlabel(p.d)+': not found in your bank'};
     }).filter(function(r,i){ return pays[i].d>=a&&pays[i].d<=b; });
     bank.forEach(function(e){ if(used[e.id]||e.date<a||e.date>b) return; var n=bankNet(e); rows.push({bad:1,t:(n!=null?gbp2.format(n):'A payment')+' in your bank on '+dlabel(e.date)+': no statement for it yet'}); });
