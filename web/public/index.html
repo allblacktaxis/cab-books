@@ -1203,7 +1203,7 @@ html{overscroll-behavior-x:none}
   function lsSet(k,v){try{localStorage.setItem(k,v)}catch(e){}}
 
   /* ---------- calculation ---------- */
-  var PK={taxiworld:1,helix:1,hips:1,uber:1,comcab:1,curb:1,freenow:1,gett:1,sumup:1,othercard:1};
+  var PK={taxiworld:1,helix:1,hips:1,comcabcard:1,uber:1,comcab:1,curb:1,freenow:1,gett:1,sumup:1,othercard:1};
   function pkey(name){var k=String(name||'').toLowerCase().replace(/\s+/g,'');return PK[k]?k:null}
   function eAmt(e){return (+e.amount||0)+(+e.extras||0)}
   /* A month's figure = loaded statement total + imported rows + manual entries not yet covered by records.
@@ -1247,7 +1247,7 @@ html{overscroll-behavior-x:none}
       var ck=bkey(e.provider), cm=cardCovKey(e.card)||'curb';
       var p=pkey(e.provider)||(e.pay==='Card'&&(ck==='hand'?cm:(cm==='taxiworld'&&(ck==='jump'||ck==='blackcab'||ck==='other')?cm:null)))||null, md=S.months[e.m], cov='';
       /* the HIPS card machine is ComCab's (shown as ComCab, Matt 13 Nov 2026): ComCab's statement covers those card jobs */
-      if(p==='hips') p='comcab';
+      if(p==='hips'||p==='comcabcard') p='comcab';
       if(p){
         cov=imp[e.m+'|'+p]||'';
         if(md){ var c=md.covered&&md.covered[p]; if(!c && !md.open) c=e.m+'-31'; if(c&&c>cov) cov=c; }
@@ -1424,19 +1424,43 @@ html{overscroll-behavior-x:none}
   var MKC=['#FF8A00','#5BA8E0','#9D8AF0','#E06A8C','#3FB47E','#E0884A','#6FB3C4','#A39E93'];
   /* Provider colours: each app's own colours (approximate), name always shown beside them. */
   var BRAND={freenow:['#E4003D','#FFFFFF'],gett:['#FFD200','#111111'],uber:['#000000','#FFFFFF'],jump:['#111111','#FFD400'],
-    curb:['#00A86B','#FFFFFF'],curbflow:['#00A86B','#FFFFFF'],hips:['#1E2B5C','#FFFFFF'],comcab:['#1E2B5C','#FFFFFF'],helix:['#5A2D8C','#FFFFFF'],taxiworld:['#0B63B6','#FFFFFF'],blackcab:['#000000','#FF8A00']};
+    curb:['#00A86B','#FFFFFF'],curbflow:['#00A86B','#FFFFFF'],hips:['#1E2B5C','#FFFFFF'],comcabcard:['#1E2B5C','#FFFFFF'],comcab:['#1E2B5C','#FFFFFF'],helix:['#5A2D8C','#FFFFFF'],taxiworld:['#0B63B6','#FFFFFF'],blackcab:['#000000','#FF8A00']};
   function bkey(n){ return String(n||'').toLowerCase().replace(/\s+/g,''); }
   /* Names shown on screen where the saved name differs (saved names stay the same so old jobs still match). */
-  var PNAME={helix:'Helix Pay',curbflow:'Curb Flow',hips:'ComCab',freenow:'FreeNow',sumup:'SumUp',othercard:'Other card provider',hand:'Street'};
+  var PNAME={helix:'Helix Pay',curbflow:'Curb Flow',hips:'ComCab',comcabcard:'ComCab',freenow:'FreeNow',sumup:'SumUp',othercard:'Other card provider',hand:'Street'};
   /* An 'other' card provider named HIPS or ComCab is ComCab's card machine (Marcin's setup, Matt 15 Nov 2026) */
   /* Phones (Chrome on Samsung) offered saved passwords on money and text boxes (Matt, 15 Nov 2026): every box outside the
      sign-in form gets an autocomplete hint, money boxes 'transaction-amount', the rest 'off', including ones drawn later. */
   (function(){ function tag(root){ if(!root||!root.querySelectorAll) return; Array.prototype.forEach.call(root.querySelectorAll('input:not([autocomplete]),textarea:not([autocomplete])'),function(i){ if(i.closest&&i.closest('#si-form')) return; if(/^(checkbox|radio|file|hidden|button|submit|date|time)$/i.test(i.type||'')) return; i.setAttribute('autocomplete',i.classList.contains('money')?'transaction-amount':'off'); }); }
     tag(document); try{ new MutationObserver(function(M){ M.forEach(function(m){ Array.prototype.forEach.call(m.addedNodes||[],function(n){ if(n.nodeType===1){ if(/^(INPUT|TEXTAREA)$/.test(n.tagName)) tag(n.parentNode); else tag(n); } }); }); }).observe(document.body,{childList:true,subtree:true}); }catch(e){} })();
+  /* One-off (Matt, 15 Nov 2026): the card machine saved as 'HIPS' is renamed 'ComCabCard' in the driver's data –
+     jobs (card / provider), providers in use, setup answers and card history, and its fee setting. Runs once per
+     driver after both settings and jobs have loaded; settings/migr.hips marks it done. Old 'HIPS' still reads as ComCab. */
+  /* read side: any 'HIPS' just loaded is used as ComCabCard straight away, so nothing changes on screen before (or if) it's saved */
+  function hipsNorm(){
+    var isH=function(v){ return String(v||'').toLowerCase()==='hips'; }, sw=function(v){ return isH(v)?'ComCabCard':v; }, M=S._hipsSet=S._hipsSet||{};
+    if((S.shown||[]).some(isH)||(S.provKnown||[]).some(isH)){ if(S.shown) S.shown=S.shown.map(sw); if(S.provKnown) S.provKnown=S.provKnown.map(sw); M.prov=1; }
+    var a=S.setup&&S.setup.a; if(a&&(isH(a.card)||isH(a.card2)||(a.cardHist||[]).some(function(h){return h&&isH(h.card)}))){
+      a.card=sw(a.card); a.card2=sw(a.card2); if(a.cardHist) a.cardHist=a.cardHist.map(function(h){ return h&&isH(h.card)?Object.assign({},h,{card:'ComCabCard'}):h; }); M.setup=1; }
+    var F=S.settings&&S.settings.fees; if(F&&F.hips&&!F.comcabcard){ F.comcabcard=F.hips; M.fees=1; }
+    if(isH(S.card)) S.card='ComCabCard';
+    if(M.prov||M.setup){ if(typeof buildChips==='function') buildChips(); }
+  }
+  function hipsMigrate(){
+    if(S._hipsRun||!S.db||!S.loaded||!S.loaded.entries||!S.loaded.settings||(S.migr&&S.migr.hips)) return; S._hipsRun=true;
+    var isH=function(v){ return String(v||'').toLowerCase()==='hips'; }, sw=function(v){ return isH(v)?'ComCabCard':v; }, jobs=[];
+    (S.entriesRaw||[]).forEach(function(e){ if(!e._hips) return; var p={}; if(e.card==='ComCabCard') p.card='ComCabCard'; if(e.provider==='ComCabCard') p.provider='ComCabCard'; jobs.push(['entries',e.id,p]); });
+    if(S._hipsSet&&S._hipsSet.prov){ var pv={}; if(S.shown) pv.shown=S.shown.map(sw); if(S.provKnown) pv.known=S.provKnown.map(sw); jobs.push(['settings','providers',pv]); }
+    var a=S.setup&&S.setup.a; if(a&&S._hipsSet&&S._hipsSet.setup) jobs.push(['settings','setup',{a:JSON.parse(JSON.stringify(a))}]);
+    var F=S.settings&&S.settings.fees; if(F&&S._hipsSet&&S._hipsSet.fees) jobs.push(['settings','main',{fees:Object.assign({},F)}]);
+    var i=0;
+    (function next(){ if(i>=jobs.length){ S.db.collection('settings').doc('migr').set({hips:true,ts:Date.now()},{merge:true}).catch(function(){}); if(S.card&&isH(S.card)) S.card='ComCabCard'; return; }
+      var j=jobs[i++]; S.db.collection(j[0]).doc(j[1]).set(j[2],{merge:true}).then(next).catch(function(e){ S._hipsRun=false; }); })();
+  }
   function otherIsComcab(){ return !!(S.setup&&S.setup.a&&/hips|comcab|computer ?cab/i.test(String(S.setup.a.cardName||''))); }
   function pname(n){ var k=bkey(n); if(k==='othercard'&&S.setup&&S.setup.a&&S.setup.a.cardName) return otherIsComcab()?'ComCab':S.setup.a.cardName; return PNAME[k]||n; }
   /* which statement covers card jobs taken on this machine */
-  function cardCovKey(c){ var k=bkey(c); if(k==='hips'||(k==='othercard'&&otherIsComcab())) return 'comcab'; return pkey(c||''); }
+  function cardCovKey(c){ var k=bkey(c); if(k==='hips'||k==='comcabcard'||(k==='othercard'&&otherIsComcab())) return 'comcab'; return pkey(c||''); }
   function popt(n,sel){ return '<option value="'+esc(n)+'"'+(sel?' selected':'')+'>'+esc(pname(n))+'</option>'; }
   function brand(n){ return BRAND[bkey(n)]||null; }
   function pcol(n){ var b=brand(n); return b?b[0]:'var(--p-other)'; }
@@ -2508,11 +2532,11 @@ html{overscroll-behavior-x:none}
   }
 
   /* ---------- fees ---------- */
-  var PROVS=['Freenow','Gett','CurbFlow','ComCab','Jump','Uber','Curb','Taxiworld','Helix','HIPS','SumUp','OtherCard','Blackcab','Other','Hand','Private'];
-  var PROV_OFF=['Taxiworld','Helix','HIPS','CurbFlow','SumUp','OtherCard']; /* hidden until a driver switches them on in 'Providers I use' */
+  var PROVS=['Freenow','Gett','CurbFlow','ComCab','Jump','Uber','Curb','Taxiworld','Helix','ComCabCard','SumUp','OtherCard','Blackcab','Other','Hand','Private'];
+  var PROV_OFF=['Taxiworld','Helix','ComCabCard','CurbFlow','SumUp','OtherCard']; /* hidden until a driver switches them on in 'Providers I use' */
   /* Card payments = the card machine/system in the cab (Curb, Taxiworld, Helix Pay, HIPS). Curb Flow = Curb's job app (like FreeNow). */
-  var PGROUPS=[['Job apps',['Freenow','Gett','CurbFlow','Uber','Jump','ComCab','Blackcab','Other']],['Card payment provider',['Curb','HIPS','Taxiworld','Helix','SumUp','OtherCard']],['Other fares',['Hand','Private']]];
-  var CARDSYS=['Curb','HIPS','Helix','Taxiworld','SumUp','OtherCard'], CARDK={curb:1,hips:1,helix:1,taxiworld:1,sumup:1,othercard:1};
+  var PGROUPS=[['Job apps',['Freenow','Gett','CurbFlow','Uber','Jump','ComCab','Blackcab','Other']],['Card payment provider',['Curb','ComCabCard','Taxiworld','Helix','SumUp','OtherCard']],['Other fares',['Hand','Private']]];
+  var CARDSYS=['Curb','ComCabCard','Helix','Taxiworld','SumUp','OtherCard'], CARDK={curb:1,hips:1,comcabcard:1,helix:1,taxiworld:1,sumup:1,othercard:1};
   /* 'None' in Set up my app: no card machine. Card fares then carry no card fee. */
   function noCardMachine(){ return !!(S.setup&&S.setup.a&&S.setup.a.card==='None') && !CARDSYS.some(provShown); }
   function isCardK(k){ return !!CARDK[k]; }
@@ -2542,7 +2566,7 @@ html{overscroll-behavior-x:none}
   }
   var PAYS=['Account','Card','Cash','Bank transfer'];
   /* Which payment types each provider allows (Matt, 27 Oct). Providers not listed allow all. */
-  var PAYRULE={freenow:['Account','Card','Cash'],gett:['Account','Card','Cash'],jump:['Card','Cash'],blackcab:['Card','Cash'],comcab:['Account','Card','Cash'],curb:['Card'],taxiworld:['Card'],helix:['Card'],hips:['Card'],sumup:['Card'],othercard:['Card'],curbflow:['Account','Card','Cash'],uber:['Account'],hand:['Card','Cash'],private:['Card','Bank transfer'],other:['Account','Card','Cash','Bank transfer']};
+  var PAYRULE={freenow:['Account','Card','Cash'],gett:['Account','Card','Cash'],jump:['Card','Cash'],blackcab:['Card','Cash'],comcab:['Account','Card','Cash'],curb:['Card'],taxiworld:['Card'],helix:['Card'],hips:['Card'],comcabcard:['Card'],sumup:['Card'],othercard:['Card'],curbflow:['Account','Card','Cash'],uber:['Account'],hand:['Card','Cash'],private:['Card','Bank transfer'],other:['Account','Card','Cash','Bank transfer']};
   function paysFor(p){ return PAYRULE[bkey(p)]||PAYS; }
   /* The card machines this driver uses (Settings → Providers I use → Card machine in my cab); Curb if none. */
   function cardSysAll(){ var c=cardList(); return c.length?c:[noCardMachine()?'OtherCard':'Curb']; }
@@ -2563,7 +2587,7 @@ html{overscroll-behavior-x:none}
   }
   function feeTxt(p,f){ var parts=[]; if(p) parts.push(p+'%'); if(f) parts.push((p?'+ ':'')+(f<1?Math.round(f*100)+'p':gbp2.format(f))); return parts.join(' ')||'no fee'; }
   function fixPay(){ var ok=paysFor(S.prov); if(ok.indexOf(S.pay)<0) S.pay=ok[0]; }
-  var DEFFEES={taxiworld:[4,0],helix:[1.75,0],hips:[3,0.20],uber:[0,0],comcab:[18,0],curb:[2.75,0.25],freenow:[20,0],gett:[20,0]};
+  var DEFFEES={taxiworld:[4,0],helix:[1.75,0],hips:[3,0.20],comcabcard:[3,0.20],uber:[0,0],comcab:[18,0],curb:[2.75,0.25],freenow:[20,0],gett:[20,0]};
   /* Rate changes with a 'from' date: settings/main fees[k].hist = [{from:'YYYY-MM-DD',pct,add}] (rate from that date on).
      fees[k].pct/add = the rate before the first change (or the only rate). Built-in: FreeNow 18% to 14 Sep 2026, 20% from 15 Sep. */
   var DEFHIST={freenow:{base:[18,0],hist:[{from:'2026-09-15',pct:20,add:0}]}};
@@ -3541,7 +3565,7 @@ html{overscroll-behavior-x:none}
     return null;
   }
   /* Money in: which taxi app paid, and the fare it stands for (commission added back). */
-  var BK_INCOME=[['Freenow',/TRANSOPCO|FREE ?NOW|MYTAXI/],['Gett',/GETTAXI|\bGETT\b/],['Uber',/\bUBER\b/],['Curb',/CURB MOBILITY|\bCURB\b/],['ComCab',/COMCAB|COMPUTER CAB/],['Taxiworld',/TAXIWORLD|TAXI WORLD/],['Helix',/HELIX PAY|\bHELIX\b/],['HIPS',/\bHIPS\b/]];
+  var BK_INCOME=[['Freenow',/TRANSOPCO|FREE ?NOW|MYTAXI/],['Gett',/GETTAXI|\bGETT\b/],['Uber',/\bUBER\b/],['Curb',/CURB MOBILITY|\bCURB\b/],['ComCab',/COMCAB|COMPUTER CAB/],['Taxiworld',/TAXIWORLD|TAXI WORLD/],['Helix',/HELIX PAY|\bHELIX\b/],['ComCabCard',/\bHIPS\b/]];
   function bkIncomeProv(desc){ var u=String(desc||'').toUpperCase(); for(var i=0;i<BK_INCOME.length;i++) if(BK_INCOME[i][1].test(u)) return BK_INCOME[i][0]; return null; }
   function bkPct(prov,d){
     var k=String(prov).toLowerCase(), f=S.settings.fees&&S.settings.fees[k];
@@ -5727,7 +5751,7 @@ html{overscroll-behavior-x:none}
      Existing accounts open with their current settings ticked and are never sent through it. */
   S.setup=null; S.su=null;
   var SU_APPS=[['Freenow','FreeNow'],['Gett','Gett'],['CurbFlow','Curb Flow'],['Uber','Uber'],['Jump','Jump'],['ComCab','ComCab'],['Blackcab','Blackcab'],['Other','Other account work']];
-  var SU_CARDS=[['Curb','Curb'],['HIPS','ComCab'],['Taxiworld','Taxiworld'],['Helix','Helix Pay'],['SumUp','SumUp'],['OtherCard','Other']];
+  var SU_CARDS=[['Curb','Curb'],['ComCabCard','ComCab'],['Taxiworld','Taxiworld'],['Helix','Helix Pay'],['SumUp','SumUp'],['OtherCard','Other']];
   var SU_CARDK=SU_CARDS.map(function(x){return x[0]});
   var SU_BAR=[['Your books',['today','position','reports','receipts','months','log','import']],['Live updates',['trains','tube','tonight','flights']],['Finding places',['ranks','toilets']],['Tools',['fare']]];
   var SU_BARNAME={today:'Today',position:'Position',reports:'Reports',receipts:'Receipts',months:'Data',log:'Log',import:'Import',trains:'Trains',tube:'Tube',tonight:'Events tonight',flights:'Airport arrivals',ranks:'Taxi ranks',toilets:'Toilets',fare:'Fare calculator'};
@@ -7437,6 +7461,7 @@ html{overscroll-behavior-x:none}
     unsubs.push(db.collection('settings').onSnapshot(function(snap){
       snap.docs.forEach(function(d){ if(d.id==='stopts'&&d.exists){ S.stopts=d.data()||{}; stSyncVia(); } if(d.id==='tipstats'&&d.exists){ S.tipstats=d.data(); } if(d.id==='business'&&d.exists){ S.biz=d.data()||{}; } if(d.id==='practice'){ S.practice=!!(d.exists&&d.data().on); } if(d.id==='drivers'&&d.exists){ var nm=d.data().names; if(Array.isArray(nm)&&nm.length) S.drivers=nm; } if(d.id==='providers'&&d.exists){ var sv=d.data().shown, kn=d.data().known; S.shown=Array.isArray(sv)&&sv.length?sv:null; S.provKnown=Array.isArray(kn)?kn:null; if(S.shown&&S.shown.indexOf(S.prov)<0&&!S.editId){ S.prov=S.shown[0]; if(typeof applyFeeDefaults==='function') applyFeeDefaults(); } if(typeof buildChips==='function') buildChips(); } if(d.id==='bank'&&d.exists){ S.bankCov=d.data().covered||''; if(typeof bkStatus==='function') bkStatus(); } if(d.id==='main'&&d.exists){ var v=d.data(); S.settings=Object.assign({},DEF,{threshold:+v.threshold||DEF.threshold,amberPct:+v.amberPct||DEF.amberPct,redPct:+v.redPct||DEF.redPct,start:v.start||DEF.start,fees:v.fees||{}}); } });
       var md=null; snap.docs.forEach(function(d){ if(d.id==='look'&&d.exists){ var lk=(d.data()||{}).theme; if(lk&&lk!==S.look) applyLook(lk); } if(d.id==='opening'&&d.exists) S.opening=d.data()||{}; if(d.id==='tax'&&d.exists) S.tax=d.data()||{}; if(d.id==='setup'&&d.exists) S.setup=d.data()||null; if(d.id==='regcheck'&&d.exists) S.regchk=d.data()||null; if(d.id==='mode'&&d.exists){ var mv=(d.data()||{}).mode; if(mv==='full'||mv==='track') md=mv; } if(d.id==='extras'&&d.exists){ var xl=(d.data()||{}).list; S.exList=Array.isArray(xl)?xl:null; if(typeof exRender==='function') exRender(); } if(d.id==='tabs'&&d.exists){ var tv=(d.data()||{}).shown, to=(d.data()||{}).order; S.bar=barFix(tv); S.barOrder=Array.isArray(to)&&to.length?to:null; } if(d.id==='charging'&&d.exists){ S.charge=d.data()||null; if(typeof renderAll==='function') setTimeout(renderAll,0); } if(d.id==='remind'&&d.exists){ S.rem=Object.assign({},REM_DEF,d.data()||{}); if(typeof remSync==='function') remSync(); } if(d.id==='alerts'&&d.exists){ var av=d.data()||{}; S.al={on:av.on!==false,min:+av.min||4,express:av.express!==false,off:Array.isArray(av.off)?av.off:[],tube:av.tube!==false,tlines:Array.isArray(av.tlines)?av.tlines:AL_TLINES.slice()}; if(typeof alRender==='function') alRender(); } }); S.mode=md||null; S.loaded.settings=true; applyMode(); renderAll();
+      var mg=snap.docs.filter(function(d){return d.id==='migr'})[0]; S.migr=mg&&mg.exists?(mg.data()||{}):{}; S.loaded.settings=true; hipsNorm(); hipsMigrate();
     },onErr('settings')));
     unsubs.push(db.collection('months').onSnapshot(function(snap){
       var o={}; snap.docs.forEach(function(d){ if(d.exists) o[d.id]=d.data(); }); S.months=o; S.loaded.months=true; renderAll(); $('sync').textContent=S.syncLabel||'Saved to your account';
@@ -7456,7 +7481,7 @@ html{overscroll-behavior-x:none}
     unsubs.push(db.collection('bills').onSnapshot(function(snap){ var o={}; snap.docs.forEach(function(d){ if(d.exists) o[d.id]=d.data(); }); S.bills=o; mergeEntries(); renderAll(); },function(){}));
     unsubs.push(db.collection('receipts').onSnapshot(function(snap){ var o={}; snap.docs.forEach(function(d){ if(d.exists) o[d.id]=d.data(); }); S.receipts=o; },function(){}));
     unsubs.push(db.collection('entries').onSnapshot(function(snap){
-      S.entriesRaw=snap.docs.filter(function(d){return d.exists}).map(function(d){ var v=d.data(); return Object.assign({id:d.id},v); }); mergeEntries(); S.loaded.entries=true; renderAll();
+      S.entriesRaw=snap.docs.filter(function(d){return d.exists}).map(function(d){ var v=d.data(); var e=Object.assign({id:d.id},v); if(/^hips$/i.test(e.card||'')){ e.card='ComCabCard'; e._hips=1; } if(/^hips$/i.test(e.provider||'')){ e.provider='ComCabCard'; e._hips=1; } return e; }); mergeEntries(); S.loaded.entries=true; renderAll(); hipsMigrate();
     },onErr('entries')));
   }
   /* ---------- website plumbing: Firebase sign-in + each driver's private books ----------
