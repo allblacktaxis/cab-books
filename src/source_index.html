@@ -856,19 +856,19 @@ html{overscroll-behavior-x:none}
         <div class="field"><label id="l-prov">Provider</label><div class="chips" id="c-prov" role="group" aria-labelledby="l-prov"></div></div>
         <div class="field"><label id="l-pay">Paid by</label><div class="chips" id="c-pay" role="group" aria-labelledby="l-pay"></div></div>
         <div class="two">
-          <div class="field"><label for="j-amt">Fare (£) <span class="lbl-sub">no tip</span></label><input type="text" class="money" id="j-amt" inputmode="numeric" autocomplete="off" placeholder="0.00"></div>
-          <div class="field"><label for="j-tips">Tip (£) <span class="lbl-sub">on top</span></label><input type="text" class="money" id="j-tips" inputmode="numeric" autocomplete="off" placeholder="0.00"></div>
+          <div class="field"><label for="j-amt">Fare (£) <span class="lbl-sub">no tip</span></label><input type="text" class="money" id="j-amt" inputmode="numeric" autocomplete="transaction-amount" placeholder="0.00"></div>
+          <div class="field"><label for="j-tips">Tip (£) <span class="lbl-sub">on top</span></label><input type="text" class="money" id="j-tips" inputmode="numeric" autocomplete="transaction-amount" placeholder="0.00"></div>
         </div>
         <p class="help" style="margin-top:-6px">Enter them separately: £20 fare + £2 tip, not £22.</p>
         <div class="field"><label for="j-exsel">Extras (£) <span class="lbl-sub">drop-off, parking</span></label>
-          <div class="exrow"><select id="j-exsel" aria-label="Add an extra"></select><input type="text" class="money" id="j-ex" inputmode="numeric" autocomplete="off" placeholder="0.00" aria-label="Extras total (£)"></div>
+          <div class="exrow"><select id="j-exsel" aria-label="Add an extra"></select><input type="text" class="money" id="j-ex" inputmode="numeric" autocomplete="transaction-amount" placeholder="0.00" aria-label="Extras total (£)"></div>
           <div class="expick" id="c-ex"></div>
           <div class="xedit" id="x-edit" hidden></div></div>
         <details class="jnote" id="j-notebox"><summary>+ Add journey</summary><div class="field" style="margin-top:8px"><label for="j-note">Journey (optional)</label><input type="text" id="j-note" maxlength="120" placeholder="e.g. Norrice Lea – T4 Heathrow"><p class="help" style="margin:6px 0 0">Useful for cash, hand and private jobs. It fills in the receipt for you.</p></div></details>
         <div class="feeline"><span id="l-fee">Commission:</span> <span id="j-feetxt"></span> <button type="button" class="linkbtn" id="j-feechg">Change</button></div>
         <div id="j-feebox" hidden>
           <div class="seg" role="group" aria-labelledby="l-fee" style="margin-bottom:8px"><button type="button" id="fm-rule" aria-pressed="true">Set rule</button><button type="button" id="fm-man" aria-pressed="false">Manual</button></div>
-          <div id="j-feeedit" hidden><label for="j-fix" style="margin-bottom:4px">Fee for this job (£)</label><input type="text" class="money" id="j-fix" inputmode="numeric" autocomplete="off" placeholder="0.00"></div>
+          <div id="j-feeedit" hidden><label for="j-fix" style="margin-bottom:4px">Fee for this job (£)</label><input type="text" class="money" id="j-fix" inputmode="numeric" autocomplete="transaction-amount" placeholder="0.00"></div>
         </div>
         <p class="warnbox" id="j-hint" hidden>Gett cash fees vary, so enter this job's fee as a fixed amount.</p>
         <button class="btn" id="j-save" type="button">Save job</button>
@@ -888,7 +888,7 @@ html{overscroll-behavior-x:none}
       <div style="padding-bottom:4px">
       <div class="fgrid" style="grid-template-columns:1.4fr 1fr auto;align-items:end">
         <div class="field" style="margin:0"><label for="e-cat">Category</label><select id="e-cat"></select></div>
-        <div class="field" style="margin:0"><label for="e-amt">Amount</label><input type="text" class="money" id="e-amt" inputmode="numeric" autocomplete="off" placeholder="0.00"></div>
+        <div class="field" style="margin:0"><label for="e-amt">Amount</label><input type="text" class="money" id="e-amt" inputmode="numeric" autocomplete="transaction-amount" placeholder="0.00"></div>
         <button class="btn small" id="e-add" type="button">Add</button>
       </div>
       <div class="field" style="margin:10px 0 0"><label id="l-epay">Paid by</label><div class="seg" role="group" aria-labelledby="l-epay" style="margin:0"><button type="button" id="e-pcard" aria-pressed="true">Card / bank</button><button type="button" id="e-pcash" aria-pressed="false">Cash</button></div><input type="checkbox" id="e-cash" hidden><p class="help" style="margin:6px 0 0" id="e-payhelp">Counted now; replaced by the bank line once you import that statement.</p></div>
@@ -907,7 +907,7 @@ html{overscroll-behavior-x:none}
         <div style="margin-top:12px">
           <div class="two">
             <div class="field"><label for="ru-cat">Category</label><select id="ru-cat"></select></div>
-            <div class="field"><label for="ru-amt">Amount (£)</label><input type="text" class="money" id="ru-amt" inputmode="numeric" autocomplete="off" placeholder="0.00"></div>
+            <div class="field"><label for="ru-amt">Amount (£)</label><input type="text" class="money" id="ru-amt" inputmode="numeric" autocomplete="transaction-amount" placeholder="0.00"></div>
           </div>
           <div class="two">
             <div class="field"><label for="ru-freq">How often</label><select id="ru-freq"><option value="week">A week</option><option value="month">A month</option><option value="year">A year</option></select></div>
@@ -966,10 +966,10 @@ html{overscroll-behavior-x:none}
       <div class="field"><label for="r-to">To (optional)</label><input type="text" id="r-to" maxlength="80" placeholder="Destination"></div>
       <div class="field"><label for="r-who">Passenger (optional)</label><input type="text" id="r-who" maxlength="60"></div>
       <div class="two">
-        <div class="field"><label for="r-fare">Fare (£)</label><input type="text" class="money" id="r-fare" inputmode="numeric" autocomplete="off" placeholder="0.00"></div>
-        <div class="field"><label for="r-extras">Extras (£)</label><input type="text" class="money" id="r-extras" inputmode="numeric" autocomplete="off" placeholder="0.00"></div>
+        <div class="field"><label for="r-fare">Fare (£)</label><input type="text" class="money" id="r-fare" inputmode="numeric" autocomplete="transaction-amount" placeholder="0.00"></div>
+        <div class="field"><label for="r-extras">Extras (£)</label><input type="text" class="money" id="r-extras" inputmode="numeric" autocomplete="transaction-amount" placeholder="0.00"></div>
       </div>
-      <div class="field"><label for="r-tip">Tip (£)</label><input type="text" class="money" id="r-tip" inputmode="numeric" autocomplete="off" placeholder="0.00"></div>
+      <div class="field"><label for="r-tip">Tip (£)</label><input type="text" class="money" id="r-tip" inputmode="numeric" autocomplete="transaction-amount" placeholder="0.00"></div>
       <div class="field"><label for="r-note">Note (optional)</label><input type="text" id="r-note" maxlength="120"></div>
       <div class="field"><label for="r-issuer">Issued by</label><input type="text" id="r-issuer" maxlength="60"></div>
     </div>
@@ -1190,7 +1190,7 @@ html{overscroll-behavior-x:none}
       if(e.src==='import'&&e.stmt&&!e.est&&pkey(e.provider)==='uber'&&S.months[e.m]&&!S.months[e.m].opening&&!UF[e.m]){
         var lt=stLoadedTo('Uber',e.m); if(lt&&e.date<=lt){ stat[e.id]='covered'; return; } }
       if(e.src==='import'){ act[e.m]=(act[e.m]||0)+eAmt(e); stat[e.id]='actual'; return; }
-      var ck=bkey(e.provider), cm=pkey(e.card||'')||'curb';
+      var ck=bkey(e.provider), cm=cardCovKey(e.card)||'curb';
       var p=pkey(e.provider)||(e.pay==='Card'&&(ck==='hand'?cm:(cm==='taxiworld'&&(ck==='jump'||ck==='blackcab'||ck==='other')?cm:null)))||null, md=S.months[e.m], cov='';
       /* the HIPS card machine is ComCab's (shown as ComCab, Matt 13 Nov 2026): ComCab's statement covers those card jobs */
       if(p==='hips') p='comcab';
@@ -1374,7 +1374,15 @@ html{overscroll-behavior-x:none}
   function bkey(n){ return String(n||'').toLowerCase().replace(/\s+/g,''); }
   /* Names shown on screen where the saved name differs (saved names stay the same so old jobs still match). */
   var PNAME={helix:'Helix Pay',curbflow:'Curb Flow',hips:'ComCab',freenow:'FreeNow',sumup:'SumUp',othercard:'Other card provider',hand:'Street'};
-  function pname(n){ var k=bkey(n); if(k==='othercard'&&S.setup&&S.setup.a&&S.setup.a.cardName) return S.setup.a.cardName; return PNAME[k]||n; }
+  /* An 'other' card provider named HIPS or ComCab is ComCab's card machine (Marcin's setup, Matt 15 Nov 2026) */
+  /* Phones (Chrome on Samsung) offered saved passwords on money and text boxes (Matt, 15 Nov 2026): every box outside the
+     sign-in form gets an autocomplete hint, money boxes 'transaction-amount', the rest 'off', including ones drawn later. */
+  (function(){ function tag(root){ if(!root||!root.querySelectorAll) return; Array.prototype.forEach.call(root.querySelectorAll('input:not([autocomplete]),textarea:not([autocomplete])'),function(i){ if(i.closest&&i.closest('#si-form')) return; if(/^(checkbox|radio|file|hidden|button|submit|date|time)$/i.test(i.type||'')) return; i.setAttribute('autocomplete',i.classList.contains('money')?'transaction-amount':'off'); }); }
+    tag(document); try{ new MutationObserver(function(M){ M.forEach(function(m){ Array.prototype.forEach.call(m.addedNodes||[],function(n){ if(n.nodeType===1){ if(/^(INPUT|TEXTAREA)$/.test(n.tagName)) tag(n.parentNode); else tag(n); } }); }); }).observe(document.body,{childList:true,subtree:true}); }catch(e){} })();
+  function otherIsComcab(){ return !!(S.setup&&S.setup.a&&/hips|comcab|computer ?cab/i.test(String(S.setup.a.cardName||''))); }
+  function pname(n){ var k=bkey(n); if(k==='othercard'&&S.setup&&S.setup.a&&S.setup.a.cardName) return otherIsComcab()?'ComCab':S.setup.a.cardName; return PNAME[k]||n; }
+  /* which statement covers card jobs taken on this machine */
+  function cardCovKey(c){ var k=bkey(c); if(k==='hips'||(k==='othercard'&&otherIsComcab())) return 'comcab'; return pkey(c||''); }
   function popt(n,sel){ return '<option value="'+esc(n)+'"'+(sel?' selected':'')+'>'+esc(pname(n))+'</option>'; }
   function brand(n){ return BRAND[bkey(n)]||null; }
   function pcol(n){ var b=brand(n); return b?b[0]:'var(--p-other)'; }
@@ -1571,7 +1579,7 @@ html{overscroll-behavior-x:none}
       var tipAll=mdTips+(tipSum[k]||0); if(tipAll) h+='<div class="note">Tips: '+gbp2.format(tipAll)+(mdTips&&tipSum[k]?' ('+gbp2.format(mdTips)+' from the workbook + '+gbp2.format(tipSum[k])+' from app statements and logged jobs)':'')+'. Taxable income, not in VAT turnover.</div>';
       if(expSum[k]) h+='<div class="note">Expenses logged here: '+gbp2.format(expSum[k])+'</div>';
       if(!hasActual){
-        h+='<div class="planbox"><label for="plan-'+k+'">Planned £</label><input type="text" class="money" autocomplete="off" id="plan-'+k+'" data-plan="'+k+'" inputmode="numeric" value="'+(S.plans[k]&&S.plans[k].amount!=null?(+S.plans[k].amount).toFixed(2):'')+'" placeholder="0.00"></div>';
+        h+='<div class="planbox"><label for="plan-'+k+'">Planned £</label><input type="text" class="money" autocomplete="transaction-amount" id="plan-'+k+'" data-plan="'+k+'" inputmode="numeric" value="'+(S.plans[k]&&S.plans[k].amount!=null?(+S.plans[k].amount).toFixed(2):'')+'" placeholder="0.00"></div>';
       }
       h+='</div>';
     });
@@ -1628,7 +1636,7 @@ html{overscroll-behavior-x:none}
       +'<div style="border-top:1px solid var(--line,rgba(127,127,127,.25));margin-top:12px;padding-top:12px"><b>Takings before Cab Books</b><p class="note" style="margin:4px 0 10px">Earnings from before you started recording here, for the 12-month VAT check. Includes a part month if you started mid-month.</p><button class="btn ghost" type="button" data-op="open-set">Add or change earlier takings</button></div></div>'+taxSettingsCard()
 ;
     var FE='<p class="help" style="margin:0 4px">Only the apps and card provider you use are shown. To add one, open <b>Apps and card provider</b>.</p>'      +'<div class="card"><h2>Fee defaults</h2><p class="help">Commission % plus an optional fixed fee per job. These fill in when you add a job, and you can change them on any job. Gett cash is always entered per job.</p>'
-      +PROVS.filter(function(n){return provShown(n)||(S.settings.fees&&S.settings.fees[n.toLowerCase()])}).map(function(n){var k=n.toLowerCase(), d=feeDefault(n,'Account')||[0,0]; return '<div class="two" style="align-items:end;margin-bottom:8px"><div class="field" style="margin:0"><label for="fd-'+k+'-p">'+esc(pname(n))+' %</label><input type="number" id="fd-'+k+'-p" data-fd="'+k+'" inputmode="decimal" step="0.01" min="0" value="'+(d[0]||0)+'"></div><div class="field" style="margin:0"><label for="fd-'+k+'-f">Fixed £</label><input type="text" class="money" autocomplete="off" id="fd-'+k+'-f" data-fd="'+k+'" inputmode="numeric" value="'+((+d[1]||0)?(+d[1]).toFixed(2):'')+'" placeholder="0.00"></div></div>'}).join('')
+      +PROVS.filter(function(n){return provShown(n)||(S.settings.fees&&S.settings.fees[n.toLowerCase()])}).map(function(n){var k=n.toLowerCase(), d=feeDefault(n,'Account')||[0,0]; return '<div class="two" style="align-items:end;margin-bottom:8px"><div class="field" style="margin:0"><label for="fd-'+k+'-p">'+esc(pname(n))+' %</label><input type="number" id="fd-'+k+'-p" data-fd="'+k+'" inputmode="decimal" step="0.01" min="0" value="'+(d[0]||0)+'"></div><div class="field" style="margin:0"><label for="fd-'+k+'-f">Fixed £</label><input type="text" class="money" autocomplete="transaction-amount" id="fd-'+k+'-f" data-fd="'+k+'" inputmode="numeric" value="'+((+d[1]||0)?(+d[1]).toFixed(2):'')+'" placeholder="0.00"></div></div>'}).join('')
       +'<button class="btn ghost" id="fd-save" type="button">Save fee defaults</button>'+renderRateChanges()+'</div>'+renderMoveJobs();
     h=privBox()
       +sgrp('acct','Account details','Email, password, backup, sign out',(typeof renderAccountCard==='function'?renderAccountCard():'')+(S.isOwner?renderBackupCard():''))
@@ -1794,7 +1802,7 @@ html{overscroll-behavior-x:none}
       +'<div class="field" style="margin:0"><label for="lg-m">Month</label><select id="lg-m"><option value="">All months</option>'+mk.map(function(m){return '<option value="'+m+'"'+(m===L.m?' selected':'')+'>'+esc(mlabel(m))+'</option>'}).join('')+'</select></div></div>'
       +'<details class="more" id="lg-mf"'+(L.open?' open':'')+'><summary>More filters'+(act?' ('+act+' on)':'')+'</summary><div style="margin-top:10px">'
       +'<div class="two"><div class="field"><label for="lg-from">From</label><input type="date" id="lg-from" value="'+esc(L.from)+'"></div><div class="field"><label for="lg-to">To</label><input type="date" id="lg-to" value="'+esc(L.to)+'"></div></div>'
-      +'<div class="two"><div class="field"><label for="lg-amin">'+(L.kind==='fare'?'Fare':'Amount')+' from (£)</label><input type="text" class="money" id="lg-amin" inputmode="numeric" autocomplete="off" placeholder="0.00" value="'+(L.amin!==''?(+L.amin).toFixed(2):'')+'"></div><div class="field"><label for="lg-amax">to (£)</label><input type="text" class="money" id="lg-amax" inputmode="numeric" autocomplete="off" placeholder="any" value="'+(L.amax!==''?(+L.amax).toFixed(2):'')+'"></div></div>'
+      +'<div class="two"><div class="field"><label for="lg-amin">'+(L.kind==='fare'?'Fare':'Amount')+' from (£)</label><input type="text" class="money" id="lg-amin" inputmode="numeric" autocomplete="transaction-amount" placeholder="0.00" value="'+(L.amin!==''?(+L.amin).toFixed(2):'')+'"></div><div class="field"><label for="lg-amax">to (£)</label><input type="text" class="money" id="lg-amax" inputmode="numeric" autocomplete="transaction-amount" placeholder="any" value="'+(L.amax!==''?(+L.amax).toFixed(2):'')+'"></div></div>'
       +(L.kind==='fare'?'<div class="field"><label for="lg-pay">Paid by</label><select id="lg-pay"><option value="">Any</option>'+yk.map(function(p){return '<option'+(p===L.pay?' selected':'')+'>'+esc(p)+'</option>'}).join('')+'</select></div>'
         +'<div class="chips tight" role="group" aria-label="Show only"><button type="button" data-lf="tips" aria-pressed="'+!!L.tips+'">Tips only</button><button type="button" data-lf="air" aria-pressed="'+!!L.air+'">Airport jobs</button><button type="button" data-lf="canc" aria-pressed="'+!!L.canc+'">Cancelled</button><button type="button" data-lf="est" aria-pressed="'+!!L.est+'">Not in statements yet</button><button type="button" data-lf="rep" aria-pressed="'+!!L.rep+'">Show replaced jobs</button></div>'
         :'<div class="chips tight" role="group" aria-label="Show only"><button type="button" data-lf="est" aria-pressed="'+!!L.est+'">Typed in, not from the bank</button><button type="button" data-lf="rep" aria-pressed="'+!!L.rep+'">Show replaced costs</button></div>')
@@ -2522,7 +2530,7 @@ html{overscroll-behavior-x:none}
     return '<h3 style="margin:16px 0 4px">Rate changes</h3><p class="help">When a provider changes its commission, add the new rate and the date it starts. Jobs before that date keep the old rate; jobs from that date use the new one.</p>'
       +(rows.length?rows.join(''):'<p class="note" style="margin:0">No rate changes yet.</p>')
       +'<div class="two" style="margin-top:8px"><div class="field" style="margin:0"><label for="rc-prov">Provider</label><select id="rc-prov">'+opts+'</select></div><div class="field" style="margin:0"><label for="rc-from">From</label><input type="date" id="rc-from" value="'+todayISO()+'"></div></div>'
-      +'<div class="two" style="margin-top:8px"><div class="field" style="margin:0"><label for="rc-p">New %</label><input type="number" id="rc-p" inputmode="decimal" step="0.01" min="0"></div><div class="field" style="margin:0"><label for="rc-f">Fixed £</label><input type="text" class="money" id="rc-f" inputmode="numeric" autocomplete="off" placeholder="0.00"></div></div>'
+      +'<div class="two" style="margin-top:8px"><div class="field" style="margin:0"><label for="rc-p">New %</label><input type="number" id="rc-p" inputmode="decimal" step="0.01" min="0"></div><div class="field" style="margin:0"><label for="rc-f">Fixed £</label><input type="text" class="money" id="rc-f" inputmode="numeric" autocomplete="transaction-amount" placeholder="0.00"></div></div>'
       +'<button class="btn ghost small" type="button" id="rc-add" style="margin-top:8px">Add rate change</button><div id="rc-after"></div>';
   }
   function feesCopy(){ var o={}, F=S.settings.fees||{}; Object.keys(F).forEach(function(k){ o[k]=JSON.parse(JSON.stringify(F[k])); }); return o; }
@@ -2934,7 +2942,7 @@ html{overscroll-behavior-x:none}
   }
   function exAsk(nm){
     var ed=$('x-edit'); ed.hidden=false;
-    ed.innerHTML='<div class="two" style="align-items:end"><div class="field" style="margin:0"><label for="x-amt">'+esc(nm)+' (£)</label><input type="text" class="money" id="x-amt" inputmode="numeric" autocomplete="off" placeholder="0.00"></div>'
+    ed.innerHTML='<div class="two" style="align-items:end"><div class="field" style="margin:0"><label for="x-amt">'+esc(nm)+' (£)</label><input type="text" class="money" id="x-amt" inputmode="numeric" autocomplete="transaction-amount" placeholder="0.00"></div>'
       +'<button class="btn small" type="button" id="x-ok">Add</button></div>';
     moneyInput($('x-amt')); $('x-amt').focus();
     function ok(){ var a=mv('x-amt'); if(!(a>0)){ toast('Enter the amount.'); return; } exAdd(nm,a); }
@@ -2945,7 +2953,7 @@ html{overscroll-behavior-x:none}
     ed.innerHTML='<p class="help" style="margin:0 0 6px">Your own extras for the list. The airports and Parking are always there.</p>'
       +exList().map(function(x,i){ if(x.air||/^parking$/i.test(x.n||'')) return ''; return '<div class="xrow"><span>'+esc(x.n)+' <span class="num">'+(x.air?'pick the airport':(+x.a||0)?gbp2.format(+x.a):'you type it each time')+'</span></span><button class="btn ghost small" type="button" data-exdel="'+i+'">Remove</button></div>'; }).join('')
       +'<div class="two" style="margin-top:8px"><div class="field" style="margin:0"><label for="x-n">Name</label><input type="text" id="x-n" maxlength="30" placeholder="e.g. Parking"></div>'
-      +'<div class="field" style="margin:0"><label for="x-a">Amount (£, blank = type each time)</label><input type="text" class="money" id="x-a" inputmode="numeric" autocomplete="off" placeholder="0.00"></div></div>'
+      +'<div class="field" style="margin:0"><label for="x-a">Amount (£, blank = type each time)</label><input type="text" class="money" id="x-a" inputmode="numeric" autocomplete="transaction-amount" placeholder="0.00"></div></div>'
       +'<button class="btn small" type="button" id="x-add" style="margin-top:8px">Add to the list</button> <button class="btn ghost small" type="button" id="x-close" style="margin-top:8px">Done</button>'
       +(Array.isArray(S.exList)?' <button class="btn ghost small" type="button" id="x-std" style="margin-top:8px">Remove all my own extras</button>':'');
     Array.prototype.forEach.call(ed.querySelectorAll('input.money'),moneyInput);
@@ -3089,7 +3097,7 @@ html{overscroll-behavior-x:none}
     if(c.kind==='new'){
       h+='<img class="rp-img" alt="Receipt photo" src="'+c.img.img+'">'
         +'<div class="two"><div class="field"><label for="rp-cat">Category</label><select id="rp-cat">'+(($('e-cat')&&$('e-cat').innerHTML)||'')+'</select></div>'
-        +'<div class="field"><label for="rp-amt">Amount</label><input type="text" class="money" id="rp-amt" inputmode="numeric" autocomplete="off" placeholder="0.00"></div></div>'
+        +'<div class="field"><label for="rp-amt">Amount</label><input type="text" class="money" id="rp-amt" inputmode="numeric" autocomplete="transaction-amount" placeholder="0.00"></div></div>'
         +'<div class="field"><label for="rp-note">Note (optional)</label><input type="text" id="rp-note" maxlength="80" placeholder="e.g. Shell, Park Royal"></div>'
         +'<p class="help">Paid by card? Just save the photo: it links itself to the bank line when your bank import brings in the same amount. Paid in cash? Use Add a cash expense instead, so the cost counts.</p>'
         +'<button class="btn" type="button" id="rp-keep">Save photo for '+esc(dlabel(S.day))+'</button>';
@@ -3268,7 +3276,7 @@ html{overscroll-behavior-x:none}
         +(ck?'<div class="ru-flag" style="color:'+(ck.bad?'var(--warn)':'var(--ok)')+'">'+(ck.bad?'⚠ ':'✓ ')+esc(ck.t)+'</div>':'')
         +(on?'<button class="rc" type="button" data-ruchg="'+esc(id)+'">Change amount</button><button class="rc" type="button" data-rupz="'+esc(id)+'">'+(pz.length?'Pauses':'Pause')+'</button>':'')
         +'<button class="rc" type="button" data-ruedit="'+esc(id)+'">Edit</button><button class="del'+(ruArmed===id?' arm':'')+'" style="display:inline-block" type="button" data-rudel="'+esc(id)+'">'+(ruArmed===id?'Tap again to delete':'Delete')+'</button>';
-      if(op==='chg') h+='<div class="ru-inline"><div class="field"><label for="ruc-amt">New amount (£) '+FQ_WORD[f]+'</label><input type="text" class="money" id="ruc-amt" inputmode="numeric" autocomplete="off" placeholder="0.00"></div><div class="field"><label for="ruc-from">From</label><input type="date" id="ruc-from" value="'+esc(t>r.start?t:dayAdd(r.start,1))+'"></div>'
+      if(op==='chg') h+='<div class="ru-inline"><div class="field"><label for="ruc-amt">New amount (£) '+FQ_WORD[f]+'</label><input type="text" class="money" id="ruc-amt" inputmode="numeric" autocomplete="transaction-amount" placeholder="0.00"></div><div class="field"><label for="ruc-from">From</label><input type="date" id="ruc-from" value="'+esc(t>r.start?t:dayAdd(r.start,1))+'"></div>'
         +'<button class="btn small" type="button" data-ruchgsave="'+esc(id)+'">Save new amount</button><button class="btn ghost small" type="button" data-ruclose="1">Cancel</button></div><p class="note" style="margin-top:6px">Days before that date keep '+gbp2.format(w)+'.</p>';
       if(op==='pz') h+=pz.map(function(p){ var i=(r.pauses||[]).indexOf(p); return '<div class="d" style="margin-top:6px">'+esc(dlabel(p.from))+(p.to?' to '+esc(dlabel(p.to)):'')+' <button class="rc" type="button" data-rupzdel="'+esc(id)+'|'+i+'">Remove this pause</button></div>'; }).join('')
         +'<div class="ru-inline"><div class="field"><label for="rup-from">Pause from</label><input type="date" id="rup-from" value="'+esc(t)+'"></div><div class="field"><label for="rup-to">Back on</label><input type="date" id="rup-to" value="'+esc(dayAdd(t,13))+'"></div>'
@@ -4019,16 +4027,16 @@ html{overscroll-behavior-x:none}
     opKeys().forEach(function(k){
       var md=S.months[k], v=md&&md.opening?(+md.total||0):0, real=md&&!md.opening;
       rows+='<div class="feeline" style="margin-bottom:8px"><label for="op-'+k+'" style="margin:0;flex:1">'+esc(mlabel(k))+(real?' <span class="tag">recorded</span>':'')+'</label>'
-        +'<input type="text" class="money" id="op-'+k+'" data-opm="'+k+'" inputmode="numeric" autocomplete="off" placeholder="0.00" value="'+(real?(+md.total||0).toFixed(2):(v?v.toFixed(2):''))+'"'+(real?' disabled':'')+' style="max-width:150px"></div>';
+        +'<input type="text" class="money" id="op-'+k+'" data-opm="'+k+'" inputmode="numeric" autocomplete="transaction-amount" placeholder="0.00" value="'+(real?(+md.total||0).toFixed(2):(v?v.toFixed(2):''))+'"'+(real?' disabled':'')+' style="max-width:150px"></div>';
     });
     $('op-body').innerHTML='<div class="cardhead"><h2 id="op-t" style="margin:0">Takings before Cab Books</h2><button type="button" class="iconbtn" data-op="close" aria-label="Close">✕</button></div>'
       +'<p class="help" style="margin:0">Your turnover for each month before '+esc(mlabel(rs))+': fares and extras, not tips. Leave a month empty if you didn’t work. These count towards the VAT check only, not your tax figures.</p>'
-      +'<div class="field" style="margin:8px 0 0"><label for="op-total">Only know the 12-month total?</label><div class="feeline"><input type="text" class="money" id="op-total" inputmode="numeric" autocomplete="off" placeholder="0.00"><button type="button" class="btn ghost small" data-op="split">Split evenly</button></div></div>'
+      +'<div class="field" style="margin:8px 0 0"><label for="op-total">Only know the 12-month total?</label><div class="feeline"><input type="text" class="money" id="op-total" inputmode="numeric" autocomplete="transaction-amount" placeholder="0.00"><button type="button" class="btn ghost small" data-op="split">Split evenly</button></div></div>'
       +'<div class="card" style="padding:12px;background:var(--surface2)"><b>Have your bank statements?</b><p class="note" style="margin:4px 0 10px">Upload them instead: the payments from FreeNow, Gett, Uber and Curb are picked out for you, along with your costs.</p><button type="button" class="btn ghost small" data-op="bank">Use my bank statement</button></div>'
       +'<p class="note" style="margin:0">Or type them in:</p>'
       +'<div>'+rows+'</div>'
       +'<div class="card" style="padding:12px;background:var(--surface2);margin-top:8px"><b>Started part-way through a month?</b><p class="note" style="margin:4px 0 10px">If you were working before you started recording in Cab Books, add what you took in that month up to your start. It is added on top of the jobs already recorded for the month, never instead of them.</p>'
-      +opPartKeys().map(function(k){ var v=opPart(k); return '<div class="feeline" style="margin-bottom:8px"><label for="opp-'+k+'" style="margin:0;flex:1">'+esc(mlabel(k))+' <span class="tag">before Cab Books</span></label><input type="text" class="money" id="opp-'+k+'" data-opp="'+k+'" inputmode="numeric" autocomplete="off" placeholder="0.00" value="'+(v?v.toFixed(2):'')+'" style="max-width:150px"></div>'; }).join('')
+      +opPartKeys().map(function(k){ var v=opPart(k); return '<div class="feeline" style="margin-bottom:8px"><label for="opp-'+k+'" style="margin:0;flex:1">'+esc(mlabel(k))+' <span class="tag">before Cab Books</span></label><input type="text" class="money" id="opp-'+k+'" data-opp="'+k+'" inputmode="numeric" autocomplete="transaction-amount" placeholder="0.00" value="'+(v?v.toFixed(2):'')+'" style="max-width:150px"></div>'; }).join('')
       +'</div>'
       +'<div class="kv"><span class="k">Total before Cab Books</span><span class="v" id="op-sum">£0.00</span></div>'
       +'<button type="button" class="btn" data-op="save">Save takings</button>';
@@ -4089,7 +4097,7 @@ html{overscroll-behavior-x:none}
     h+='<div class="kv"><span class="k">Tax and NI on '+tyLabel(y)+' so far<br><span style="font-size:12px">profit '+gbp0.format(Math.max(0,A.profit))+'</span></span><span class="v">'+gbp0.format(E.total)+'</span></div>';
     if(prevOpen) h+='<div class="kv"><span class="k">'+tyLabel(y-1)+' bill, due 31 Jan '+(y+1)+(prev.full?'':'<br><span style="font-size:12px">only what is in Cab Books</span>')+'</span><span class="v">'+gbp0.format(prev.E.total)+'</span></div>';
     h+='<div class="kv"><span class="k"><b style="color:var(--ink)">Should be put aside now</b></span><span class="v"><b>'+gbp0.format(need)+'</b></span></div>';
-    h+='<div class="field" style="margin:12px 0 0"><label for="tx-aside">Put aside so far (savings pot, or already paid to HMRC for these)</label><div class="feeline"><input type="text" class="money" id="tx-aside" inputmode="numeric" autocomplete="off" placeholder="0.00" value="'+(aside?aside.toFixed(2):'')+'"><button type="button" class="btn ghost small" id="tx-save">Save</button></div>'
+    h+='<div class="field" style="margin:12px 0 0"><label for="tx-aside">Put aside so far (savings pot, or already paid to HMRC for these)</label><div class="feeline"><input type="text" class="money" id="tx-aside" inputmode="numeric" autocomplete="transaction-amount" placeholder="0.00" value="'+(aside?aside.toFixed(2):'')+'"><button type="button" class="btn ghost small" id="tx-save">Save</button></div>'
       +(S.tax.asOf?'<p class="note" style="margin-top:4px">Last updated '+esc(dlabel(S.tax.asOf))+'</p>':'')+'</div>';
     if(need>0) h+=gap>0.5?'<div class="taxgap bad">Short by <b>'+gbp0.format(gap)+'</b></div>':'<div class="taxgap ok">Covered'+(gap<-0.5?', with <b>'+gbp0.format(-gap)+'</b> spare':'')+'</div>';
     if(rate>0) h+='<p class="note">Putting aside about <b style="color:var(--ink)">'+Math.ceil(rate)+'%</b> of what you take (fares and tips) keeps you level for '+tyLabel(y)+'.</p>';
@@ -5024,7 +5032,7 @@ html{overscroll-behavior-x:none}
   function renderChargeCard(){
     var c=S.charge||{}, on=chargeOn(), now=chargeAt(todayISO()), H=(c.hist||[]).slice().sort(function(a,b){return a.from<b.from?-1:1});
     return '<div class="card" id="ch-card"><h2>Home charging</h2><p class="help">Only if you charge your cab at home. Put what a night’s charge costs you, and on every day you work Cab Books adds that much as an Electric charging expense. Roughly: the units (kWh) you put in a night × your price per unit. Your energy supplier’s app shows both. If your home electricity bill also comes in from your bank import, mark that payee as personal so it isn’t counted twice.</p>'
-      +'<div class="two"><div class="field" style="margin:0"><label for="ch-amt">A night’s charge (£)</label><input type="text" class="money" id="ch-amt" inputmode="numeric" autocomplete="off" placeholder="0.00" value="'+(now>0?now.toFixed(2):'')+'"></div>'
+      +'<div class="two"><div class="field" style="margin:0"><label for="ch-amt">A night’s charge (£)</label><input type="text" class="money" id="ch-amt" inputmode="numeric" autocomplete="transaction-amount" placeholder="0.00" value="'+(now>0?now.toFixed(2):'')+'"></div>'
       +(on?'<div class="field" style="margin:0"><label for="ch-from">New cost from</label><input type="date" id="ch-from" value="'+esc(todayISO())+'"></div>':'<div class="field" style="margin:0"><label for="ch-from">Count from</label><input type="date" id="ch-from" value="'+esc(c.from||(curTaxYear()+'-04-06'))+'"></div>')+'</div>'
       +'<div class="two" style="margin-top:10px"><button class="btn" type="button" id="ch-save">Save</button>'+(now>0?'<button class="btn ghost" type="button" id="ch-off">Turn off from today</button>':'')+'</div>'
       +(on?'<p class="note" style="color:var(--ok)">'+(now>0?'✓ '+gbp2.format(now)+' for each working day now.':'Off now.')+' Started '+esc(dlabel(c.from))+' at '+gbp2.format(+c.perDay||0)+H.map(function(h){ return '; '+(+h.perDay>0?gbp2.format(+h.perDay):'off')+' from '+esc(dlabel(h.from)); }).join('')+'. Days before a change keep their cost.</p>':'')+'</div>';
@@ -5752,7 +5760,7 @@ html{overscroll-behavior-x:none}
       return '<button type="button" data-su="pick" data-f="'+f+'" data-v="'+esc(x[0])+'" aria-pressed="'+on+'"'+(dis?' disabled':'')+'>'+(on&&cls!=='su-grid'?'✓ ':'')+esc(x[1])+'</button>'; }).join('')+'</div>';
   }
   function suMoney(k,label,v){
-    return '<div class="field" style="margin:12px 0 0"><label for="su-'+k+'">'+esc(label)+' (£)</label><input type="text" class="money" id="su-'+k+'" data-sf="'+k+'" inputmode="numeric" autocomplete="off" placeholder="0.00" value="'+(+v>0?(+v).toFixed(2):'')+'"></div>';
+    return '<div class="field" style="margin:12px 0 0"><label for="su-'+k+'">'+esc(label)+' (£)</label><input type="text" class="money" id="su-'+k+'" data-sf="'+k+'" inputmode="numeric" autocomplete="transaction-amount" placeholder="0.00" value="'+(+v>0?(+v).toFixed(2):'')+'"></div>';
   }
   function suFee(c,pk,ppk,pv,ppv,lab){
     var curb=c==='Curb';
@@ -5763,7 +5771,7 @@ html{overscroll-behavior-x:none}
   function suExpRow(k,name,note,e,own){
     var h='<div class="su-exp'+(e.on?' on':'')+'"><label><input type="checkbox" data-sf="x:'+k+':on"'+(e.on?' checked':'')+'><span>'+esc(own&&e.name?e.name:name)+(note?'<small>'+esc(note)+'</small>':'')+'</span></label>';
     if(e.on) h+='<div class="su-expd">'+(own?'<input type="text" data-sf="x:'+k+':name" maxlength="40" placeholder="What is it?" aria-label="What is it?" value="'+esc(e.name||'')+'" style="grid-column:1/-1">':'')
-      +'<input type="text" class="money" data-sf="x:'+k+':amt" inputmode="numeric" autocomplete="off" placeholder="0.00" aria-label="Amount (£)" value="'+(+e.amt>0?(+e.amt).toFixed(2):'')+'">'
+      +'<input type="text" class="money" data-sf="x:'+k+':amt" inputmode="numeric" autocomplete="transaction-amount" placeholder="0.00" aria-label="Amount (£)" value="'+(+e.amt>0?(+e.amt).toFixed(2):'')+'">'
       +'<select data-sf="x:'+k+':fq" aria-label="How often">'+['week','month','year'].map(function(f){ return '<option value="'+f+'"'+(e.fq===f?' selected':'')+'>'+FQ_WORD[f]+'</option>'; }).join('')+'</select>'
       +'<label class="su-tick"><input type="checkbox" data-sf="x:'+k+':vat"'+(e.vat?' checked':'')+'> VAT included</label>'
       +(own||k==='phone'?'<div class="field" style="margin:0;grid-column:1/-1"><label for="su-bz-'+k+'">Business use (%)</label><input type="number" id="su-bz-'+k+'" data-sf="x:'+k+':biz" inputmode="numeric" min="0" max="100" step="1" value="'+(e.biz==null?100:esc(e.biz))+'" style="width:96px"><p class="note">If you also use it privately, only the business share counts for tax. For example, 80 if your accountant says 80%.</p></div>':'')+'</div>';
@@ -6248,14 +6256,14 @@ html{overscroll-behavior-x:none}
         +'<div class="two"><div class="field"><label for="bj-date-'+i+'">Date</label><input type="date" id="bj-date-'+i+'" data-jf="date" data-ji="'+i+'" value="'+esc(j.date)+'"></div>'
         +'<div class="field"><label for="bj-drv-'+i+'">Driver</label><select id="bj-drv-'+i+'" data-jf="driver" data-ji="'+i+'">'+drv.map(function(n){return '<option'+(n===(j.driver||drv[0])?' selected':'')+'>'+esc(n)+'</option>'}).join('')+'</select></div></div>'
         +'<div class="field"><label for="bj-route-'+i+'">Journey</label><input type="text" id="bj-route-'+i+'" data-jf="route" data-ji="'+i+'" maxlength="120" value="'+esc(j.route)+'" placeholder="e.g. Norrice Lea – T4 Heathrow"></div>'
-        +'<div class="two"><div class="field"><label for="bj-fare-'+i+'">Fare (£)</label><input type="text" class="money" inputmode="numeric" autocomplete="off" id="bj-fare-'+i+'" data-jf="fare" data-ji="'+i+'" value="'+esc(m2(j.fare))+'" placeholder="0.00"></div>'
-        +'<div class="field"><label for="bj-park-'+i+'">Parking/drop off (£)</label><input type="text" class="money" inputmode="numeric" autocomplete="off" id="bj-park-'+i+'" data-jf="parking" data-ji="'+i+'" value="'+esc(m2(j.parking))+'" placeholder="0.00"></div></div></div>';
+        +'<div class="two"><div class="field"><label for="bj-fare-'+i+'">Fare (£)</label><input type="text" class="money" inputmode="numeric" autocomplete="transaction-amount" id="bj-fare-'+i+'" data-jf="fare" data-ji="'+i+'" value="'+esc(m2(j.fare))+'" placeholder="0.00"></div>'
+        +'<div class="field"><label for="bj-park-'+i+'">Parking/drop off (£)</label><input type="text" class="money" inputmode="numeric" autocomplete="transaction-amount" id="bj-park-'+i+'" data-jf="parking" data-ji="'+i+'" value="'+esc(m2(j.parking))+'" placeholder="0.00"></div></div></div>';
     });
     var cand=S.entriesRaw.filter(function(e){return e.kind==='fare'}).sort(function(a,b){return a.date<b.date?1:-1}).slice(0,60);
     h+='<button class="btn ghost small" type="button" id="bj-add" style="width:100%">+ Add a job</button>'
       +(cand.length?'<div class="field" style="margin:12px 0 0"><label for="bj-from">Or add a job you logged</label><select id="bj-from"><option value="">Choose a job…</option>'+cand.map(function(e){return '<option value="'+esc(e.id)+'">'+esc(dlabel(e.date)+' · '+pname(e.provider||'Job')+' · '+gbp2.format(eAmt(e))+(e.note?' · '+e.note:''))+'</option>'}).join('')+'</select></div>':'')+'</div>';
     h+='<div class="card"><h2>Discount and tip</h2><div class="two"><div class="field"><label for="bd-pct">Discount %</label><input type="text" inputmode="decimal" id="bd-pct" value="'+esc(d.discountPct)+'"></div>'
-      +'<div class="field"><label for="bd-tip">Tip '+(d.tipMode==='pct'?'(% of fares)':'(£)')+'</label><input type="text" '+(d.tipMode==='pct'?'inputmode="decimal"':'class="money" inputmode="numeric" autocomplete="off"')+' id="bd-tip" value="'+esc(d.tipMode==='pct'?d.tipValue:m2(d.tipValue))+'" placeholder="0.00"></div></div>'
+      +'<div class="field"><label for="bd-tip">Tip '+(d.tipMode==='pct'?'(% of fares)':'(£)')+'</label><input type="text" '+(d.tipMode==='pct'?'inputmode="decimal"':'class="money" inputmode="numeric" autocomplete="transaction-amount"')+' id="bd-tip" value="'+esc(d.tipMode==='pct'?d.tipValue:m2(d.tipValue))+'" placeholder="0.00"></div></div>'
       +'<div class="seg"><button type="button" data-tm="amount" aria-pressed="'+(d.tipMode!=='pct')+'">Tip in £</button><button type="button" data-tm="pct" aria-pressed="'+(d.tipMode==='pct')+'">Tip as %</button></div>'
       +'<p class="help" style="margin:0">Discount comes off the fares only, not parking. Only add a tip the customer chose to give.</p>'
       +'<div class="field" style="margin-top:12px"><label for="bd-note">Note on receipt (optional)</label><input type="text" id="bd-note" maxlength="160" value="'+esc(d.note||'')+'"></div></div>';
