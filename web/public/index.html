@@ -3300,9 +3300,10 @@ html{overscroll-behavior-x:none}
     if(p[0]<r.start||(r.end&&r.end<p[1])||rulePaused(r,p[0])) return null;
     var paid=0, n=0; S.entries.forEach(function(x){ if(x.kind==='expense'&&x.src==='import'&&x.category===r.category&&x.date>=p[0]&&x.date<=p[1]){ paid+=+x.amount||0; n++; } });
     var amt=+r.amount||0, lab=periodLabel(r,p);
-    if(!n) return {bad:true,t:'Not found in your bank for '+lab+'.'};
-    if(Math.abs(paid-amt)>Math.max(1,amt*0.02)) return {bad:true,t:'Your bank shows '+gbp2.format(paid)+' for '+lab+', not '+gbp2.format(amt)+'.'};
-    return {bad:false,t:'Matched to your bank for '+lab+'.'};
+    /* the real payment can come from the bank or be taken off an app statement (ComCab rent) (Matt, 14 Nov 2026) */
+    if(!n) return {bad:true,t:'Not found in your bank or app statements for '+lab+'. If it was taken off a statement (like ComCab rent), that week’s statement may be missing.'};
+    if(Math.abs(paid-amt)>Math.max(1,amt*0.02)) return {bad:true,t:'Your bank and statements show '+gbp2.format(paid)+' for '+lab+', not '+gbp2.format(amt)+'.'};
+    return {bad:false,t:'Matched to your bank or statements for '+lab+'.'};
   }
   S.ruOpen=null;
   function renderRules(){
