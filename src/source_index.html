@@ -1642,6 +1642,7 @@ html{overscroll-behavior-x:none}
   function renderSettings(){
     var el=$('set-body'); if(!el || $('setovl').hidden) return;
     if(!S.db){ el.innerHTML='<p class="help">Open this page while signed in to change settings.</p>'; return; }
+    verLoad();
     var ae=document.activeElement; if(ae && el.contains(ae) && /INPUT|TEXTAREA|SELECT/.test(ae.tagName)) return;
     var st=S.settings, z=S.biz||{}, h='';
     var RC=''      +'<div class="card"><h2>Your details on receipts</h2><p class="help">Printed at the bottom of every receipt and PDF.</p>'
@@ -1677,6 +1678,7 @@ html{overscroll-behavior-x:none}
       +sgrp('rcpt','Receipts','Your details and drivers on your receipts',RC)
       +sgrp('look','Appearance','',renderLookCard())
       +(S.adm&&S.adm.is?sgrp('adm','Admin','Only you and Marcin see this',renderAdminCard()):'');
+    h+='<p class="note" style="text-align:center;margin:16px 0 4px">'+esc(verText())+'</p>';
     var rc=$('ru-card'); if(rc&&el.contains(rc)) $('ru-home').appendChild(rc);
     el.innerHTML=h;
     var slot=$('set-rules-slot'); if(slot&&rc) slot.appendChild(rc);
@@ -4934,11 +4936,39 @@ html{overscroll-behavior-x:none}
   setInterval(function(){
     if(!FX_CFG||!admUser()||!S.db) return;
     var last=+lsGet('cb-seen')||0; if(Date.now()-last>3600000){ lsSet('cb-seen',String(Date.now())); S.db.collection('meta').doc('seen').set({at:Date.now(),device:admDevice()}).catch(function(){}); }
-    if(!S.adm.checked){ S.adm.checked=true; admCall('?check=1').then(function(j){ S.adm.is=!!j.admin; renderSettings(); }).catch(function(){ S.adm.checked=false; }); }
+    if(!S.adm.checked){ S.adm.checked=true; admCall('?check=1').then(function(j){ S.adm.is=!!j.admin; renderSettings(); verCheckMain(); }).catch(function(){ S.adm.checked=false; }); }
   },10000);
+  /* Which version is live (Matt, 17 Nov 2026): Netlify writes /version.json (commit + time) on every build.
+     Everyone sees it at the foot of Settings. Admins also get a check against the newest code on GitHub, so the
+     live app quietly going back to an older version (17 Nov) is noticed straight away. */
+  S.ver=null; S.verMain=null;
+  function verText(){ var v=S.ver; if(!v||!v.commit) return 'Version: not known'; var d=v.built?new Date(v.built):null;
+    return 'Version '+String(v.commit).slice(0,7)+(d&&!isNaN(d)?' · published '+d.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})+' '+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}):''); }
+  function verLoad(){
+    if(S._verLoading) return; S._verLoading=1;
+    fetch('/version.json?'+Date.now(),{cache:'no-store'}).then(function(r){ return r.ok?r.json():null; }).then(function(v){ S.ver=v; if(typeof renderSettings==='function') renderSettings(); verCheckMain(); }).catch(function(){});
+  }
+  function verCheckMain(){
+    if(!(S.adm&&S.adm.is)||!S.ver||!S.ver.commit||S.verMain) return;
+    var live=S.ver.commit;
+    fetch('https://api.github.com/repos/allblacktaxis/cab-books/compare/'+encodeURIComponent(live)+'...main',{cache:'no-store'}).then(function(r){ return r.ok?r.json():null; }).then(function(c){
+      if(!c) return; var files=(c.files||[]).map(function(f){return f.filename}), code=files.filter(function(n){ return !/\.md$/i.test(n); });
+      var last=c.commits&&c.commits.length?c.commits[c.commits.length-1]:null, when=last&&last.commit&&last.commit.committer?last.commit.committer.date:'';
+      S.verMain={ahead:+c.ahead_by||0,behind:+c.behind_by||0,code:code.length,when:when,head:last?last.sha:live,status:c.status};
+      if(typeof renderSettings==='function') renderSettings();
+    }).catch(function(){});
+  }
+  function verAdminHTML(){
+    var v=S.ver, m=S.verMain; if(!v||!v.commit) return '<p class="note" style="margin:8px 0 0">Live version: not known yet (it’s written on the next Netlify build).</p>';
+    if(!m) return '<p class="note" style="margin:8px 0 0">'+esc(verText())+'</p>';
+    var old=m.when?(Date.now()-new Date(m.when).getTime())/60000:0;
+    if(m.behind>0) return '<p class="warnbox" style="margin:8px 0 0">The live app ('+esc(String(v.commit).slice(0,7))+') isn’t on the main code line. In Netlify → Deploys, publish the newest build from main.</p>';
+    if(m.code>0&&old>20) return '<p class="warnbox" style="margin:8px 0 0">The live app is <b>older than the latest code</b> ('+m.ahead+' change'+(m.ahead===1?'':'s')+' not live). In Netlify → Deploys: if it says auto publishing is locked, click “Start auto publishing”, then publish the newest build.</p>';
+    return '<p class="note" style="margin:8px 0 0;color:var(--ok)">\u2713 The live app is the latest code ('+esc(String(v.commit).slice(0,7))+').'+(m.code>0?' A newer change is being published now.':'')+'</p>';
+  }
   function renderAdminCard(){
     if(!S.adm.is) return '';
-    return '<div class="card"><h2>Admin</h2><p class="help">Who has signed up and how they use Cab Books. Account details only: nobody’s jobs or money.</p><button class="btn ghost" type="button" id="adm-open">Open admin panel</button></div>';
+    return '<div class="card"><h2>Admin</h2><p class="help">Who has signed up and how they use Cab Books. Account details only: nobody’s jobs or money.</p><button class="btn ghost" type="button" id="adm-open">Open admin panel</button>'+verAdminHTML()+'</div>';
   }
   function admWhen(ms){ if(!ms) return '–'; var d=new Date(ms), now=new Date(), days=Math.floor((now-d)/864e5);
     if(d.toDateString()===now.toDateString()) return 'today '+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
