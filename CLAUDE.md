@@ -7,3 +7,4 @@
 - Explain things in plain English, one step at a time.
 - Group changes into batches rather than going live after every small change, because each Netlify build uses credits.
 - Voice dictation often hears "Cab Books" as "CAD Books". They mean the same thing: this app.
+- TODO.md is the shared to-do list. Read it at the start, tick off what you finish, add anything new Matt asks for. Before adding an item, check the code and git log so nothing already done is listed.

@@ -3,3 +3,6 @@
   publish = "web/public"
   functions = "netlify/functions"
   command = ""
+  # Skip the build (saves credits) when a push only changes .md files (TODO.md, CLAUDE.md, README.md).
+  # Netlify skips when this command exits 0, which git diff --quiet does when nothing else changed.
+  ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- . ':(exclude)*.md'"
