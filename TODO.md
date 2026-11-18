@@ -22,6 +22,11 @@ Before adding an item, check the code and git log so nothing already done is lis
 - [ ] Link Cab Books from TaxiTracker.
 
 ## Build next
+- [ ] How to download each provider's files, in the guide (help.html, section 6). Bank, FreeNow, Gett, Uber and Curb were already there.
+  - [x] Heathrow drop-offs (18 Nov)
+  - [ ] ComCab: driver statement PDF and pay sheet spreadsheet. Matt to say where he downloads them.
+  - [ ] Taxiworld: "Payment from Taxiworld" PDFs. Matt to say where they come from.
+  - [ ] Point the setup checklist's ComCab and Taxiworld "how to" links at their own sections.
 - [ ] Reminders: a "To do" card on Today, month-end close nudges, unpaid receipts, set-aside shortfall. (The weekly statement reminder per app is already built.)
 - [ ] Events alerts: phone alerts for venues the driver ticks. Go through the venue and annual events list with Matt first.
 - [ ] Toilet door codes on the Toilets map, shared between drivers ("Code worked" / "Code changed").
