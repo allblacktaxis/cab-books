@@ -806,6 +806,8 @@ input[type=file]{max-width:100%}
 html{overscroll-behavior-x:none}
 .ovl .sheet{overflow-x:hidden}
 .su-scroll{overflow-x:hidden}
+/* iPhone zooms in when you tap a box with text under 16px, and the zoomed page drags the bottom bar up the screen (Import tab, Matt 18 Nov 2026). 16px on touch screens stops the zoom. */
+@media (pointer:coarse){input,select,textarea{font-size:16px!important}}
 .ru-inline{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;align-items:end}
 .ru-inline .field{margin:0}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}

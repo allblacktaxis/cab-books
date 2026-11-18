@@ -7,6 +7,7 @@ Before adding an item, check the code and git log so nothing already done is lis
 - [ ] Voice entry ("Say jobs"): on 11 Nov it heard nothing. The microphone fix went in after that, so check it now hears speech.
 - [ ] Uber March figures: fares £1,276.70, Quest £150, tips £43.83.
 - [ ] Knowledge route on Tools → Shortest.
+- [ ] Import tab on iPhone: tap a date box or a bank-line drop-down, then scroll. The bottom bar should stay at the bottom (fixed 18 Nov).
 
 ## Waiting on Matt / accountant
 - [ ] Real cash fares (October onward).
