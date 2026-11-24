@@ -36,6 +36,7 @@ Before adding an item, check the code and git log so nothing already done is lis
 - [ ] Match bank payments to unpaid receipts.
 
 ## Videos
+- [ ] Matt to review every guide video so far (open the guide, tap each "Watch a short video"): 7.1 Add a job, 7.2 Position, 7.3 Reports. Add new ones here as they are made.
 - [x] Captions or voice-over? Matt (11 Nov): silent is fine. Each guide section gets a "Watch a short video" button.
 - [ ] Short silent walkthroughs in the guide, recorded on a test copy of the app with a pretend driver (no real data):
   - [x] Add a job (guide 7.1)
