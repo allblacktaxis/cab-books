@@ -25,7 +25,7 @@ Before adding an item, check the code and git log so nothing already done is lis
 
 ## Build next
 - [ ] How to download each provider's files, in the guide (help.html, section 9). Bank, FreeNow, Gett, Uber and Curb were already there.
-  - [x] Heathrow drop-offs (18 Nov)
+  - [x] Heathrow drop-offs (on the Import screen 18 Nov; in the guide 24 Nov)
   - [ ] ComCab: driver statement PDF and pay sheet spreadsheet. Matt to say where he downloads them.
   - [ ] Taxiworld: "Payment from Taxiworld" PDFs. Matt to say where they come from.
   - [ ] Point the setup checklist's ComCab and Taxiworld "how to" links at their own sections.
@@ -61,7 +61,7 @@ Work is on branch `claude/zen-bohr-kkfepw` until Matt says "deploy".
 - [x] 3. Quick setup: Basic and Full explained (Cab Books doesn't send anything to HMRC), card provider not listed, earlier takings
 - [x] 4. Train alerts
 - [x] 8. Bank statement (was 5): moved down, Full only, privacy reminder, CSV or Excel, real button name, bank replaces typed expenses, once a month
-- [ ] 9. App statements (was 6): moved down; still to review with Matt
+- [x] 9. App statements (was 6): moved down, Heathrow drop-off steps added, weekly (apps) and monthly (bank, Curb) routine, Import box name. ComCab and Taxiworld steps still waiting on Matt (see Build next).
 - [x] 5. Everyday use (was 7): 1 Adding a job, 2 Position, 3 Reports, 4 Handy screens (map videos still to do, see Videos)
 - [x] 6. Receipt photos (was 8) (reviewed; Add an expense → Cash)
 - [x] 7. Fixing mistakes (was 9): current Settings paths, Update job, Tap again to delete, backup, contact us
