@@ -59,11 +59,11 @@ details.vid video{display:block;width:100%;max-width:340px;margin:12px auto 0;bo
 <a href="#home">2. Home screen</a>
 <a href="#setup">3. Set it up</a>
 <a href="#alerts">4. Train alerts</a>
-<a href="#bank">5. Bank statement</a>
-<a href="#statements">6. App statements</a>
-<a href="#daily">7. Everyday use</a>
-<a href="#receipts">8. Receipt photos</a>
-<a href="#fix">9. Fixing mistakes</a>
+<a href="#daily">5. Everyday use</a>
+<a href="#receipts">6. Receipt photos</a>
+<a href="#fix">7. Fixing mistakes</a>
+<a href="#bank">8. Bank statement</a>
+<a href="#statements">9. App statements</a>
 <a href="#help">Help</a>
 </nav>
 
@@ -144,98 +144,8 @@ details.vid video{display:block;width:100%;max-width:340px;margin:12px auto 0;bo
 <p class="tip">On iPhone an alert can occasionally arrive a little late. When Cab Books is open, a banner at the top shows the same warning straight away. Live counts for every terminal are on the <b>Trains</b> screen. Add the Trains button to your bottom bar in Settings → Changes to your setup → <b>Bottom bar</b>.</p>
 </section>
 
-<section id="bank">
-<h2>5. Bring in your bank statement</h2>
-<p>This is the quickest way to get your books up to date. Cab Books spots payments from FreeNow, Gett, Uber, Curb, HIPS, Helix Pay, Taxiworld and ComCab, adds back the commission to work out your fares, and sorts your spending (rent, fuel, charging, airport drop-offs and so on).</p>
-<h3>Get the file from your bank</h3>
-<ol>
-<li>Log in to your bank's <b>online banking website</b>. A computer is usually easiest, as many banking apps can't download files.</li>
-<li>Open the account your taxi money goes into and look for <b>Download</b>, <b>Export</b> or <b>Statements</b>.</li>
-<li>Choose the dates (the last 3 months is a good start) and the format <b>CSV</b>. If there's a choice, pick "CSV" or "Excel (CSV)", not PDF.</li>
-<li>Save the file. If you did this on a computer, you can bring it in on the computer too, since your books are the same everywhere you sign in.</li>
-</ol>
-<h3>Bring it into Cab Books</h3>
-<ol>
-<li>Make sure you’re on <b>Full</b> (Settings → Changes to your setup → <b>Basic or Full</b>).</li>
-<li>Go to the <b>Import</b> tab and find <b>Bank statement</b>.</li>
-<li>Tap <b>Choose file</b>, pick your CSV, then tap <b>Read it</b>.</li>
-<li>Check the columns look right (date, description, money in, money out). They're usually picked for you.</li>
-<li>Under <b>Needs a decision</b>, choose a category for any payee Cab Books doesn't know. Anything you leave is treated as personal. Your choices are remembered next time.</li>
-<li>Tap any category in the summary to see every line in it. Move a single line, or a whole payee, to a different category (for example personal Amazon orders). On your first bank statement, tap <b>Looks right</b> on each business category before Import is allowed.</li>
-<li>Tap <b>Import</b>.</li>
-</ol>
-<p class="tip">It's safe to bring in the same statement twice, or statements that overlap. Lines already in are skipped.</p>
-<p class="tip">Do this every week. Pick dates from your last download to today: overlapping is fine.</p>
-<p>For every job, tip and commission, also bring in the statements from your taxi apps. See <a href="#statements">6. App statements</a>.</p>
-</section>
-
-<section id="statements">
-<h2>6. Statements from your taxi apps</h2>
-<p>Your bank shows the money that reached you. The apps' statements add the detail: each job, the tip and the commission taken. They all go in one place: the <b>Import</b> tab, under <b>Taxi app statements</b>.</p>
-<ul>
-<li>You can choose several files at once, from different apps.</li>
-<li>Cab Books skips anything it has already read, so downloading the same week twice does no harm.</li>
-<li>Statements replace the bank estimates for the same weeks automatically. Nothing is counted twice.</li>
-</ul>
-
-<h3>What to get, and when</h3>
-<ul>
-<li><b>Bank</b>: CSV, once a month for last month (see <a href="#bank">5. Bank statement</a>).</li>
-<li><b>FreeNow</b>: 3 PDFs, every week after Tuesday's payment.</li>
-<li><b>Gett</b>: PDF, every week (or wait for the quarterly email).</li>
-<li><b>Uber</b>: PDF, every week (or at month end).</li>
-<li><b>Curb</b> (card payments in the cab): Excel, every month.</li>
-</ul>
-
-<h3 id="st-freenow">FreeNow</h3>
-<ol>
-<li>Log in to the <b>FreeNow driver portal</b> and go to <b>Invoices</b>.</li>
-<li>Find the week. Its <b>Select file</b> box has three separate files. Download each one: <b>Invoice summary.pdf</b>, <b>Tour overview.pdf</b> and <b>Invoice.pdf</b>.</li>
-<li>In Cab Books, go to <b>Import → Taxi app statements</b> and choose all three together.</li>
-</ol>
-
-<h3 id="st-gett">Gett</h3>
-<ol>
-<li>In the <b>Gett driver app</b>, tap the <b>three bars</b> at the top, then <b>Driver portal</b>.</li>
-<li>Go to <b>Accounting</b> and choose <b>Daily</b>, <b>Weekly</b> or <b>Annual</b> statements.</li>
-<li>Tap the date and download the PDF (or have it emailed to you).</li>
-<li>In Cab Books, go to <b>Import → Taxi app statements</b> and choose the files.</li>
-</ol>
-<p class="tip">Gett also emails you statements every quarter. If you'd rather not download them each week, wait for those. Daily, weekly and quarterly statements can overlap: each job is only counted once.</p>
-
-<h3 id="st-uber">Uber</h3>
-<ol>
-<li>Go to <a href="https://drivers.uber.com" target="_blank" rel="noopener noreferrer">drivers.uber.com</a> and sign in.</li>
-<li>Go to <b>Earnings → Statements</b>.</li>
-<li>Pick the week and tap <b>Download</b>.</li>
-<li>In Cab Books, go to <b>Import → Taxi app statements</b> and choose the files. You can do several weeks at once.</li>
-</ol>
-<p class="tip">An Uber week runs Monday 4am to Monday 4am, and the money reaches your bank about two days later. Cab Books also reads Uber's earnings CSV if you have that instead.</p>
-
-<h3 id="st-curb">Curb (card payments in your cab)</h3>
-<ol>
-<li>Go to the Curb eFleet driver portal: <a href="https://efleet.gocurb.com/emeter/Login_Driver.aspx" target="_blank" rel="noopener noreferrer">efleet.gocurb.com</a>.</li>
-<li><b>Login ID</b>: your badge number. <b>Password</b>: your Curb portal password. <b>Select group</b>: <b>UK London</b>.</li>
-<li>Open <b>Credit card transactions</b>, choose last month's dates and <b>export to Excel</b>.</li>
-<li>In Cab Books, go to <b>Import → Taxi app statements</b> and choose the file.</li>
-</ol>
-<p class="tip">FreeNow or Gett jobs that the passenger paid by card in your cab (on your card machine) are already sorted out for you, so they won't be counted twice.</p>
-
-<h3>Your weekly routine (about 10 minutes)</h3>
-<ol>
-<li>On Tuesday or Wednesday, download your bank CSV, FreeNow's 3 PDFs, Gett's statements and Uber's weekly statement.</li>
-<li><b>Import → Bank statement</b>, then <b>Import → Taxi app statements</b>.</li>
-<li>Have a look at <b>Position</b> to see where you are against the VAT limit.</li>
-</ol>
-<h3>At month end</h3>
-<ol>
-<li>Bring in last month's Curb report.</li>
-<li>Go to <b>Data → Monthly checks</b> and mark each source <b>Checked</b> once its statements are in.</li>
-</ol>
-</section>
-
 <section id="daily">
-<h2>7. Everyday use</h2>
+<h2>5. Everyday use</h2>
 <p><b>You’re ready to go.</b> Now that you’ve set up your apps and train alerts, you can start adding your fares. You can add every kind of job:</p>
 <ul>
 <li><b>Hailing apps</b>: FreeNow, Gett, Uber and the others you ticked</li>
@@ -293,7 +203,7 @@ details.vid video{display:block;width:100%;max-width:340px;margin:12px auto 0;bo
 </section>
 
 <section id="receipts">
-<h2>8. Receipt photos</h2>
+<h2>6. Receipt photos</h2>
 <p>Keep a photo of every receipt for your accountant and HMRC.</p>
 <ol>
 <li>On <b>Today</b>, tap <b>Snap a receipt</b>, take the photo, check the amount and type, and tap <b>Save</b>.</li>
@@ -304,7 +214,7 @@ details.vid video{display:block;width:100%;max-width:340px;margin:12px auto 0;bo
 </section>
 
 <section id="fix">
-<h2>9. Fixing mistakes</h2>
+<h2>7. Fixing mistakes</h2>
 <details class="vid"><summary>▶ Watch a short video</summary><video controls playsinline muted preload="none" poster="/guide/fix-job-poster.jpg" src="/guide/fix-job.mp4"></video></details>
 <ul>
 <li><b>Wrong job?</b> Tap <b>Edit</b> on it in Today or the Log, change it and tap <b>Update job</b>. To remove it, tap <b>Edit</b>, then <b>Delete this job</b>, then <b>Tap again to delete</b>.</li>
@@ -315,6 +225,99 @@ details.vid video{display:block;width:100%;max-width:340px;margin:12px auto 0;bo
 </ul>
 <p class="tip">Still stuck? Email us from Settings → <b>Help and suggestions</b>.</p>
 </section>
+
+<section id="bank">
+<h2>8. Bring in your bank statement</h2>
+<p class="tip">🔒 Your bank statement stays private. Only you can see it, and nobody at Cab Books looks at it.</p>
+<p>For drivers on <b>Full</b>. This is the quickest way to get your books up to date. Cab Books spots payments from FreeNow, Gett, Uber, Curb, ComCab, Taxiworld and Helix Pay, adds back the commission to work out your fares, and sorts your spending (rent, fuel, charging, airport drop-offs and so on).</p>
+<h3>Get the file from your bank</h3>
+<ol>
+<li>Log in to your bank's <b>online banking website</b>. A computer is usually easiest, as many banking apps can't download files.</li>
+<li>Open the account your taxi money goes into and look for <b>Download</b>, <b>Export</b> or <b>Statements</b>.</li>
+<li>Choose the dates (the last 3 months is a good start) and the format <b>CSV</b> or <b>Excel</b>. Don’t choose PDF, because Cab Books can’t read it.</li>
+<li>Save the file. If you did this on a computer, you can bring it in on the computer too, since your books are the same everywhere you sign in.</li>
+</ol>
+<h3>Bring it into Cab Books</h3>
+<ol>
+<li>Make sure you’re on <b>Full</b> (Settings → Changes to your setup → <b>Basic or Full</b>).</li>
+<li>Go to the <b>Import</b> tab and find <b>Bank statement</b>.</li>
+<li>Tap <b>Choose your bank statement file</b>, pick the file, then tap <b>Read it</b>.</li>
+<li>Check the columns look right (date, description, money in, money out). They're usually picked for you.</li>
+<li>Under <b>Needs a decision</b>, choose a category for any payee Cab Books doesn't know. Anything you leave is treated as personal. Your choices are remembered next time.</li>
+<li>Tap any category in the summary to see every line in it. Move a single line, or a whole payee, to a different category (for example personal Amazon orders). On your first bank statement, tap <b>Looks right</b> on each business category before Import is allowed.</li>
+<li>Tap <b>Import</b>.</li>
+</ol>
+<p class="tip">Your bank statement becomes the record of your spending. Expenses you typed in yourself are replaced by the bank’s figures, up to the last date on the statement, so nothing is counted twice.</p>
+<p class="tip">It's safe to bring in the same statement twice, or statements that overlap. Lines already in are skipped.</p>
+<p class="tip">Do this once a month, for the month before. Your statement reminder will nudge you. Pick dates from your last download to today: overlapping is fine.</p>
+<p>For every job, tip and commission, also bring in the statements from your taxi apps. See <a href="#statements">9. App statements</a>.</p>
+</section>
+
+<section id="statements">
+<h2>9. Statements from your taxi apps</h2>
+<p>For drivers on <b>Full</b>. Your bank shows the money that reached you. The apps' statements add the detail: each job, the tip and the commission taken. They all go in one place: the <b>Import</b> tab, under <b>Taxi app statements</b>.</p>
+<ul>
+<li>You can choose several files at once, from different apps.</li>
+<li>Cab Books skips anything it has already read, so downloading the same week twice does no harm.</li>
+<li>Statements replace the bank estimates for the same weeks automatically. Nothing is counted twice.</li>
+</ul>
+
+<h3>What to get, and when</h3>
+<ul>
+<li><b>Bank</b>: CSV, once a month for last month (see <a href="#bank">8. Bank statement</a>).</li>
+<li><b>FreeNow</b>: 3 PDFs, every week after Tuesday's payment.</li>
+<li><b>Gett</b>: PDF, every week (or wait for the quarterly email).</li>
+<li><b>Uber</b>: PDF, every week (or at month end).</li>
+<li><b>Curb</b> (card payments in the cab): Excel, every month.</li>
+</ul>
+
+<h3 id="st-freenow">FreeNow</h3>
+<ol>
+<li>Log in to the <b>FreeNow driver portal</b> and go to <b>Invoices</b>.</li>
+<li>Find the week. Its <b>Select file</b> box has three separate files. Download each one: <b>Invoice summary.pdf</b>, <b>Tour overview.pdf</b> and <b>Invoice.pdf</b>.</li>
+<li>In Cab Books, go to <b>Import → Taxi app statements</b> and choose all three together.</li>
+</ol>
+
+<h3 id="st-gett">Gett</h3>
+<ol>
+<li>In the <b>Gett driver app</b>, tap the <b>three bars</b> at the top, then <b>Driver portal</b>.</li>
+<li>Go to <b>Accounting</b> and choose <b>Daily</b>, <b>Weekly</b> or <b>Annual</b> statements.</li>
+<li>Tap the date and download the PDF (or have it emailed to you).</li>
+<li>In Cab Books, go to <b>Import → Taxi app statements</b> and choose the files.</li>
+</ol>
+<p class="tip">Gett also emails you statements every quarter. If you'd rather not download them each week, wait for those. Daily, weekly and quarterly statements can overlap: each job is only counted once.</p>
+
+<h3 id="st-uber">Uber</h3>
+<ol>
+<li>Go to <a href="https://drivers.uber.com" target="_blank" rel="noopener noreferrer">drivers.uber.com</a> and sign in.</li>
+<li>Go to <b>Earnings → Statements</b>.</li>
+<li>Pick the week and tap <b>Download</b>.</li>
+<li>In Cab Books, go to <b>Import → Taxi app statements</b> and choose the files. You can do several weeks at once.</li>
+</ol>
+<p class="tip">An Uber week runs Monday 4am to Monday 4am, and the money reaches your bank about two days later. Cab Books also reads Uber's earnings CSV if you have that instead.</p>
+
+<h3 id="st-curb">Curb (card payments in your cab)</h3>
+<ol>
+<li>Go to the Curb eFleet driver portal: <a href="https://efleet.gocurb.com/emeter/Login_Driver.aspx" target="_blank" rel="noopener noreferrer">efleet.gocurb.com</a>.</li>
+<li><b>Login ID</b>: your badge number. <b>Password</b>: your Curb portal password. <b>Select group</b>: <b>UK London</b>.</li>
+<li>Open <b>Credit card transactions</b>, choose last month's dates and <b>export to Excel</b>.</li>
+<li>In Cab Books, go to <b>Import → Taxi app statements</b> and choose the file.</li>
+</ol>
+<p class="tip">FreeNow or Gett jobs that the passenger paid by card in your cab (on your card machine) are already sorted out for you, so they won't be counted twice.</p>
+
+<h3>Your weekly routine (about 10 minutes)</h3>
+<ol>
+<li>On Tuesday or Wednesday, download your bank CSV, FreeNow's 3 PDFs, Gett's statements and Uber's weekly statement.</li>
+<li><b>Import → Bank statement</b>, then <b>Import → Taxi app statements</b>.</li>
+<li>Have a look at <b>Position</b> to see where you are against the VAT limit.</li>
+</ol>
+<h3>At month end</h3>
+<ol>
+<li>Bring in last month's Curb report.</li>
+<li>Go to <b>Data → Monthly checks</b> and mark each source <b>Checked</b> once its statements are in.</li>
+</ol>
+</section>
+
 
 <section id="help">
 <h2>Help</h2>

@@ -24,7 +24,7 @@ Before adding an item, check the code and git log so nothing already done is lis
 - [ ] Link Cab Books from TaxiTracker.
 
 ## Build next
-- [ ] How to download each provider's files, in the guide (help.html, section 6). Bank, FreeNow, Gett, Uber and Curb were already there.
+- [ ] How to download each provider's files, in the guide (help.html, section 9). Bank, FreeNow, Gett, Uber and Curb were already there.
   - [x] Heathrow drop-offs (18 Nov)
   - [ ] ComCab: driver statement PDF and pay sheet spreadsheet. Matt to say where he downloads them.
   - [ ] Taxiworld: "Payment from Taxiworld" PDFs. Matt to say where they come from.
@@ -36,21 +36,21 @@ Before adding an item, check the code and git log so nothing already done is lis
 - [ ] Match bank payments to unpaid receipts.
 
 ## Videos
-- [ ] Matt to review every guide video so far (open the guide, tap each "Watch a short video"): 7.1 Add a job, 7.2 Position, 7.3 Reports, 7.4 Tonight, Flights, Trains and Tube, 9 Fixing mistakes (edit and delete a job). Add new ones here as they are made.
+- [ ] Matt to review every guide video so far (open the guide, tap each "Watch a short video"): 5.1 Add a job, 5.2 Position, 5.3 Reports, 5.4 Tonight, Flights, Trains and Tube, 7 Fixing mistakes (edit and delete a job). Add new ones here as they are made.
 - [x] Captions or voice-over? Matt (11 Nov): silent is fine. Each guide section gets a "Watch a short video" button.
 - [ ] Short silent walkthroughs in the guide, recorded on a test copy of the app with a pretend driver (no real data):
-  - [x] Add a job (guide 7.1)
-  - [x] Position and the VAT limit (guide 7.2)
-  - [x] Reports (guide 7.3)
+  - [x] Add a job (guide 5.1)
+  - [x] Position and the VAT limit (guide 5.2)
+  - [x] Reports (guide 5.3)
   - [ ] Sign up and Quick setup
   - [ ] Home screen icon
   - [ ] Train alerts
   - [ ] Bank statement
   - [ ] App statements
   - [ ] Receipt photos
-  - [x] Tonight, Flights, Trains, Tube (guide 7.4, recorded with live data on 24 Nov)
+  - [x] Tonight, Flights, Trains, Tube (guide 5.4, recorded with live data on 24 Nov)
   - [ ] Fares, Ranks, Toilets: blocked. The test computer can't reach the map server (taxitrackermap.allblacktaxis.co.uk). Add it under Allowed domains in the cloud environment's network settings, then record.
-  - [x] Fixing mistakes: edit and delete a job (guide 9)
+  - [x] Fixing mistakes: edit and delete a job (guide 7)
 - [ ] A longer "How to use Cab Books" video for drivers (Matt, 11 Nov).
 
 ## Getting started guide run-through with Matt (help.html)
@@ -60,11 +60,11 @@ Work is on branch `claude/zen-bohr-kkfepw` until Matt says "deploy".
 - [x] 2. Home screen: icon picture, "go back to your home screen" step
 - [x] 3. Quick setup: Basic and Full explained (Cab Books doesn't send anything to HMRC), card provider not listed, earlier takings
 - [x] 4. Train alerts
-- [ ] 5. Bank statement: move further down (Full only); privacy reminder, CSV or Excel, real button name, bank replaces typed expenses
-- [ ] 6. App statements: move further down (Full only)
-- [x] 7. Everyday use: 1 Adding a job, 2 Position, 3 Reports, 4 Handy screens (map videos still to do, see Videos)
-- [x] 8. Receipt photos (reviewed; Add an expense → Cash)
-- [x] 9. Fixing mistakes: current Settings paths, Update job, Tap again to delete, backup, contact us
+- [x] 8. Bank statement (was 5): moved down, Full only, privacy reminder, CSV or Excel, real button name, bank replaces typed expenses, once a month
+- [ ] 9. App statements (was 6): moved down; still to review with Matt
+- [x] 5. Everyday use (was 7): 1 Adding a job, 2 Position, 3 Reports, 4 Handy screens (map videos still to do, see Videos)
+- [x] 6. Receipt photos (was 8) (reviewed; Add an expense → Cash)
+- [x] 7. Fixing mistakes (was 9): current Settings paths, Update job, Tap again to delete, backup, contact us
 
 ## Later / parked
 - [ ] Bank statement PDFs (NatWest first).
