@@ -2,4 +2,9 @@
 [build]
   publish = "web/public"
   functions = "netlify/functions"
-  command = ""
+  # Writes which commit is live, shown in Settings (and checked against GitHub in the Admin card) – Matt, 17 Nov 2026.
+  command = "printf '{\"commit\":\"%s\",\"built\":\"%s\"}' \"$COMMIT_REF\" \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\" > web/public/version.json || true"
+  # Skip the build (saves credits) when a push only changes .md files (TODO.md, CLAUDE.md, README.md).
+  # Netlify skips when this command exits 0, which git diff --quiet does when nothing else changed.
+  # Only skips when Netlify knows the previous build's commit; otherwise it always builds (Matt, 17 Nov 2026).
+  ignore = "[ -n \"$CACHED_COMMIT_REF\" ] && [ \"$CACHED_COMMIT_REF\" != \"$COMMIT_REF\" ] && git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- . ':(exclude)*.md'"
