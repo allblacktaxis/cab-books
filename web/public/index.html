@@ -308,7 +308,8 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .tb-st.ok{background:var(--ok-soft);color:var(--ok)} .tb-st.amb{background:var(--warn-soft);color:var(--warn)} .tb-st.org{background:#3a1f00;color:#ff9d3a} .tb-st.bad{background:var(--bad-soft);color:var(--bad)} .tb-st.off{background:var(--surface2);color:var(--muted)}
 .tb-why{font-size:14px;color:var(--ink);padding:0 0 12px 16px;white-space:pre-line}
 .pm-map{position:relative;height:max(420px,calc(100dvh - 250px));border-radius:10px;overflow:hidden;border:1px solid var(--line);background:#0d1117}
-.pm-map>div{position:absolute;inset:0}
+/* Only the map itself fills the box. This used to be ".pm-map>div", which also stretched the search bar layer over the whole map, so it caught every pinch and drag and the map never moved (Matt, 24 Nov 2026). */
+#pm-map{position:absolute;inset:0}
 .pm-top{position:absolute;left:8px;right:8px;top:8px;z-index:3}
 .pm-top .pm-row input[type=search]{background:color-mix(in srgb,var(--surface) 92%,transparent);box-shadow:0 2px 10px var(--shadow)}
 .pm-top .pm-res{margin-top:6px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:0 10px;max-height:45vh;overflow:auto;box-shadow:0 4px 18px var(--shadow)}
