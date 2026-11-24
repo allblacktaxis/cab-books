@@ -9,6 +9,7 @@ Before adding an item, check the code and git log so nothing already done is lis
 - [ ] Knowledge route on Tools → Shortest.
 - [ ] Import tab on iPhone: tap a date box or a bank-line drop-down, then scroll. The bottom bar should stay at the bottom (fixed 18 Nov).
 - [ ] Toilets and Ranks maps: pinch to zoom and drag with one finger. The map should move (fixed 24 Nov).
+- [ ] Receipts: make one with "Discount in £" (e.g. £10 off) and one with "Discount as %". Check the totals, the PDF and "Copy as text" (added 24 Nov).
 
 ## Waiting on Matt / accountant
 - [ ] Real cash fares (October onward).

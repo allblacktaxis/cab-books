@@ -6204,16 +6204,17 @@ html{overscroll-behavior-x:none}
   function billCalc(b){
     var jobs=b.jobs||[], orig=0, park=0, mine=0, other={};
     jobs.forEach(function(j){ orig+=(+j.fare||0); park+=(+j.parking||0); });
-    var pct=+b.discountPct||0, disc=r2(orig*pct/100);
+    /* Discount as a % of the fares, or a fixed £ amount (Matt, 24 Nov 2026). Old receipts have no discMode, so they stay %. */
+    var amt=b.discMode==='amount', pct=amt?0:(+b.discountPct||0), disc=amt?r2(Math.min(Math.max(+b.discountAmt||0,0),orig)):r2(orig*pct/100);
     var tip=b.tipMode==='pct'? r2(orig*(+b.tipValue||0)/100) : r2(+b.tipValue||0);
     var total=r2(orig+park-disc+tip);
     var me=S.drivers[0], shares=[];
     jobs.forEach(function(j){
-      var f=+j.fare||0, w=orig>0?f/orig:0, net=r2(f*(1-pct/100)+(+j.parking||0)), t=r2(tip*w);
+      var f=+j.fare||0, w=orig>0?f/orig:0, net=r2(f-disc*w+(+j.parking||0)), t=r2(tip*w);
       shares.push({net:net,tip:t});
       if((j.driver||me)!==me){ other[j.driver]=r2((other[j.driver]||0)+net+t); }
     });
-    return {orig:r2(orig),park:r2(park),pct:pct,disc:disc,tip:tip,total:total,shares:shares,other:other};
+    return {orig:r2(orig),park:r2(park),amt:amt,pct:pct,disc:disc,dlabel:amt?'Discount':'Discount ('+pct+'%)',tip:tip,total:total,shares:shares,other:other};
   }
   function billEntries(){
     var out=[], me=S.drivers[0];
@@ -6241,7 +6242,7 @@ html{overscroll-behavior-x:none}
   function mergeEntries(){ S.entriesAll=S.entriesRaw.concat(billEntries()); var po=ccPaidOff(S.entriesAll); S.entries=S.entriesAll.filter(function(e){return !e.demo&&!po[e.id]}); if(S.tab==='import'&&typeof bkStatus==='function') bkStatus(); if(S.tab==='import'&&typeof ihRender==='function') ihRender(); }
   function nextBillNo(){ var mx=0; Object.keys(S.receipts||{}).concat(Object.keys(S.bills).filter(function(k){return !S.bills[k].demo})).forEach(function(k){var n=+String(k).replace(/\D/g,''); if(n>mx) mx=n}); return 'R-'+('0000'+(mx+1)).slice(-4); }
   function blankJob(){ return {date:todayISO(),route:'',fare:'',parking:'',driver:S.drivers[0]}; }
-  function newBill(jobs){ S.bv={mode:'edit',no:null,draft:{date:todayISO(),customer:'',jobs:jobs&&jobs.length?jobs:[blankJob()],discountPct:10,tipMode:'amount',tipValue:0,note:''},armDel:false,filter:S.bv.filter}; showTab('receipts'); renderBills(); }
+  function newBill(jobs){ S.bv={mode:'edit',no:null,draft:{date:todayISO(),customer:'',jobs:jobs&&jobs.length?jobs:[blankJob()],discMode:'pct',discountPct:10,discountAmt:0,tipMode:'amount',tipValue:0,note:''},armDel:false,filter:S.bv.filter}; showTab('receipts'); renderBills(); }
   function jobFromEntry(e){ return {date:e.date,route:e.note||'',fare:r2(eAmt(e)),parking:'',driver:S.drivers[0]}; }
   function openReceipt(id){
     if(id && String(id).indexOf('bill:')===0){ openBill(id.split(':')[1]); return; }
@@ -6277,7 +6278,7 @@ html{overscroll-behavior-x:none}
       +'<div class="rjobs">';
     (b.jobs||[]).forEach(function(j,i){ h+='<div class="rjob"><div><div class="rjt">Job '+(i+1)+' · '+esc(fmtD(j.date))+'</div><div class="rjr">'+esc(j.route||'')+'</div><div class="rjd">Driver: '+esc(j.driver||S.drivers[0])+((+j.parking)?' · Parking/drop off: '+gbp2.format(+j.parking):'')+'</div></div><div class="num">'+gbp2.format(+j.fare||0)+'</div></div>'; });
     h+='</div><div class="rtot"><div class="rkv"><span>Original price</span><span class="num">'+gbp2.format(c.orig)+'</span></div><div class="rkv"><span>Parking/drop off</span><span class="num">'+gbp2.format(c.park)+'</span></div>'
-      +'<div class="rkv"><span>Discount %</span><span class="num">'+c.pct+'%</span></div><div class="rkv"><span>Discount amount</span><span class="num">'+gbp2.format(c.disc)+'</span></div><div class="rkv"><span>Tip</span><span class="num">'+gbp2.format(c.tip)+'</span></div>'
+      +(c.amt?'':'<div class="rkv"><span>Discount %</span><span class="num">'+c.pct+'%</span></div>')+'<div class="rkv"><span>Discount amount</span><span class="num">'+gbp2.format(c.disc)+'</span></div><div class="rkv"><span>Tip</span><span class="num">'+gbp2.format(c.tip)+'</span></div>'
       +'<div class="rkv rgrand"><span>Total</span><span class="num">'+gbp2.format(c.total)+'</span></div></div>'+(b.note?'<p class="rnote">'+esc(b.note)+'</p>':'')+bizFoot()+'</div>';
     return h;
   }
@@ -6301,7 +6302,8 @@ html{overscroll-behavior-x:none}
   }
   function lastBillFor(name){ var k=String(name||'').trim().toLowerCase(); if(!k) return null; var best=null; Object.keys(S.bills).forEach(function(no){ var b=S.bills[no]; if(String(b.customer||'').trim().toLowerCase()===k && (!best||(b.date||'')>(best.date||''))) best=b; }); return best; }
   function termsFor(name){ var b=lastBillFor(name); if(!b) return null; var tip=b.tipMode==='pct'?(+b.tipValue||0)+'% tip':(+b.tipValue?'tip '+gbp2.format(+b.tipValue):'no tip');
-    return {discountPct:+b.discountPct||0,tipMode:b.tipMode||'amount',tipValue:b.tipMode==='pct'?(+b.tipValue||0):0,label:(+b.discountPct||0)+'% discount'+(b.tipMode==='pct'?' + '+tip:'')}; }
+    var am=b.discMode==='amount';
+    return {discMode:am?'amount':'pct',discountPct:am?10:(+b.discountPct||0),discountAmt:am?(+b.discountAmt||0):0,tipMode:b.tipMode||'amount',tipValue:b.tipMode==='pct'?(+b.tipValue||0):0,label:(am?gbp2.format(+b.discountAmt||0)+' off':(+b.discountPct||0)+'% discount')+(b.tipMode==='pct'?' + '+tip:'')}; }
   function custList(){ var seen={}, out=[]; Object.keys(S.bills).map(function(no){return S.bills[no]}).sort(function(a,b){return (b.date||'')<(a.date||'')?-1:1}).forEach(function(b){ var n=String(b.customer||'').trim(); if(!n||seen[n.toLowerCase()]) return; seen[n.toLowerCase()]=1; var t=termsFor(n); out.push({name:n,terms:t?t.label:''}); }); return out; }
   function billEditHTML(){
     var d=S.bv.draft, c=billCalc(d), drv=S.drivers;
@@ -6319,23 +6321,25 @@ html{overscroll-behavior-x:none}
     var cand=S.entriesRaw.filter(function(e){return e.kind==='fare'}).sort(function(a,b){return a.date<b.date?1:-1}).slice(0,60);
     h+='<button class="btn ghost small" type="button" id="bj-add" style="width:100%">+ Add a job</button>'
       +(cand.length?'<div class="field" style="margin:12px 0 0"><label for="bj-from">Or add a job you logged</label><select id="bj-from"><option value="">Choose a job…</option>'+cand.map(function(e){return '<option value="'+esc(e.id)+'">'+esc(dlabel(e.date)+' · '+pname(e.provider||'Job')+' · '+gbp2.format(eAmt(e))+(e.note?' · '+e.note:''))+'</option>'}).join('')+'</select></div>':'')+'</div>';
-    h+='<div class="card"><h2>Discount and tip</h2><div class="two"><div class="field"><label for="bd-pct">Discount %</label><input type="text" inputmode="decimal" id="bd-pct" value="'+esc(d.discountPct)+'"></div>'
+    var dam=d.discMode==='amount';
+    h+='<div class="card"><h2>Discount and tip</h2><div class="two"><div class="field"><label for="bd-pct">Discount '+(dam?'(£)':'(% of fares)')+'</label><input type="text" '+(dam?'class="money" inputmode="numeric" autocomplete="transaction-amount"':'inputmode="decimal"')+' id="bd-pct" value="'+esc(dam?m2(d.discountAmt):d.discountPct)+'" placeholder="'+(dam?'0.00':'0')+'"></div>'
       +'<div class="field"><label for="bd-tip">Tip '+(d.tipMode==='pct'?'(% of fares)':'(£)')+'</label><input type="text" '+(d.tipMode==='pct'?'inputmode="decimal"':'class="money" inputmode="numeric" autocomplete="transaction-amount"')+' id="bd-tip" value="'+esc(d.tipMode==='pct'?d.tipValue:m2(d.tipValue))+'" placeholder="0.00"></div></div>'
-      +'<div class="seg"><button type="button" data-tm="amount" aria-pressed="'+(d.tipMode!=='pct')+'">Tip in £</button><button type="button" data-tm="pct" aria-pressed="'+(d.tipMode==='pct')+'">Tip as %</button></div>'
+      +'<div class="seg" role="group" aria-label="Discount type"><button type="button" data-dm="pct" aria-pressed="'+(!dam)+'">Discount as %</button><button type="button" data-dm="amount" aria-pressed="'+dam+'">Discount in £</button></div>'
+      +'<div class="seg" role="group" aria-label="Tip type"><button type="button" data-tm="amount" aria-pressed="'+(d.tipMode!=='pct')+'">Tip in £</button><button type="button" data-tm="pct" aria-pressed="'+(d.tipMode==='pct')+'">Tip as %</button></div>'
       +'<p class="help" style="margin:0">Discount comes off the fares only, not parking. Only add a tip the customer chose to give.</p>'
       +'<div class="field" style="margin-top:12px"><label for="bd-note">Note on receipt (optional)</label><input type="text" id="bd-note" maxlength="160" value="'+esc(d.note||'')+'"></div></div>';
     h+='<div class="card" id="bd-tot"><h2>Totals</h2>'+totHTML(c)+'</div><button class="btn" type="button" id="bd-save">Save receipt</button>';
     return h;
   }
   function m2(v){ var n=parseFloat(String(v==null?'':v).replace(/[£,\s]/g,'')); return (isNaN(n)||n===0)?'':n.toFixed(2); }
-  function totHTML(c){ return '<div class="kv"><span class="k">Original price</span><span class="v">'+gbp2.format(c.orig)+'</span></div><div class="kv"><span class="k">Parking/drop off</span><span class="v">'+gbp2.format(c.park)+'</span></div><div class="kv"><span class="k">Discount ('+c.pct+'%)</span><span class="v">−'+gbp2.format(c.disc)+'</span></div><div class="kv"><span class="k">Tip</span><span class="v">'+gbp2.format(c.tip)+'</span></div><div class="kv"><span class="k"><b>Total</b></span><span class="v"><b>'+gbp2.format(c.total)+'</b></span></div>'; }
+  function totHTML(c){ return '<div class="kv"><span class="k">Original price</span><span class="v">'+gbp2.format(c.orig)+'</span></div><div class="kv"><span class="k">Parking/drop off</span><span class="v">'+gbp2.format(c.park)+'</span></div><div class="kv"><span class="k">'+c.dlabel+'</span><span class="v">−'+gbp2.format(c.disc)+'</span></div><div class="kv"><span class="k">Tip</span><span class="v">'+gbp2.format(c.tip)+'</span></div><div class="kv"><span class="k"><b>Total</b></span><span class="v"><b>'+gbp2.format(c.total)+'</b></span></div>'; }
   function numIn(v){ var n=parseFloat(String(v).replace(/[£,\s]/g,'')); return isNaN(n)?'':n; }
   function readDraft(){
     var d=S.bv.draft; if(!d) return;
-    d.date=$('bd-date').value; d.customer=$('bd-cust').value; d.discountPct=numIn($('bd-pct').value)||0; d.tipValue=numIn($('bd-tip').value)||0; d.note=$('bd-note').value;
+    d.date=$('bd-date').value; d.customer=$('bd-cust').value; if(d.discMode==='amount') d.discountAmt=numIn($('bd-pct').value)||0; else d.discountPct=numIn($('bd-pct').value)||0; d.tipValue=numIn($('bd-tip').value)||0; d.note=$('bd-note').value;
     Array.prototype.forEach.call(document.querySelectorAll('[data-jf]'),function(inp){ var i=+inp.getAttribute('data-ji'), f=inp.getAttribute('data-jf'); if(d.jobs[i]) d.jobs[i][f]=(f==='fare'||f==='parking')?inp.value:inp.value; });
   }
-  function draftClean(d){ return {date:d.date,customer:d.customer.trim(),discountPct:+d.discountPct||0,tipMode:d.tipMode==='pct'?'pct':'amount',tipValue:+d.tipValue||0,note:(d.note||'').trim(),
+  function draftClean(d){ return {date:d.date,customer:d.customer.trim(),discMode:d.discMode==='amount'?'amount':'pct',discountPct:+d.discountPct||0,discountAmt:+d.discountAmt||0,tipMode:d.tipMode==='pct'?'pct':'amount',tipValue:+d.tipValue||0,note:(d.note||'').trim(),
     jobs:d.jobs.map(function(j){return {date:j.date,route:String(j.route||'').trim(),fare:+numIn(j.fare)||0,parking:+numIn(j.parking)||0,driver:j.driver||S.drivers[0]}})}; }
   function renderBills(){
     var el=$('tab-receipts'); if(!el) return;
@@ -6362,8 +6366,9 @@ html{overscroll-behavior-x:none}
     if(S.bv.mode==='edit'){
       Array.prototype.forEach.call(el.querySelectorAll('input.money'),moneyInput);
       Array.prototype.forEach.call(el.querySelectorAll('input,select'),function(inp){ inp.addEventListener('input',function(){ readDraft(); $('bd-tot').innerHTML='<h2>Totals</h2>'+totHTML(billCalc(draftClean(S.bv.draft))); }); });
-      var cu=$('bd-cust'); if(cu) cu.addEventListener('change',function(){ if(S.bv.no) return; var t=termsFor(cu.value); if(!t) { $('bd-terms').textContent=''; return; } readDraft(); var d=S.bv.draft; d.discountPct=t.discountPct; d.tipMode=t.tipMode; d.tipValue=t.tipValue; renderBills(); var t2=$('bd-terms'); if(t2) t2.textContent='Usual terms filled in: '+t.label+'. Change them below if needed.'; });
+      var cu=$('bd-cust'); if(cu) cu.addEventListener('change',function(){ if(S.bv.no) return; var t=termsFor(cu.value); if(!t) { $('bd-terms').textContent=''; return; } readDraft(); var d=S.bv.draft; d.discMode=t.discMode; d.discountPct=t.discountPct; d.discountAmt=t.discountAmt; d.tipMode=t.tipMode; d.tipValue=t.tipValue; renderBills(); var t2=$('bd-terms'); if(t2) t2.textContent='Usual terms filled in: '+t.label+'. Change them below if needed.'; });
       Array.prototype.forEach.call(el.querySelectorAll('[data-jdel]'),function(b){ b.addEventListener('click',function(){ readDraft(); S.bv.draft.jobs.splice(+b.getAttribute('data-jdel'),1); renderBills(); }); });
+      Array.prototype.forEach.call(el.querySelectorAll('[data-dm]'),function(b){ b.addEventListener('click',function(){ readDraft(); S.bv.draft.discMode=b.getAttribute('data-dm'); renderBills(); }); });
       Array.prototype.forEach.call(el.querySelectorAll('[data-tm]'),function(b){ b.addEventListener('click',function(){ readDraft(); S.bv.draft.tipMode=b.getAttribute('data-tm'); renderBills(); }); });
       on('bj-add',function(){ readDraft(); var last=S.bv.draft.jobs[S.bv.draft.jobs.length-1]; var nj=blankJob(); if(last){ nj.driver=last.driver; } S.bv.draft.jobs.push(nj); renderBills(); });
       var fr=$('bj-from'); if(fr) fr.addEventListener('change',function(){ var e=S.entriesRaw.filter(function(x){return x.id===fr.value})[0]; if(!e) return; readDraft(); var d=S.bv.draft;
@@ -6392,7 +6397,7 @@ html{overscroll-behavior-x:none}
   }
   function billText(b,no){ var c=billCalc(b), L=[brandName(),'Taxi Journey Receipt '+no,'Date: '+dlabel(b.date),'Receipt to: '+b.customer,''];
     (b.jobs||[]).forEach(function(j,i){ L.push('Job '+(i+1)+' - '+fmtD(j.date)+' - '+(j.route||'')+' - Driver: '+(j.driver||S.drivers[0])+' - '+gbp2.format(+j.fare||0)+((+j.parking)?' (parking/drop off '+gbp2.format(+j.parking)+')':'')); });
-    L.push('','Original price: '+gbp2.format(c.orig),'Parking/drop off: '+gbp2.format(c.park),'Discount: '+c.pct+'% ('+gbp2.format(c.disc)+')','Tip: '+gbp2.format(c.tip),'Total: '+gbp2.format(c.total)); if(b.note) L.push('',b.note); L.push('','Thank you for travelling with '+brandName()+'.'); return L.join('\n'); }
+    L.push('','Original price: '+gbp2.format(c.orig),'Parking/drop off: '+gbp2.format(c.park),'Discount: '+(c.amt?gbp2.format(c.disc):c.pct+'% ('+gbp2.format(c.disc)+')'),'Tip: '+gbp2.format(c.tip),'Total: '+gbp2.format(c.total)); if(b.note) L.push('',b.note); L.push('','Thank you for travelling with '+brandName()+'.'); return L.join('\n'); }
   function billPDF(no){
     var b=S.bills[no]; if(!b) return;
     if(!window.jspdf||!window.jspdf.jsPDF){ toast('The PDF maker did not load. Check your connection and try again.'); return; }
@@ -6414,7 +6419,7 @@ html{overscroll-behavior-x:none}
     });
     if(y>220){ doc.addPage(); y=20; }
     var bx=112; y+=4; doc.setFillColor(245,242,231); doc.roundedRect(bx-4,y-6,R-bx+8,52,3,3,'F');
-    [['Original price',gbp2.format(c.orig)],['Parking/drop off',gbp2.format(c.park)],['Discount %',c.pct+'%'],['Discount amount',gbp2.format(c.disc)],['Tip',gbp2.format(c.tip)]].forEach(function(r){ doc.setFont('helvetica','bold'); doc.text(r[0],bx,y); doc.setFont('helvetica','normal'); doc.text(r[1],R,y,{align:'right'}); y+=7; });
+    [['Original price',gbp2.format(c.orig)],['Parking/drop off',gbp2.format(c.park)],['Discount %',c.pct+'%'],['Discount amount',gbp2.format(c.disc)],['Tip',gbp2.format(c.tip)]].filter(function(r){ return !(c.amt&&r[0]==='Discount %'); }).forEach(function(r){ doc.setFont('helvetica','bold'); doc.text(r[0],bx,y); doc.setFont('helvetica','normal'); doc.text(r[1],R,y,{align:'right'}); y+=7; });
     doc.setFontSize(14); doc.setFont('helvetica','bold'); doc.text('Total',bx,y+3); doc.text(gbp2.format(c.total),R,y+3,{align:'right'});
     if(b.note){ doc.setFontSize(10); doc.setFont('helvetica','normal'); doc.text(doc.splitTextToSize(b.note,R-L),L,y+18); }
     doc.setFontSize(9); doc.setFont('helvetica','normal'); doc.setTextColor(120); var BL=bizLines(); if(BL.length) doc.text(BL.join('  ·  '),L,280); doc.text('Thank you for travelling with '+brandName()+'.',L,285);
