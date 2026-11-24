@@ -36,16 +36,33 @@ Before adding an item, check the code and git log so nothing already done is lis
 - [ ] Match bank payments to unpaid receipts.
 
 ## Videos
-- [ ] Ask Matt: captions only, or voice-over?
-- [ ] 8 short walkthroughs recorded from the live app:
-  - [ ] Sign up and setup
-  - [ ] Add a job
+- [x] Captions or voice-over? Matt (11 Nov): silent is fine. Each guide section gets a "Watch a short video" button.
+- [ ] Short silent walkthroughs in the guide, recorded on a test copy of the app with a pretend driver (no real data):
+  - [x] Add a job (guide 7.1)
+  - [x] Position and the VAT limit (guide 7.2)
+  - [x] Reports (guide 7.3)
+  - [ ] Sign up and Quick setup
+  - [ ] Home screen icon
+  - [ ] Train alerts
   - [ ] Bank statement
   - [ ] App statements
   - [ ] Receipt photos
-  - [ ] Tools
-  - [ ] VAT and tax year
+  - [ ] Tools (fares, Tonight, flights, ranks, toilets, trains, tube)
   - [ ] Fixing mistakes
+- [ ] A longer "How to use Cab Books" video for drivers (Matt, 11 Nov).
+
+## Getting started guide run-through with Matt (help.html)
+Work is on branch `claude/zen-bohr-kkfepw` until Matt says "deploy".
+- [x] Top: privacy box; Open Cab Books opens in a new tab
+- [x] 1. Sign up
+- [x] 2. Home screen: icon picture, "go back to your home screen" step
+- [x] 3. Quick setup: Basic and Full explained (Cab Books doesn't send anything to HMRC), card provider not listed, earlier takings
+- [x] 4. Train alerts
+- [ ] 5. Bank statement: move further down (Full only); privacy reminder, CSV or Excel, real button name, bank replaces typed expenses
+- [ ] 6. App statements: move further down (Full only)
+- [ ] 7. Everyday use: 1 Adding a job, 2 Position and 3 Reports done; next: handy screens
+- [x] 8. Receipt photos (reviewed; Add an expense → Cash)
+- [ ] 9. Fixing mistakes
 
 ## Later / parked
 - [ ] Bank statement PDFs (NatWest first).
