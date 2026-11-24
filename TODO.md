@@ -36,7 +36,7 @@ Before adding an item, check the code and git log so nothing already done is lis
 - [ ] Match bank payments to unpaid receipts.
 
 ## Videos
-- [ ] Matt to review every guide video so far (open the guide, tap each "Watch a short video"): 7.1 Add a job, 7.2 Position, 7.3 Reports, 7.4 Tonight, Flights, Trains and Tube. Add new ones here as they are made.
+- [ ] Matt to review every guide video so far (open the guide, tap each "Watch a short video"): 7.1 Add a job, 7.2 Position, 7.3 Reports, 7.4 Tonight, Flights, Trains and Tube, 9 Fixing mistakes (edit and delete a job). Add new ones here as they are made.
 - [x] Captions or voice-over? Matt (11 Nov): silent is fine. Each guide section gets a "Watch a short video" button.
 - [ ] Short silent walkthroughs in the guide, recorded on a test copy of the app with a pretend driver (no real data):
   - [x] Add a job (guide 7.1)
@@ -50,7 +50,7 @@ Before adding an item, check the code and git log so nothing already done is lis
   - [ ] Receipt photos
   - [x] Tonight, Flights, Trains, Tube (guide 7.4, recorded with live data on 24 Nov)
   - [ ] Fares, Ranks, Toilets: blocked. The test computer can't reach the map server (taxitrackermap.allblacktaxis.co.uk). Add it under Allowed domains in the cloud environment's network settings, then record.
-  - [ ] Fixing mistakes
+  - [x] Fixing mistakes: edit and delete a job (guide 9)
 - [ ] A longer "How to use Cab Books" video for drivers (Matt, 11 Nov).
 
 ## Getting started guide run-through with Matt (help.html)
@@ -64,7 +64,7 @@ Work is on branch `claude/zen-bohr-kkfepw` until Matt says "deploy".
 - [ ] 6. App statements: move further down (Full only)
 - [x] 7. Everyday use: 1 Adding a job, 2 Position, 3 Reports, 4 Handy screens (map videos still to do, see Videos)
 - [x] 8. Receipt photos (reviewed; Add an expense → Cash)
-- [ ] 9. Fixing mistakes
+- [x] 9. Fixing mistakes: current Settings paths, Update job, Tap again to delete, backup, contact us
 
 ## Later / parked
 - [ ] Bank statement PDFs (NatWest first).
